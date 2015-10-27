@@ -32,7 +32,7 @@ public interface MessageTranslator {
 	 * @param amqpMsg
 	 * @return Vert.x Msg
 	 */
-	JsonObject toVertx(org.apache.qpid.proton.message.Message amqpMsg);
+	Object toVertx(org.apache.qpid.proton.message.Message amqpMsg);
 
 	// TODO need to find a better way.
 	static final class Factory {

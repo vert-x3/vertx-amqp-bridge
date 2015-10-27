@@ -26,10 +26,10 @@ public class DefaultRouter implements Router {
 		defaultOutgoingAddress = defaultOutgoingAddr;
 		if (LOG.isInfoEnabled()) {
 			StringBuilder b = new StringBuilder();
-			b.append("========== DefaultAMQPRouter ===========");
-			b.append("Default Outgoing AMQP Address : " + defaultOutgoingAddress);
-			b.append("Default Incoming Vertx Address : " + defaultIncomingAddress);
-			b.append("========================================");
+			b.append("\n========== DefaultAMQPRouter ===========");
+			b.append("\nDefault Outgoing AMQP Address : " + defaultOutgoingAddress);
+			b.append("\nDefault Incoming Vertx Address : " + defaultIncomingAddress);
+			b.append("\n========================================\n");
 			LOG.info(b.toString());
 		}
 	}

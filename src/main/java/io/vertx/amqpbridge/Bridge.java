@@ -7,13 +7,11 @@ import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.SendContext;
-import io.vertx.core.json.JsonObject;
 import io.vertx.proton.ProtonClient;
 import io.vertx.proton.ProtonConnection;
 import io.vertx.proton.ProtonReceiver;
 import io.vertx.proton.ProtonServer;
 
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -66,9 +64,9 @@ public class Bridge implements Handler<SendContext> {
 
 			LOG.debug("Received message from AMQP with content: " + msg.getBody());
 			// Now forward it to the Vert.x destination
-			    JsonObject vertxMsg = msgTranslator.toVertx(msg);
-			    // TODO doing a publish now. Need to diff btw pub and send.
-			    vertx.eventBus().publish(router.routeIncoming(msg), vertxMsg);
+			// TODO doing a publish now. Need to diff btw pub and send.
+			// TODO handle reply-to
+			    vertx.eventBus().publish(router.routeIncoming(msg), msgTranslator.toVertx(msg));
 			    // TODO for now we just ack everything
 			    delivery.disposition(Accepted.getInstance());
 			    // TODO credit-handling receiver.flow(1);
@@ -113,12 +111,10 @@ public class Bridge implements Handler<SendContext> {
 	}
 
 	protected void handleSend(String amqpAddress, SendContext sendContext) {
-		// Send to the AMQP destination
-		// Send messages to a queue..
 		Message message = msgTranslator.toAMQP(sendContext.message());
 		message.setAddress(amqpAddress);
 		connection.send(tag(String.valueOf(counter)), message, delivery -> {
-			System.out.println("The message was sent : Remote state is " + delivery.getRemoteState());
+			// handle acks/flow
 		});
 	}
 }
