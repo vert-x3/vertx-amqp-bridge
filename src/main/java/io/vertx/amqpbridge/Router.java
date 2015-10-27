@@ -21,46 +21,45 @@ public interface Router {
 	}
 
 	/**
-	 * Maps an AMQP subscription (Ex. Queue, Topic ..etc) to a Vert.x address
-	 * pattern
+	 * Maps an AMQP subscription (Ex. Queue, Topic ..etc) to a Vert.x address.
 	 * 
 	 * @param pattern
 	 * @param amqpAddress
 	 */
-	void addIncomingRoute(String pattern, String amqpAddress);
+	void addIncomingRoute(String amqpAddress, String vertxAddress);
 
 	/**
-	 * Maps a Vert.x address pattern to an AMQP destination
+	 * Maps a Vert.x address to an AMQP destination
 	 * 
 	 * @param pattern
 	 * @param amqpAddress
 	 */
-	void addOutgoingRoute(String pattern, String amqpAddress);
+	void addOutgoingRoute(String vertxAddress, String amqpAddress);
 
 	/**
-	 * Removes the mapping for an AMQP subscription (Ex. Queue, Topic ..etc) to
-	 * a Vert.x address pattern
+	 * Removes the mapping from an AMQP subscription (Ex. Queue, Topic ..etc) to
+	 * a Vert.x address.
 	 * 
 	 * @param pattern
 	 * @param vertxAddress
 	 */
-	void removeIncomingRoute(String pattern, String amqpAddress);
+	void removeIncomingRoute(String amqpAddress, String vertxAddress);
 
 	/**
-	 * Removes the mapping for a Vert.x address pattern to an AMQP destination
+	 * Removes the mapping from a Vert.x address to an AMQP destination
 	 * 
 	 * @param pattern
 	 * @param amqpAddress
 	 */
-	void removeOutgoingRoute(String pattern, String amqpAddress);
+	void removeOutgoingRoute(String vertxAddress, String amqpAddress);
 
 	/**
-	 * Maps an AMQP Message to one or many Vert.x addresses
+	 * Maps an AMQP Message to a Vert.x address
 	 * 
 	 * @param amqpMsg
 	 * @return A list Vert.x address
 	 */
-	List<String> routeIncoming(org.apache.qpid.proton.message.Message amqpMsg);
+	String routeIncoming(org.apache.qpid.proton.message.Message amqpMsg);
 
 	/**
 	 * Maps a Vert.x Message to an AMQP address

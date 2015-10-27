@@ -14,6 +14,7 @@ import io.vertx.proton.ProtonReceiver;
 import io.vertx.proton.ProtonServer;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.qpid.proton.amqp.messaging.Accepted;
@@ -65,12 +66,9 @@ public class Bridge implements Handler<SendContext> {
 
 			LOG.debug("Received message from AMQP with content: " + msg.getBody());
 			// Now forward it to the Vert.x destination
-			    List<String> addrList = router.routeIncoming(msg);
 			    JsonObject vertxMsg = msgTranslator.toVertx(msg);
 			    // TODO doing a publish now. Need to diff btw pub and send.
-			    for (String addr : addrList) {
-				    vertx.eventBus().send(addr, vertxMsg);
-			    }
+			    vertx.eventBus().publish(router.routeIncoming(msg), vertxMsg);
 			    // TODO for now we just ack everything
 			    delivery.disposition(Accepted.getInstance());
 			    // TODO credit-handling receiver.flow(1);
@@ -84,15 +82,24 @@ public class Bridge implements Handler<SendContext> {
 	// TODO handle removing routes/unsubscribing.
 
 	public void start(Handler<AsyncResult<Void>> resultHandler) {
+		final CountDownLatch connectionReady = new CountDownLatch(1);
 		client.connect(config.getOutboundAMQPHost(), config.getOutboundAMQPPort(), res -> {
 			if (res.succeeded()) {
 				connection = res.result();
 				connection.open();
 				resultHandler.handle(Future.succeededFuture());
+				connectionReady.countDown();
 			} else {
 				resultHandler.handle(Future.failedFuture(res.cause()));
 			}
 		});
+		// Block start until the connection is ready. Any other operation
+		// doesn't make sense until then.
+		try {
+			connectionReady.await();
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+		}
 	}
 
 	@Override
