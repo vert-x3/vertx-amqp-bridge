@@ -1,12 +1,8 @@
 package io.vertx.amqpbridge;
 
-import io.vertx.amqpbridge.MessageTranslator.Factory;
 import io.vertx.amqpbridge.impl.DefaultRouter;
-import io.vertx.amqpbridge.impl.DefalultMessageTranslator;
-import io.vertx.core.json.JsonObject;
 
 import java.lang.reflect.Constructor;
-import java.util.List;
 
 /**
  * Allows different routing implementations to be used.
@@ -16,8 +12,8 @@ import java.util.List;
  */
 public interface Router {
 
-	static Router get(String defaultIncomingAddr, String defaultOutgoingAddr) {
-		return Factory.create(defaultIncomingAddr, defaultOutgoingAddr);
+	static Router get() {
+		return Factory.create();
 	}
 
 	/**
@@ -73,18 +69,18 @@ public interface Router {
 	static final class Factory {
 		static Router instance;
 
-		public static Router create(String defaultIncomingAddr, String defaultOutgoingAddr) {
+		public static Router create() {
 			if (instance != null) {
 				return instance;
 			} else {
 				try {
 					Class<? extends Router> c = (Class<Router>) Class.forName(System.getProperty(
 					        "vertx-amqp.message-translator", "io.vertx.amqpbridge.impl.DefalultMessageTranslator"));
-					Constructor<? extends Router> ctor = c.getConstructor(String.class, String.class);
-					instance = ctor.newInstance(defaultIncomingAddr, defaultOutgoingAddr);
+					Constructor<? extends Router> ctor = c.getConstructor();
+					instance = ctor.newInstance();
 				} catch (Exception e) {
 					// TODO need to raise the exception or log a warning.
-					instance = new DefaultRouter(defaultIncomingAddr, defaultOutgoingAddr);
+					instance = new DefaultRouter();
 				}
 				return instance;
 			}

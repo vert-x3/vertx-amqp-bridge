@@ -14,24 +14,12 @@ import java.util.concurrent.ConcurrentHashMap;
 public class DefaultRouter implements Router {
 
 	static final LogManager LOG = LogManager.get("MessageRouter:", DefaultRouter.class);
-	String defaultOutgoingAddress;
-	String defaultIncomingAddress;
 
 	Map<String, String> _outboundRoutes = new ConcurrentHashMap<String, String>();
 
 	Map<String, String> _inboundRoutes = new ConcurrentHashMap<String, String>();
 
-	public DefaultRouter(String defaultIncomingAddr, String defaultOutgoingAddr) {
-		defaultIncomingAddress = defaultIncomingAddr;
-		defaultOutgoingAddress = defaultOutgoingAddr;
-		if (LOG.isInfoEnabled()) {
-			StringBuilder b = new StringBuilder();
-			b.append("\n========== DefaultAMQPRouter ===========");
-			b.append("\nDefault Outgoing AMQP Address : " + defaultOutgoingAddress);
-			b.append("\nDefault Incoming Vertx Address : " + defaultIncomingAddress);
-			b.append("\n========================================\n");
-			LOG.info(b.toString());
-		}
+	public DefaultRouter() {		
 	}
 
 	/*
@@ -64,7 +52,7 @@ public class DefaultRouter implements Router {
 		if (_inboundRoutes.containsKey(amqpMsg.getAddress())) {
 			return _inboundRoutes.get(amqpMsg.getAddress());
 		} else {
-			return defaultIncomingAddress;
+			return null;
 		}
 	}
 
@@ -74,7 +62,7 @@ public class DefaultRouter implements Router {
 		if (_outboundRoutes.containsKey(vertxMsg.address())) {
 			return _outboundRoutes.get(vertxMsg.address());
 		} else {
-			return defaultOutgoingAddress;
+			return null;
 		}
 	}
 }

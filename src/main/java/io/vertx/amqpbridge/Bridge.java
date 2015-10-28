@@ -41,23 +41,22 @@ public class Bridge implements Handler<SendContext> {
 		server = ProtonServer.create(vertx);
 		config = options;
 		msgTranslator = MessageTranslator.get();
-		router = Router.get(config.getDefaultIncomingAddress(), config.getDefaultOutgoingAddress());
+		router = Router.get();
 	}
 
 	/*
-	 * Maps a Vert.x address pattern to an AMQP destination
+	 * Maps a Vert.x address to an AMQP destination
 	 */
-	public Bridge addOutgoingRoute(String pattern, String amqpAddress) {
+	public Bridge addOutgoingRoute(String vertxAddress, String amqpAddress) {
 
-		router.addOutgoingRoute(pattern, amqpAddress);
+		router.addOutgoingRoute(vertxAddress, amqpAddress);
 		return this;
 	}
 
 	/*
-	 * Maps an AMQP subscription (Ex. Queue, Topic ..etc) to a Vert.x address
-	 * pattern
+	 * Maps an AMQP subscription (Ex. Queue, Topic ..etc) to a Vert.x address.
 	 */
-	public Bridge addIncomingRoute(String pattern, String amqpAddress) {
+	public Bridge addIncomingRoute(String amqpAddress, String vertxAddress) {
 		// Receive messages from an AMQP endpoint
 		// TODO keep a map so we can cancel and manage credit.
 		final ProtonReceiver receiver = connection.receiver().setSource(amqpAddress).handler((delivery, msg) -> {
@@ -73,7 +72,7 @@ public class Bridge implements Handler<SendContext> {
 
 		    }).flow(config.getDefaultPrefetch()) // TODO handle flow-control
 		        .open();
-		router.addIncomingRoute(pattern, amqpAddress);
+		router.addIncomingRoute(amqpAddress, vertxAddress);
 		return this;
 	}
 

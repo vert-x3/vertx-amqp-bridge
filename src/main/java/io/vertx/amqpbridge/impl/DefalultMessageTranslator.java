@@ -11,6 +11,7 @@ import org.apache.qpid.proton.amqp.Symbol;
 import org.apache.qpid.proton.amqp.messaging.AmqpSequence;
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton.amqp.messaging.Data;
+import org.apache.qpid.proton.amqp.messaging.MessageAnnotations;
 import org.apache.qpid.proton.amqp.messaging.Section;
 import org.apache.qpid.proton.message.Message;
 
@@ -35,6 +36,7 @@ public class DefalultMessageTranslator implements MessageTranslator {
 				} else if (obj instanceof List) {
 					annotations.put(JMS_ANNOTATION_HEADER, JMS_STREAM_MESSAGE);
 				}
+				out.setMessageAnnotations(new MessageAnnotations(annotations));
 			}
 			out.setBody(new AmqpValue(obj));
 		}

@@ -28,7 +28,7 @@ public class WeatherReceiver extends AbstractVerticle {
 				throw new Error("Connection to AMQP peer was not succesfull. Aborting!");
 			}
 		});
-		bridge.addIncomingRoute("usa.nyc", "amqp://localhost:6672/Broadcast/usa.nyc");
+		bridge.addIncomingRoute("/Broadcast/usa.nyc", "usa.nyc");
 		eb.addInterceptor(bridge);
 		vertx.deployVerticle(new WeatherReceiver());
 	}

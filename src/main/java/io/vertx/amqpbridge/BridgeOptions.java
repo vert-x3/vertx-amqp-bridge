@@ -8,8 +8,6 @@ public class BridgeOptions {
 	private String outboundAMQPHost = "localhost";
 	private int inboundAMQPPort = 5673;
 	private String inboundAMQPHost = "localhost";
-	private String defaultOutgoingAddress = "vertx-dlq";
-	private String defaultIncomingAddress = "amqp-dlq";
 	private int defaultPrefetch = 10;
 
 	public BridgeOptions() {
@@ -49,22 +47,6 @@ public class BridgeOptions {
 
 	public void setInboundAMQPHost(String inboundAMQPHost) {
 		this.inboundAMQPHost = inboundAMQPHost;
-	}
-
-	public String getDefaultOutgoingAddress() {
-		return defaultOutgoingAddress;
-	}
-
-	public void setDefaultOutgoingAddress(String defaultOutgoingAddress) {
-		this.defaultOutgoingAddress = defaultOutgoingAddress;
-	}
-
-	public String getDefaultIncomingAddress() {
-		return defaultIncomingAddress;
-	}
-
-	public void setDefaultIncomingAddress(String defaultIncomingAddress) {
-		this.defaultIncomingAddress = defaultIncomingAddress;
 	}
 
 	public int getDefaultPrefetch() {
