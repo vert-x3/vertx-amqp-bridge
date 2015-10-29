@@ -29,7 +29,7 @@ public class WeatherSender extends AbstractVerticle {
 				throw new Error("Connection to AMQP peer was not succesfull. Aborting!");
 			}			
 		});
-		bridge.addOutgoingRoute("usa.nyc", "/Broadcast/usa.nyc");
+		bridge.addOutgoingRoute("usa.nyc", "/Exclusive/usa.nyc");
 		eb.addInterceptor(bridge);
 		vertx.deployVerticle(new WeatherSender());
 	}
