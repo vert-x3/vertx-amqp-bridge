@@ -66,7 +66,7 @@ public interface Router {
 	String routeOutgoing(io.vertx.core.eventbus.Message<?> vertxMsg);
 
 	// TODO need to find a better way.
-	static final class Factory {
+	final class Factory {
 		static Router instance;
 
 		public static Router create() {

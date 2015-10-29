@@ -1,5 +1,7 @@
-package io.vertx.amqpbridge;
+package io.vertx.amqpbridge.example;
 
+import io.vertx.amqpbridge.Bridge;
+import io.vertx.amqpbridge.BridgeOptions;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.EventBus;
@@ -7,30 +9,30 @@ import io.vertx.core.eventbus.EventBus;
 /**
  * @author <a href="mailto:rajith@rajith.lk">Rajith Muditha Attapattu</a>
  */
-public class WeatherSender extends AbstractVerticle {
-
+public class WeatherReceiver extends AbstractVerticle {
 	@Override
 	public void start() throws Exception {
 		EventBus eb = vertx.eventBus();
-		vertx.setPeriodic(1000, v -> eb.publish("usa.nyc", "It's nice and sunny in the big apple!"));
+		eb.consumer("usa.nyc", message -> System.out.println("Received Weather : " + message.body()));
+		System.out.println("Ready to receive the weather for usa.nyc");
 	}
 
 	public static void main(String[] args) {
-
+		// Default subscribe to all.
 		Vertx vertx = Vertx.vertx();
 		EventBus eb = vertx.eventBus();
 		Bridge bridge = new Bridge(vertx, new BridgeOptions());
-		bridge.start(res ->{
+		bridge.start(res -> {
 			if (res.succeeded()) {
 				System.out.println("Connection to AMQP peer was succesfull");
-			}
-			else{
+			} else {
 				System.out.println("Connection to AMQP peer was not succesfull");
+				res.cause().printStackTrace();
 				throw new Error("Connection to AMQP peer was not succesfull. Aborting!");
-			}			
+			}
 		});
-		bridge.addOutgoingRoute("usa.nyc", "/Broadcast/usa.nyc");
+		bridge.addIncomingRoute("/Broadcast/usa.nyc", "usa.nyc");
 		eb.addInterceptor(bridge);
-		vertx.deployVerticle(new WeatherSender());
+		vertx.deployVerticle(new WeatherReceiver());
 	}
 }

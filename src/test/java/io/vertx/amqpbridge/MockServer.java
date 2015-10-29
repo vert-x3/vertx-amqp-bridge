@@ -5,16 +5,13 @@ package io.vertx.amqpbridge;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Vertx;
-import io.vertx.proton.*;
-
-import org.apache.qpid.proton.amqp.messaging.AmqpValue;
+import io.vertx.proton.ProtonConnection;
+import io.vertx.proton.ProtonDelivery;
+import io.vertx.proton.ProtonSender;
+import io.vertx.proton.ProtonServer;
 import org.apache.qpid.proton.message.Message;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -24,19 +21,19 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class MockServer {
 
 	private ProtonServer server;
-	private Map<String, List<StoreEntry>> store = new HashMap<String, List<StoreEntry>>();
-	private Map<String, ProtonSender> senders = new HashMap<String, ProtonSender>();
-	private AtomicInteger counter = new AtomicInteger();
+	private final Map<String, List<StoreEntry>> store = new HashMap<>();
+	private final Map<String, ProtonSender> senders = new HashMap<>();
+	private final AtomicInteger counter = new AtomicInteger();
 
 	public MockServer(Vertx vertx) throws ExecutionException, InterruptedException {
 		server = ProtonServer.create(vertx);
-		server.connectHandler((connection) -> processConnection(vertx, connection));
+		server.connectHandler(this::processConnection);
 		FutureHandler<ProtonServer, AsyncResult<ProtonServer>> handler = FutureHandler.asyncResult();
 		server.listen(5672, handler);
 		handler.get();
 	}
 
-	private void processConnection(Vertx vertx, ProtonConnection connection) {
+	private void processConnection(ProtonConnection connection) {
 		connection.sessionOpenHandler(session -> session.open());
 		connection.receiverOpenHandler(receiver -> {
 			receiver.handler((delivery, msg) -> {
@@ -69,11 +66,11 @@ public class MockServer {
 
 	}
 
-	public void storeMessage(String address, ProtonDelivery delivery, Message msg) {
+	public synchronized void storeMessage(String address, ProtonDelivery delivery, Message msg) {
 		if (store.containsKey(address)) {
 			store.get(address).add(new StoreEntry(delivery, msg));
 		} else {
-			store.put(address, new ArrayList()).add(new StoreEntry(delivery, msg));
+			store.put(address, new ArrayList<>()).add(new StoreEntry(delivery, msg));
 		}
 	}
 
@@ -85,8 +82,9 @@ public class MockServer {
 		return server.actualPort();
 	}
 
-	private class StoreEntry {
-		public StoreEntry(ProtonDelivery del, Message m) {
+	private static class StoreEntry {
+
+		StoreEntry(ProtonDelivery del, Message m) {
 			delivery = del;
 			msg = m;
 		}

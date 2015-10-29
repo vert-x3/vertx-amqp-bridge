@@ -1,8 +1,6 @@
 package io.vertx.amqpbridge;
 
 import io.vertx.amqpbridge.impl.DefalultMessageTranslator;
-import io.vertx.core.json.JsonObject;
-
 import org.apache.qpid.proton.message.Message;
 
 /**
@@ -35,7 +33,7 @@ public interface MessageTranslator {
 	Object toVertx(org.apache.qpid.proton.message.Message amqpMsg);
 
 	// TODO need to find a better way.
-	static final class Factory {
+	final class Factory {
 		static MessageTranslator instance;
 
 		public static MessageTranslator create() {
