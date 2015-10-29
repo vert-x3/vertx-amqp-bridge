@@ -25,6 +25,7 @@ public class WeatherReceiver extends AbstractVerticle {
 				System.out.println("Connection to AMQP peer was succesfull");
 			} else {
 				System.out.println("Connection to AMQP peer was not succesfull");
+				res.cause().printStackTrace();
 				throw new Error("Connection to AMQP peer was not succesfull. Aborting!");
 			}
 		});
