@@ -20,17 +20,17 @@ public class BridgeTest extends BridgeTestBase {
       if (res.succeeded()) {
         System.out.println("Connection to AMQP peer was succesfull");
 
-        bridge.addOutgoingRoute("usa.nyc", "/Broadcast/usa.nyc");
-        bridge.addIncomingRoute("/Broadcast/usa.nyc", "usa.nyc");
+        bridge.addOutgoingRoute("send.usa.nyc", "/Broadcast/usa.nyc");
+        bridge.addIncomingRoute("/Broadcast/usa.nyc", "recv.usa.nyc");
 
         eb.addInterceptor(bridge);
 
-        eb.consumer("usa.nyc", message -> {
+        eb.consumer("recv.usa.nyc", message -> {
           System.out.println("Received Weather : " + message.body());
           testComplete();
         });
 
-        vertx.setPeriodic(1000, v -> eb.publish("usa.nyc", "It's nice and sunny in the big apple!"));
+        eb.publish("send.usa.nyc", "It's nice and sunny in the big apple!");
 
       } else {
         res.cause().printStackTrace();
