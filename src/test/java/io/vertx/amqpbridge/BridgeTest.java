@@ -8,38 +8,33 @@ import org.junit.Test;
  */
 public class BridgeTest extends BridgeTestBase {
 
-  @Test
-  public void testSimpleSendConsume() {
+	@Test
+	public void testSimpleSendConsume() {
+		EventBus eb = vertx.eventBus();
+		Bridge bridge = new Bridge(vertx, new BridgeOptions());
+		bridge.start(res -> {
+			if (res.succeeded()) {
+				System.out.println("Connection to AMQP peer was succesfull");
 
-    EventBus eb = vertx.eventBus();
+				bridge.addOutgoingRoute("send.my-queue", "queue/my-queue");
+				bridge.addIncomingRoute("queue/my-queue", "recv.my-queue");
 
-    Bridge bridge = new Bridge(vertx, new BridgeOptions());
+				eb.addInterceptor(bridge);
 
+				eb.consumer("recv.my-queue", message -> {
+					System.out.println("Received Weather : " + message.body());
+					testComplete();
+				});
 
-    bridge.start(res ->{
-      if (res.succeeded()) {
-        System.out.println("Connection to AMQP peer was succesfull");
+				eb.publish("send.my-queue", "It's nice and sunny in the big apple!");
 
-        bridge.addOutgoingRoute("send.usa.nyc", "/Broadcast/usa.nyc");
-        bridge.addIncomingRoute("/Broadcast/usa.nyc", "recv.usa.nyc");
+			} else {
+				res.cause().printStackTrace();
+				fail("Connection to AMQP peer was not succesfull");
 
-        eb.addInterceptor(bridge);
+			}
+		});
 
-        eb.consumer("recv.usa.nyc", message -> {
-          System.out.println("Received Weather : " + message.body());
-          testComplete();
-        });
-
-        eb.publish("send.usa.nyc", "It's nice and sunny in the big apple!");
-
-      } else {
-        res.cause().printStackTrace();
-        fail("Connection to AMQP peer was not succesfull");
-
-      }
-    });
-
-    await();
-
-  }
+		await();
+	}
 }
