@@ -30,18 +30,17 @@ public class MockServer {
 	private Map<String, List<StoreEntry>> store = new HashMap<String, List<StoreEntry>>();
 	private Map<String, Queue> queueSubscribers = new HashMap<String, Queue>();
 	private Map<String, List<ProtonSender>> topicSubscribers = new HashMap<String, List<ProtonSender>>();
-
 	private AtomicInteger counter = new AtomicInteger();
 
 	public MockServer(Vertx vertx) throws ExecutionException, InterruptedException {
 		server = ProtonServer.create(vertx);
-		server.connectHandler((connection) -> processConnection(vertx, connection));
+		server.connectHandler(this::processConnection);
 		FutureHandler<ProtonServer, AsyncResult<ProtonServer>> handler = FutureHandler.asyncResult();
 		server.listen(5672, handler);
 		handler.get();
 	}
 
-	private void processConnection(Vertx vertx, ProtonConnection connection) {
+	private void processConnection(ProtonConnection connection) {
 		connection.sessionOpenHandler(session -> session.open());
 		connection.receiverOpenHandler(receiver -> {
 			receiver.handler((delivery, msg) -> {
@@ -127,7 +126,7 @@ public class MockServer {
 
 	}
 
-	public void storeMessage(String address, ProtonDelivery delivery, Message msg) {
+	public synchronized void storeMessage(String address, ProtonDelivery delivery, Message msg) {
 		if (store.containsKey(address)) {
 			store.get(address).add(new StoreEntry(delivery, msg));
 		} else {
@@ -143,8 +142,9 @@ public class MockServer {
 		server.close();
 	}
 
-	private class StoreEntry {
-		public StoreEntry(ProtonDelivery del, Message m) {
+	private static class StoreEntry {
+
+		StoreEntry(ProtonDelivery del, Message m) {
 			delivery = del;
 			msg = m;
 		}
