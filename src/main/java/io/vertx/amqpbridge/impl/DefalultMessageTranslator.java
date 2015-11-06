@@ -1,23 +1,18 @@
 package io.vertx.amqpbridge.impl;
 
+import io.vertx.amqpbridge.MessageTranslator;
+import org.apache.qpid.proton.amqp.Binary;
+import org.apache.qpid.proton.amqp.Symbol;
+import org.apache.qpid.proton.amqp.messaging.*;
+import org.apache.qpid.proton.message.Message;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.vertx.amqpbridge.MessageTranslator;
-
-import org.apache.qpid.proton.amqp.Binary;
-import org.apache.qpid.proton.amqp.Symbol;
-import org.apache.qpid.proton.amqp.messaging.AmqpSequence;
-import org.apache.qpid.proton.amqp.messaging.AmqpValue;
-import org.apache.qpid.proton.amqp.messaging.Data;
-import org.apache.qpid.proton.amqp.messaging.MessageAnnotations;
-import org.apache.qpid.proton.amqp.messaging.Section;
-import org.apache.qpid.proton.message.Message;
-
 public class DefalultMessageTranslator implements MessageTranslator {
 
-	boolean isJMSAnnotated = Boolean.getBoolean("vertx-amqp.jms-annotation");
+	private static boolean isJMSAnnotated = Boolean.getBoolean("vertx-amqp.jms-annotation");
 	static final Symbol JMS_ANNOTATION_HEADER = Symbol.valueOf("x-opt-jms-msg-type");
 	static final byte JMS_MAP_MESSAGE = 2;
 	public static final byte JMS_STREAM_MESSAGE = 4;

@@ -8,31 +8,67 @@ import org.junit.Test;
  */
 public class BridgeTest extends BridgeTestBase {
 
-	@Test
-	public void testSimpleSendConsume() {
-		EventBus eb = vertx.eventBus();
+	protected EventBus eb;
+
+	protected void setUpAndRun(Runnable runner) {
+		eb = vertx.eventBus();
 		Bridge bridge = new Bridge(vertx, new BridgeOptions());
 		bridge.start(res -> {
 			if (res.succeeded()) {
-				System.out.println("Connection to AMQP peer was succesfull");
-
 				bridge.addOutgoingRoute("send.my-queue", "queue/my-queue");
 				bridge.addIncomingRoute("queue/my-queue", "recv.my-queue");
-
 				eb.addInterceptor(bridge);
-
-				eb.consumer("recv.my-queue", message -> {
-					System.out.println("Received Weather : " + message.body());
-					testComplete();
-				});
-
-				eb.publish("send.my-queue", "It's nice and sunny in the big apple!");
-
+				runner.run();
 			} else {
-				res.cause().printStackTrace();
 				fail("Connection to AMQP peer was not succesfull");
-
 			}
+		});
+
+	}
+
+	@Test
+	public void testSimpleSendConsume() {
+		setUpAndRun(() -> {
+			eb.consumer("recv.my-queue", message -> {
+				System.out.println("Received Weather : " + message.body());
+				testComplete();
+			});
+
+			eb.send("send.my-queue", "It's nice and sunny in the big apple!");
+		});
+
+		await();
+	}
+
+	@Test
+	public void testSendWithAck() {
+		setUpAndRun(() -> {
+			eb.consumer("recv.my-queue", message -> {
+				System.out.println("Received Weather : " + message.body());
+			});
+
+			eb.<Boolean>send("send.my-queue", "It's nice and sunny in the big apple!", res -> {
+				assertTrue(res.succeeded());
+				assertTrue(res.result().body());
+				testComplete();
+			});
+		});
+
+		await();
+	}
+
+	@Test
+	public void testConsumeWithAck() {
+		setUpAndRun(() -> {
+			eb.consumer("recv.my-queue", message -> {
+				System.out.println("Received Weather : " + message.body());
+				// Now ack it
+				message.reply(true);
+				// TODO we need to verify it actually gets acked in AMQP, e.g. by trying to consume it again
+				testComplete();
+			});
+
+			eb.<Boolean>send("send.my-queue", "It's nice and sunny in the big apple!");
 		});
 
 		await();
