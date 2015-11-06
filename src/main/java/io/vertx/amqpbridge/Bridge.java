@@ -4,9 +4,11 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
 import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.eventbus.SendContext;
+import io.vertx.core.eventbus.impl.MessageProducerImpl;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.proton.ProtonClient;
@@ -29,7 +31,8 @@ public class Bridge implements Handler<SendContext> {
 
   private static final Logger log = LoggerFactory.getLogger(Bridge.class);
 
-  private final Vertx vertx;
+  private static final String FROM_AMQP_HEADER_NAME = "__vertx.fromAMQP";
+
   private final EventBus eb;
   private ProtonClient client;
   private BridgeOptions config;
@@ -40,19 +43,7 @@ public class Bridge implements Handler<SendContext> {
   private final Map<String, String> outboundRoutes = new ConcurrentHashMap<>();
   private final Map<String, ReceiverHolder> inboundRoutes = new ConcurrentHashMap<>();
 
-  private static final class ReceiverHolder {
-    final ProtonReceiver receiver;
-    final String vertxAddress;
-
-    public ReceiverHolder(ProtonReceiver receiver, String vertxAddress) {
-      this.receiver = receiver;
-      this.vertxAddress = vertxAddress;
-    }
-  }
-
-
   public Bridge(Vertx vertx, BridgeOptions options) {
-    this.vertx = vertx;
     this.eb = vertx.eventBus();
     client = ProtonClient.create(vertx);
     config = options;
@@ -80,6 +71,10 @@ public class Bridge implements Handler<SendContext> {
 
       log.debug("Received message from AMQP with content: " + msg.getBody());
       // Now forward it to the Vert.x destination
+
+      // To prevent loops
+      DeliveryOptions options = new DeliveryOptions().addHeader(FROM_AMQP_HEADER_NAME, "true");
+      producer.deliveryOptions(options);
 
       producer.<Boolean>send(msgTranslator.toVertx(msg), res -> {
         if (res.succeeded()) {
@@ -138,10 +133,14 @@ public class Bridge implements Handler<SendContext> {
   public void handle(SendContext sendContext) {
     String amqpAddress = outboundRoutes.get(sendContext.message().address());
     if (amqpAddress != null) {
-      handleSend(amqpAddress, sendContext);
-    } else {
-      sendContext.next();
+      // Prevent loops
+      String fromAMQP = sendContext.message().headers().get(FROM_AMQP_HEADER_NAME);
+      if (fromAMQP == null) {
+        handleSend(amqpAddress, sendContext);
+        return;
+      }
     }
+    sendContext.next();
   }
 
   protected void handleSend(String amqpAddress, SendContext sendContext) {
@@ -150,5 +149,24 @@ public class Bridge implements Handler<SendContext> {
     connection.send(tag(String.valueOf(counter)), message, delivery -> {
       sendContext.message().reply(true);
     });
+    // A bit hacky
+    // FIXME
+    String creditsAddress = sendContext.message().headers().get(MessageProducerImpl.CREDIT_ADDRESS_HEADER_NAME);
+    if (creditsAddress != null) {
+      // Send back some credits when we get credits from AMQP
+      // TODO - how to do this?
+      eb.send(creditsAddress, 1);
+    }
   }
+
+  private static final class ReceiverHolder {
+    final ProtonReceiver receiver;
+    final String vertxAddress;
+
+    public ReceiverHolder(ProtonReceiver receiver, String vertxAddress) {
+      this.receiver = receiver;
+      this.vertxAddress = vertxAddress;
+    }
+  }
+
 }
