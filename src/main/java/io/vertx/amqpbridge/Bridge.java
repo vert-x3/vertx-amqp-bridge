@@ -13,7 +13,10 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.proton.ProtonClient;
 import io.vertx.proton.ProtonConnection;
+import io.vertx.proton.ProtonQoS;
 import io.vertx.proton.ProtonReceiver;
+import io.vertx.proton.ProtonSender;
+
 import org.apache.qpid.proton.amqp.messaging.Accepted;
 import org.apache.qpid.proton.message.Message;
 
@@ -38,6 +41,7 @@ public class Bridge implements Handler<SendContext> {
   private BridgeOptions config;
   private MessageTranslator msgTranslator;
   private volatile ProtonConnection connection;
+  private volatile ProtonSender sender;
   private AtomicInteger counter = new AtomicInteger();
 
   private final Map<String, String> outboundRoutes = new ConcurrentHashMap<>();
@@ -66,8 +70,8 @@ public class Bridge implements Handler<SendContext> {
     MessageProducer<Object> producer = eb.sender(vertxAddress);
 
     // Receive messages from an AMQP endpoint
-    ProtonReceiver receiver = connection.receiver();
-    receiver.setSource(amqpAddress).handler((delivery, msg) -> {
+    ProtonReceiver receiver = connection.createReceiver(amqpAddress);
+    receiver.handler((delivery, msg) -> {
 
       log.debug("Received message from AMQP with content: " + msg.getBody());
       // Now forward it to the Vert.x destination
@@ -122,6 +126,8 @@ public class Bridge implements Handler<SendContext> {
       if (res.succeeded()) {
         connection = res.result();
         connection.open();
+        sender = connection.createSender(null).setQoS(ProtonQoS.AT_LEAST_ONCE);
+        sender.open();
         resultHandler.handle(Future.succeededFuture());
       } else {
         resultHandler.handle(Future.failedFuture(res.cause()));
@@ -146,7 +152,7 @@ public class Bridge implements Handler<SendContext> {
   protected void handleSend(String amqpAddress, SendContext sendContext) {
     Message message = msgTranslator.toAMQP(sendContext.message());
     message.setAddress(amqpAddress);
-    connection.send(tag(String.valueOf(counter)), message, delivery -> {
+    sender.send(tag(String.valueOf(counter)), message, delivery -> {
       sendContext.message().reply(true);
     });
     // A bit hacky
