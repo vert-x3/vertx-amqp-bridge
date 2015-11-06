@@ -4,6 +4,8 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.EventBus;
+import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.eventbus.SendContext;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -28,6 +30,7 @@ public class Bridge implements Handler<SendContext> {
   private static final Logger log = LoggerFactory.getLogger(Bridge.class);
 
   private final Vertx vertx;
+  private final EventBus eb;
   private ProtonClient client;
   private BridgeOptions config;
   private MessageTranslator msgTranslator;
@@ -50,6 +53,7 @@ public class Bridge implements Handler<SendContext> {
 
   public Bridge(Vertx vertx, BridgeOptions options) {
     this.vertx = vertx;
+    this.eb = vertx.eventBus();
     client = ProtonClient.create(vertx);
     config = options;
     msgTranslator = MessageTranslator.get();
@@ -67,12 +71,17 @@ public class Bridge implements Handler<SendContext> {
    * Maps an AMQP subscription (Ex. Queue, Topic ..etc) to a Vert.x address.
    */
   public Bridge addIncomingRoute(String amqpAddress, String vertxAddress) {
+
+    MessageProducer<Object> producer = eb.sender(vertxAddress);
+
     // Receive messages from an AMQP endpoint
-    ProtonReceiver receiver = connection.receiver().setSource(amqpAddress).handler((delivery, msg) -> {
+    ProtonReceiver receiver = connection.receiver();
+    receiver.setSource(amqpAddress).handler((delivery, msg) -> {
 
       log.debug("Received message from AMQP with content: " + msg.getBody());
       // Now forward it to the Vert.x destination
-      vertx.eventBus().<Boolean>send(vertxAddress, msgTranslator.toVertx(msg), res -> {
+
+      producer.<Boolean>send(msgTranslator.toVertx(msg), res -> {
         if (res.succeeded()) {
           boolean acked = res.result().body();
           if (acked) {
@@ -83,9 +92,18 @@ public class Bridge implements Handler<SendContext> {
           log.error("Failed to forward message to Vert.x", res.cause());
         }
       });
-      // TODO credit-handling receiver.flow(1);
-    }).flow(config.getDefaultPrefetch()) // TODO handle flow-control
-      .open();
+
+      if (producer.writeQueueFull()) {
+        producer.drainHandler(v -> {
+          receiver.flow(1);
+        });
+      } else {
+        receiver.flow(1);
+      }
+
+    });
+    // Send some initial credits so we receive messages
+    receiver.flow(config.getDefaultPrefetch()).open();
     inboundRoutes.put(amqpAddress, new ReceiverHolder(receiver, vertxAddress));
     return this;
 
