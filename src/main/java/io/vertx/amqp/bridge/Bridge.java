@@ -15,9 +15,42 @@
 */
 package io.vertx.amqp.bridge;
 
+import io.vertx.amqp.bridge.impl.BridgeImpl;
+import io.vertx.core.AsyncResult;
+import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
+
 /**
  * Vert.x AMQP Bridge. Facilitates sending and receiving AMQP messages.
  */
 public interface Bridge {
 
+  /**
+   * Creates a Bridge
+   *
+   * @param vertx
+   *          the vertx instance to use
+   * @return the (not-yet-started) bridge.
+   */
+  static Bridge bridge(Vertx vertx, int port) { // TODO: pass general options not just port
+    return new BridgeImpl(vertx, port);
+  }
+
+  /**
+   * Starts the bridge, establishing the underlying connection.
+   *
+   * @param resultHandler
+   *          the result handler
+   * @return the bridge
+   */
+  Bridge start(Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Shuts the bridge down, closing the underlying connection.
+   *
+   * @param resultHandler
+   *          the result handler
+   * @return the bridge
+   */
+  Bridge shutdown(Handler<AsyncResult<Void>> resultHandler);
 }
