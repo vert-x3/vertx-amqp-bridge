@@ -120,6 +120,7 @@ public abstract class ActiveMQTestBase {
 
   public void stopBroker() throws Exception {
     stopBroker(brokerService);
+    brokerService = null;
   }
 
   public void restartBroker() throws Exception {

@@ -15,6 +15,10 @@
 */
 package io.vertx.amqp.bridge.impl;
 
+import java.util.LinkedHashMap;
+
+import org.apache.qpid.proton.amqp.Symbol;
+
 import io.vertx.amqp.bridge.Bridge;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -38,17 +42,20 @@ public class BridgeImpl implements Bridge {
 
   private static final Logger LOG = LoggerFactory.getLogger(BridgeImpl.class);
 
-  static {
-    LOG.trace("AMQP Bridge version: " + BridgeMetaDataSupportImpl.VERSION);
-  }
-
   @Override
   public Bridge start(Handler<AsyncResult<Void>> resultHandler) {
 
     client.connect("localhost", port, connectResult -> {
       if (connectResult.succeeded()) {
         connection = connectResult.result();
+
+        LinkedHashMap<Symbol, Object> props = new LinkedHashMap<Symbol, Object>();
+        props.put(BridgeMetaDataSupportImpl.PRODUCT_KEY, BridgeMetaDataSupportImpl.PRODUCT);
+        props.put(BridgeMetaDataSupportImpl.VERSION_KEY, BridgeMetaDataSupportImpl.VERSION);
+        connection.setProperties(props);
+
         connection.openHandler(openResult -> {
+          LOG.trace("Bridge connection open complete");
           if (openResult.succeeded()) {
             resultHandler.handle(Future.succeededFuture());
           } else {

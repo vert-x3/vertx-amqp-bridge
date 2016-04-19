@@ -15,13 +15,17 @@
 */
 package io.vertx.amqp.bridge;
 
+import java.util.Map;
+
 import org.apache.activemq.broker.jmx.BrokerView;
+import org.apache.qpid.proton.amqp.Symbol;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import io.vertx.amqp.bridge.Bridge;
+import io.vertx.amqp.bridge.impl.BridgeMetaDataSupportImpl;
 import io.vertx.core.Vertx;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -77,7 +81,7 @@ public class BridgeTest extends ActiveMQTestBase {
 
       bridge.shutdown(shutdownRes -> {
         LOG.trace("Shutdown complete");
-        context.assertTrue(res.succeeded());
+        context.assertTrue(shutdownRes.succeeded());
 
         context.assertEquals(1L, getBrokerAdminView(context).getTotalConnectionsCount(),
             "unexpected total connection count after");
@@ -98,6 +102,61 @@ public class BridgeTest extends ActiveMQTestBase {
       context.fail(e);
       // Above line throws, but satisfy the compiler.
       return null;
+    }
+  }
+
+  @Test(timeout = 20000)
+  public void testConnectionMetaData(TestContext context) throws Exception {
+    stopBroker();
+
+    Async asyncMetaData = context.async();
+    Async asyncShutdown = context.async();
+    MockServer server = new MockServer(vertx, serverConnection -> {
+      serverConnection.closeHandler(x -> {
+        serverConnection.close();
+      });
+
+      serverConnection.openHandler(x -> {
+        // Open the connection.
+        serverConnection.open();
+
+        // Validate the properties separately.
+        Map<Symbol, Object> properties = serverConnection.getRemoteProperties();
+
+        context.assertNotNull(properties, "connection properties not present");
+
+        context.assertTrue(properties.containsKey(BridgeMetaDataSupportImpl.PRODUCT_KEY),
+            "product property key not present");
+        context.assertEquals(BridgeMetaDataSupportImpl.PRODUCT, properties.get(BridgeMetaDataSupportImpl.PRODUCT_KEY),
+            "unexpected product property value");
+
+        context.assertTrue(properties.containsKey(BridgeMetaDataSupportImpl.VERSION_KEY),
+            "product property key not present");
+        context.assertEquals(BridgeMetaDataSupportImpl.VERSION, properties.get(BridgeMetaDataSupportImpl.VERSION_KEY),
+            "unexpected product property value");
+
+        asyncMetaData.complete();
+      });
+
+    });
+
+    Bridge bridge = Bridge.bridge(vertx, server.actualPort());
+    bridge.start(res -> {
+      LOG.trace("Startup complete");
+      asyncMetaData.awaitSuccess();
+
+      LOG.trace("Shutting down");
+      bridge.shutdown(shutdownRes -> {
+        LOG.trace("Shutdown complete");
+        context.assertTrue(shutdownRes.succeeded());
+        asyncShutdown.complete();
+      });
+    });
+
+    try {
+      asyncShutdown.awaitSuccess();
+    } finally {
+      server.close();
     }
   }
 }
