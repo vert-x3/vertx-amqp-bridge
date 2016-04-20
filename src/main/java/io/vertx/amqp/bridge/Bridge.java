@@ -20,6 +20,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.MessageConsumer;
+import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.json.JsonObject;
 
 /**
@@ -54,6 +55,14 @@ public interface Bridge {
    * @return the consumer
    */
   MessageConsumer<JsonObject> createConsumer(String amqpAddress);
+
+  /**
+   * Creates a producer to the given AMQP address.
+   *
+   * @param amqpAddress the address to produce to
+   * @return the producer
+   */
+  MessageProducer<JsonObject> createProducer(String amqpAddress);
 
   /**
    * Shuts the bridge down, closing the underlying connection.

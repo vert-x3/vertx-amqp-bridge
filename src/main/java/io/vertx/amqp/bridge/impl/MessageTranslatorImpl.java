@@ -24,6 +24,8 @@ import io.vertx.core.json.JsonObject;
 
 public class MessageTranslatorImpl {
 
+  private static final AmqpValue EMPTY_BODY_SECTION = new AmqpValue(null);
+
   public JsonObject convertToJsonObject(Message protonMessage) throws IllegalArgumentException {
     JsonObject jsonObject = new JsonObject();
 
@@ -36,5 +38,19 @@ public class MessageTranslatorImpl {
     }
 
     return jsonObject;
+  }
+
+  public Message convertToAmqpMessage(JsonObject jsonObject) throws IllegalArgumentException {
+    Message protonMessage = Message.Factory.create();
+
+    if (jsonObject.containsKey(MessageHelper.BODY)) {
+      Object o = jsonObject.getValue(MessageHelper.BODY);
+      // TODO: handle other body types
+      protonMessage.setBody(new AmqpValue(o));
+    } else {
+      protonMessage.setBody(EMPTY_BODY_SECTION);
+    }
+
+    return protonMessage;
   }
 }

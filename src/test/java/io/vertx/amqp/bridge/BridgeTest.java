@@ -22,6 +22,7 @@ import org.apache.qpid.proton.Proton;
 import org.apache.qpid.proton.amqp.Symbol;
 import org.apache.qpid.proton.amqp.messaging.Accepted;
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
+import org.apache.qpid.proton.amqp.messaging.Section;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,6 +31,7 @@ import org.junit.runner.RunWith;
 import io.vertx.amqp.bridge.Bridge;
 import io.vertx.amqp.bridge.impl.BridgeMetaDataSupportImpl;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -38,6 +40,7 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.proton.ProtonClient;
 import io.vertx.proton.ProtonConnection;
+import io.vertx.proton.ProtonReceiver;
 import io.vertx.proton.ProtonSender;
 
 @RunWith(VertxUnitRunner.class)
@@ -228,4 +231,54 @@ public class BridgeTest extends ActiveMQTestBase {
     asyncShutdown.awaitSuccess();
   }
 
+  @Test(timeout = 20000)
+  public void testSendBasicMessage(TestContext context) throws Exception {
+    String testName = getTestName();
+    String sentContent = "myMessageContent-" + testName;
+
+    Async asyncRecvMsg = context.async();
+
+    int port = getBrokerAmqpConnectorPort();
+
+    Bridge bridge = Bridge.bridge(vertx, port);
+    bridge.start(res -> {
+      // Set up a sender using the bridge
+      context.assertTrue(res.succeeded());
+
+      MessageProducer<JsonObject> producer = bridge.createProducer(testName);
+
+      JsonObject body = new JsonObject();
+      body.put("body", sentContent);
+
+      producer.send(body);
+    });
+
+    // Receive it with a regular AMQP client
+    ProtonClient client = ProtonClient.create(vertx);
+    client.connect("localhost", port, res -> {
+      context.assertTrue(res.succeeded());
+
+      org.apache.qpid.proton.message.Message protonMsg = Proton.message();
+      protonMsg.setBody(new AmqpValue(sentContent));
+
+      ProtonConnection conn = res.result().open();
+
+      ProtonReceiver receiver = conn.createReceiver(testName);
+      receiver.handler((d, m) -> {
+        Section body = m.getBody();
+        context.assertNotNull(body);
+        context.assertTrue(body instanceof AmqpValue);
+        Object actual = ((AmqpValue) body).getValue();
+
+        context.assertEquals(sentContent, actual, "Unexpected message body");
+        asyncRecvMsg.complete();
+
+        conn.closeHandler(closeResult -> {
+          conn.disconnect();
+        }).close();
+      }).open();
+    });
+
+    asyncRecvMsg.awaitSuccess();
+  }
 }
