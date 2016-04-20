@@ -24,6 +24,8 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.MessageConsumer;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.proton.ProtonClient;
@@ -73,6 +75,11 @@ public class BridgeImpl implements Bridge {
     });
 
     return this;
+  }
+
+  @Override
+  public MessageConsumer<JsonObject> createConsumer(String amqpAddress) {
+    return new AmqpConsumerImpl(connection, amqpAddress);
   }
 
   @Override

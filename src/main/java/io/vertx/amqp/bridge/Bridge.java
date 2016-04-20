@@ -19,6 +19,8 @@ import io.vertx.amqp.bridge.impl.BridgeImpl;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.MessageConsumer;
+import io.vertx.core.json.JsonObject;
 
 /**
  * Vert.x AMQP Bridge. Facilitates sending and receiving AMQP messages.
@@ -44,6 +46,14 @@ public interface Bridge {
    * @return the bridge
    */
   Bridge start(Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Creates a consumer on the given AMQP address.
+   *
+   * @param amqpAddress the address to consume from
+   * @return the consumer
+   */
+  MessageConsumer<JsonObject> createConsumer(String amqpAddress);
 
   /**
    * Shuts the bridge down, closing the underlying connection.
