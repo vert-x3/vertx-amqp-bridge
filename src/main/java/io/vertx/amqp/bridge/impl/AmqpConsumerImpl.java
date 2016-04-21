@@ -26,11 +26,12 @@ import io.vertx.proton.ProtonReceiver;
 
 public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
 
-
+  private BridgeImpl bridge;
   private ProtonReceiver receiver;
   private MessageTranslatorImpl translator;
 
-  public AmqpConsumerImpl(ProtonConnection connection, String amqpAddress) {
+  public AmqpConsumerImpl(BridgeImpl bridge, ProtonConnection connection, String amqpAddress) {
+    this.bridge = bridge;
     receiver = connection.createReceiver(amqpAddress);
     receiver.open(); // TODO: withhold credit until handler registered? buffer messages arriving before handler?
     translator = new MessageTranslatorImpl();
@@ -47,7 +48,7 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
     // TODO: complete
     receiver.handler((delivery, protonMessage) -> {
       JsonObject body = translator.convertToJsonObject(protonMessage);
-      Message<JsonObject> vertxMessage = new AmqpMessageImpl(body);
+      Message<JsonObject> vertxMessage = new AmqpMessageImpl(body, bridge, protonMessage);
 
       handler.handle(vertxMessage);
     });

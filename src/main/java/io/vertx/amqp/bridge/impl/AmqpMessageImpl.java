@@ -25,10 +25,14 @@ import io.vertx.core.json.JsonObject;
 public class AmqpMessageImpl implements Message<JsonObject> {
 
   private JsonObject body;
+  private BridgeImpl bridge;
+  private org.apache.qpid.proton.message.Message protonMessage;
 
-  public AmqpMessageImpl(JsonObject body) {
+  public AmqpMessageImpl(JsonObject body, BridgeImpl bridge, org.apache.qpid.proton.message.Message protonMessage) {
     // TODO: ensure non-null body?
     this.body = body;
+    this.bridge = bridge;
+    this.protonMessage = protonMessage;
   }
 
   @Override
@@ -56,8 +60,7 @@ public class AmqpMessageImpl implements Message<JsonObject> {
 
   @Override
   public void reply(Object replyMessageBody) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    bridge.sendReply(protonMessage, replyMessageBody);
   }
 
   @Override

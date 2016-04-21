@@ -16,6 +16,7 @@
 package io.vertx.amqp.bridge.impl;
 
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
+import org.apache.qpid.proton.amqp.messaging.Properties;
 import org.apache.qpid.proton.amqp.messaging.Section;
 import org.apache.qpid.proton.message.Message;
 
@@ -37,7 +38,36 @@ public class MessageTranslatorImpl {
       jsonObject.put(MessageHelper.BODY, value);
     }
 
+    Properties props = protonMessage.getProperties();
+    if (props != null) {
+      JsonObject jsonProps = createJsonProperties(props);
+      jsonObject.put(MessageHelper.PROPERTIES, jsonProps);
+    }
     return jsonObject;
+  }
+
+  private JsonObject createJsonProperties(Properties protonProps) {
+    JsonObject jsonProps = new JsonObject();
+
+    if (protonProps.getTo() != null) {
+      jsonProps.put(MessageHelper.PROPERTIES_TO, protonProps.getTo());
+    }
+
+    if (protonProps.getReplyTo() != null) {
+      jsonProps.put(MessageHelper.PROPERTIES_REPLY_TO, protonProps.getReplyTo());
+    }
+
+    if (protonProps.getMessageId() != null) {
+      // TODO: handle other types of id
+      jsonProps.put(MessageHelper.PROPERTIES_MESSAGE_ID, protonProps.getMessageId().toString());
+    }
+
+    if (protonProps.getCorrelationId() != null) {
+      // TODO: handle other types of id
+      jsonProps.put(MessageHelper.PROPERTIES_CORRELATION_ID, protonProps.getCorrelationId().toString());
+    }
+
+    return jsonProps;
   }
 
   public Message convertToAmqpMessage(JsonObject jsonObject) throws IllegalArgumentException {
@@ -51,6 +81,36 @@ public class MessageTranslatorImpl {
       protonMessage.setBody(EMPTY_BODY_SECTION);
     }
 
+    if (jsonObject.containsKey(MessageHelper.PROPERTIES)) {
+      Properties props = createAmqpProperties(jsonObject.getJsonObject(MessageHelper.PROPERTIES));
+      protonMessage.setProperties(props);
+    }
+
     return protonMessage;
+  }
+
+  private Properties createAmqpProperties(JsonObject jsonProps) {
+    Properties proptonProps = new Properties();
+
+    if (jsonProps.containsKey(MessageHelper.PROPERTIES_TO)) {
+      proptonProps.setTo(jsonProps.getString(MessageHelper.PROPERTIES_TO));
+    }
+
+    if (jsonProps.containsKey(MessageHelper.PROPERTIES_REPLY_TO)) {
+      proptonProps.setReplyTo(jsonProps.getString(MessageHelper.PROPERTIES_REPLY_TO));
+    }
+
+    if (jsonProps.containsKey(MessageHelper.PROPERTIES_MESSAGE_ID)) {
+      // TODO: handle other types of id
+      proptonProps.setMessageId(jsonProps.getString(MessageHelper.PROPERTIES_MESSAGE_ID));
+    }
+
+    if (jsonProps.containsKey(MessageHelper.PROPERTIES_CORRELATION_ID)) {
+      // TODO: handle other types of id
+      proptonProps.setCorrelationId(jsonProps.getString(MessageHelper.PROPERTIES_CORRELATION_ID));
+    }
+
+    // TODO: handle other fields
+    return proptonProps;
   }
 }

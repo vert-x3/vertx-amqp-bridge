@@ -28,11 +28,13 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
 
   private ProtonSender sender;
   private MessageTranslatorImpl translator;
+  private BridgeImpl bridge;
 
-  public AmqpProducerImpl(ProtonConnection connection, String amqpAddress) {
+  public AmqpProducerImpl(BridgeImpl bridge, ProtonConnection connection, String amqpAddress) {
     sender = connection.createSender(amqpAddress);
     sender.open();
     translator = new MessageTranslatorImpl();
+    this.bridge = bridge;
   }
 
   @Override
@@ -48,16 +50,20 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
 
   @Override
   public <R> MessageProducer<JsonObject> send(JsonObject messageBody, Handler<AsyncResult<Message<R>>> replyHandler) {
-    return doSend(messageBody, replyHandler);
+    return doSend(messageBody, replyHandler, null);
   }
 
   protected <R> MessageProducer<JsonObject> doSend(JsonObject messageBody,
-                                                   Handler<AsyncResult<Message<R>>> replyHandler) {
+                                                   Handler<AsyncResult<Message<R>>> replyHandler, String toAddress) {
     org.apache.qpid.proton.message.Message msg = translator.convertToAmqpMessage(messageBody);
 
+    if (toAddress != null) {
+      msg.setAddress(toAddress);
+    }
+
     if (replyHandler != null) {
-      // TODO: implement replyHandler functionality
-      throw new IllegalArgumentException("reply handling not yet supported");
+      // TODO: finish implementing replyHandler functionality
+      bridge.registerReplyToHandler(msg, replyHandler);
     }
 
     sender.send(msg);

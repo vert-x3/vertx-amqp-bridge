@@ -29,8 +29,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 
 import io.vertx.amqp.bridge.Bridge;
+import io.vertx.amqp.bridge.impl.BridgeImpl;
 import io.vertx.amqp.bridge.impl.BridgeMetaDataSupportImpl;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
@@ -151,6 +153,7 @@ public class BridgeTest extends ActiveMQTestBase {
     });
 
     Bridge bridge = Bridge.bridge(vertx, server.actualPort());
+    ((BridgeImpl) bridge).setDisableReplyHandlerSupport(true);
     bridge.start(res -> {
       LOG.trace("Startup complete");
       asyncMetaData.awaitSuccess();
@@ -280,5 +283,52 @@ public class BridgeTest extends ActiveMQTestBase {
     });
 
     asyncRecvMsg.awaitSuccess();
+  }
+
+  @Test(timeout = 20000)
+  public void testBasicRequestReply(TestContext context) {
+    Async async = context.async();
+    Async replyAsync = context.async();
+
+    String destinationName = getTestName();
+    String content = "myStringContent";
+    String replyContent = "myStringReply";
+
+    Bridge bridge = Bridge.bridge(vertx, getBrokerAmqpConnectorPort());
+    bridge.start(startResult -> {
+      context.assertTrue(startResult.succeeded());
+
+      MessageProducer<JsonObject> producer = bridge.createProducer(destinationName);
+
+      JsonObject body = new JsonObject();
+      body.put(MessageHelper.BODY, content);
+
+      producer.<JsonObject> send(body, reply -> {
+        LOG.trace("Client got reply");
+        context.assertEquals(replyContent, reply.result().body().getValue(MessageHelper.BODY), "unexpected reply msg content");
+
+        replyAsync.complete();
+      });
+      LOG.trace("Client sent msg");
+
+      MessageConsumer<JsonObject> consumer = bridge.createConsumer(destinationName);
+      consumer.handler(msg -> {
+        JsonObject receivedMsgBody = msg.body();
+        LOG.trace("Client got msg: " + receivedMsgBody);
+
+        context.assertNotNull(receivedMsgBody, "expected msg body but none found");
+        context.assertEquals(content, receivedMsgBody.getValue(MessageHelper.BODY), "unexpected msg content");
+
+        JsonObject replyBody = new JsonObject();
+        replyBody.put(MessageHelper.BODY, replyContent);
+
+        msg.reply(replyBody);
+
+        async.complete();
+      });
+    });
+
+    async.awaitSuccess();
+    replyAsync.awaitSuccess();
   }
 }

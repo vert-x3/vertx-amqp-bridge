@@ -15,15 +15,24 @@
 */
 package io.vertx.amqp.bridge.impl;
 
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Map;
 
 import org.apache.qpid.proton.amqp.Symbol;
+import org.apache.qpid.proton.amqp.messaging.Source;
 
 import io.vertx.amqp.bridge.Bridge;
+import io.vertx.amqp.bridge.MessageHelper;
+import io.vertx.amqp.bridge.impl.AmqpProducerImpl;
+import io.vertx.amqp.bridge.impl.AmqpMessageImpl;
+import io.vertx.amqp.bridge.impl.BridgeImpl;
+import io.vertx.amqp.bridge.impl.MessageTranslatorImpl;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.json.JsonObject;
@@ -31,12 +40,21 @@ import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 import io.vertx.proton.ProtonClient;
 import io.vertx.proton.ProtonConnection;
+import io.vertx.proton.ProtonDelivery;
+import io.vertx.proton.ProtonReceiver;
 
 public class BridgeImpl implements Bridge {
 
   private ProtonClient client;
   private ProtonConnection connection;
   private int port;
+  private int replyToMsgIdIndex = 1;
+  private ProtonReceiver replyToConsumer;
+  private String replyToConsumerAddress;
+  private AmqpProducerImpl replySender;
+  private Map<String, Handler<?>> replyToMapping = new HashMap<>();
+  private MessageTranslatorImpl translator = new MessageTranslatorImpl();
+  private boolean disableReplyHandlerSupport = false;
 
   public BridgeImpl(Vertx vertx, int port) {
     client = ProtonClient.create(vertx);
@@ -60,16 +78,38 @@ public class BridgeImpl implements Bridge {
         connection.openHandler(openResult -> {
           LOG.trace("Bridge connection open complete");
           if (openResult.succeeded()) {
-            resultHandler.handle(Future.succeededFuture());
+            if (disableReplyHandlerSupport) {
+              resultHandler.handle(Future.succeededFuture());
+              return;
+            }
+
+            // Create a reply sender
+            replySender = new AmqpProducerImpl(this, connection, null);
+
+            // Create a receiver, requesting a dynamic address, which we will inspect once attached and use as the
+            // replyTo value on outgoing messages sent with replyHandler specified.
+            replyToConsumer = connection.createReceiver(null);
+            Source source = (Source) replyToConsumer.getSource();
+            source.setDynamic(true);
+
+            replyToConsumer.handler(this::handleIncomingMessageReply);
+            replyToConsumer.openHandler(replyToConsumerResult -> {
+              if (replyToConsumerResult.succeeded()) {
+                Source remoteSource = (Source) replyToConsumer.getRemoteSource();
+                if (remoteSource != null) {
+                  replyToConsumerAddress = remoteSource.getAddress();
+                }
+
+                resultHandler.handle(Future.succeededFuture());
+              } else {
+                resultHandler.handle(Future.failedFuture(replyToConsumerResult.cause()));
+              }
+            }).open();
           } else {
             resultHandler.handle(Future.failedFuture(openResult.cause()));
           }
         }).open();
         connection.open();
-
-        // TODO: create dynamic address with receiver to use with reply handling
-        // TODO: return the succeededFuture only after the receiver opens remotely?
-        // Assume that it will and test later if it is ever used to verify that it did?
       } else {
         resultHandler.handle(Future.failedFuture(connectResult.cause()));
       }
@@ -80,14 +120,14 @@ public class BridgeImpl implements Bridge {
 
   @Override
   public MessageConsumer<JsonObject> createConsumer(String amqpAddress) {
-    return new AmqpConsumerImpl(connection, amqpAddress);
+    return new AmqpConsumerImpl(this, connection, amqpAddress);
   }
 
   // TODO: add result handler to tell that it opened? Producer creation has no way to plug this in, unlike consumer
   // 'completion handler' which could be used for the purpose. Might be simpler to have callback on create for both.
   @Override
   public MessageProducer<JsonObject> createProducer(String amqpAddress) {
-    return new AmqpProducerImpl(connection, amqpAddress);
+    return new AmqpProducerImpl(this, connection, amqpAddress);
   }
 
   @Override
@@ -106,6 +146,87 @@ public class BridgeImpl implements Bridge {
         }
       }).close();
     }
+    return this;
+  }
+
+  <R> void registerReplyToHandler(org.apache.qpid.proton.message.Message msg,
+                                  Handler<AsyncResult<Message<R>>> replyHandler) {
+    // TODO: complete, possibly do something nicer with the message generics in the producer
+
+    if (replyToConsumerAddress == null) {
+      throw new IllegalStateException("No reply-to address available, unable register reply handler");
+    }
+
+    msg.setReplyTo(replyToConsumerAddress);
+
+    if (msg.getMessageId() == null) {
+      String generatedMessageId = generateMessageId();
+      msg.setMessageId(generatedMessageId);
+
+      replyToMapping.put(generatedMessageId, replyHandler);
+    } else {
+      // TODO: use as-is? convert? fail? enforce it is always going to be string we/producer set?
+      throw new IllegalStateException("Not yet implemented");
+    }
+  }
+
+  private String generateMessageId() {
+    // TODO generate a proper ID. Pure UUID string? Use some kind of connection prefix for trace?
+    return "myMessageId-" + (replyToMsgIdIndex++);
+  }
+
+  private void handleIncomingMessageReply(ProtonDelivery delivery,
+                                          org.apache.qpid.proton.message.Message protonMessage) {
+    Object correlationId = protonMessage.getCorrelationId();
+    if (correlationId != null) {
+      // Remove the associated handler from the map (only 1 reply permitted).
+      Handler<?> handler = replyToMapping.remove(correlationId);
+
+      if (handler != null) {
+        @SuppressWarnings("unchecked")
+        Handler<AsyncResult<Message<JsonObject>>> h = (Handler<AsyncResult<Message<JsonObject>>>) handler;
+
+        JsonObject body = translator.convertToJsonObject(protonMessage);
+        Message<JsonObject> msg = new AmqpMessageImpl(body, BridgeImpl.this, protonMessage);
+
+        AsyncResult<Message<JsonObject>> result = Future.succeededFuture(msg);
+        h.handle(result);
+        return;
+      }
+    }
+
+    // TODO: either had no id, or no matching handler...handle the message in some way?
+    LOG.error("Received message on replyTo consumer, could not match to a replyHandler: " + protonMessage);
+  }
+
+  void sendReply(org.apache.qpid.proton.message.Message protonMessage, Object replyMessageBody) {
+    // TODO enforce body type better
+    JsonObject replyBody = (JsonObject) replyMessageBody;
+
+    // TODO verify not null
+    String replyAddress = protonMessage.getReplyTo();
+
+    // Set the correlationId to the messageId value if there was one, so the recipient reply handler can be found if it
+    // is also a vertx amqp bridge
+    Object origMessageId = protonMessage.getMessageId();
+    if (origMessageId != null) {
+      JsonObject replyBodyProps = replyBody.getJsonObject(MessageHelper.PROPERTIES);
+      if (replyBodyProps == null) {
+        replyBodyProps = new JsonObject();
+        replyBody.put(MessageHelper.PROPERTIES, replyBodyProps);
+      }
+
+      // TODO: preserve existing correlation-id if there was one?
+      replyBodyProps.put(MessageHelper.PROPERTIES_CORRELATION_ID, origMessageId);
+    } else {
+      // TODO: Anything? Could just be a non-bridge recipient who didn't set one on their request
+    }
+
+    replySender.doSend(replyBody, null, replyAddress);
+  }
+
+  public Bridge setDisableReplyHandlerSupport(boolean disableReplyHandlerSupport) {
+    this.disableReplyHandlerSupport = disableReplyHandlerSupport;
     return this;
   }
 }

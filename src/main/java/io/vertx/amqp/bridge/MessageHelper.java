@@ -16,7 +16,13 @@
 package io.vertx.amqp.bridge;
 
 public class MessageHelper {
-
+  // sections
   public static final String BODY = "body";
+  public static final String PROPERTIES = "properties";
 
+  // properties section
+  public static final String PROPERTIES_TO = "to";
+  public static final String PROPERTIES_REPLY_TO = "reply_to";
+  public static final String PROPERTIES_MESSAGE_ID = "message_id";
+  public static final String PROPERTIES_CORRELATION_ID = "correlation_id";
 }
