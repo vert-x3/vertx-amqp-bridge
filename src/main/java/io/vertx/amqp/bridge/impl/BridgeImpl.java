@@ -199,16 +199,17 @@ public class BridgeImpl implements Bridge {
     LOG.error("Received message on replyTo consumer, could not match to a replyHandler: " + protonMessage);
   }
 
-  void sendReply(org.apache.qpid.proton.message.Message protonMessage, Object replyMessageBody) {
+  <R> void sendReply(org.apache.qpid.proton.message.Message origIncomingMessage, Object replyMessageBody,
+                     Handler<AsyncResult<Message<R>>> replyHandler) {
     // TODO enforce body type better
     JsonObject replyBody = (JsonObject) replyMessageBody;
 
     // TODO verify not null
-    String replyAddress = protonMessage.getReplyTo();
+    String replyAddress = origIncomingMessage.getReplyTo();
 
     // Set the correlationId to the messageId value if there was one, so the recipient reply handler can be found if it
     // is also a vertx amqp bridge
-    Object origMessageId = protonMessage.getMessageId();
+    Object origMessageId = origIncomingMessage.getMessageId();
     if (origMessageId != null) {
       JsonObject replyBodyProps = replyBody.getJsonObject(MessageHelper.PROPERTIES);
       if (replyBodyProps == null) {
@@ -222,7 +223,7 @@ public class BridgeImpl implements Bridge {
       // TODO: Anything? Could just be a non-bridge recipient who didn't set one on their request
     }
 
-    replySender.doSend(replyBody, null, replyAddress);
+    replySender.doSend(replyBody, replyHandler, replyAddress);
   }
 
   public Bridge setDisableReplyHandlerSupport(boolean disableReplyHandlerSupport) {

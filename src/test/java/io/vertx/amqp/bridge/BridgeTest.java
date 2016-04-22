@@ -32,6 +32,7 @@ import io.vertx.amqp.bridge.Bridge;
 import io.vertx.amqp.bridge.impl.BridgeImpl;
 import io.vertx.amqp.bridge.impl.BridgeMetaDataSupportImpl;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.json.JsonObject;
@@ -143,13 +144,12 @@ public class BridgeTest extends ActiveMQTestBase {
             "unexpected product property value");
 
         context.assertTrue(properties.containsKey(BridgeMetaDataSupportImpl.VERSION_KEY),
-            "product property key not present");
+            "version property key not present");
         context.assertEquals(BridgeMetaDataSupportImpl.VERSION, properties.get(BridgeMetaDataSupportImpl.VERSION_KEY),
-            "unexpected product property value");
+            "unexpected version property value");
 
         asyncMetaData.complete();
       });
-
     });
 
     Bridge bridge = Bridge.bridge(vertx, server.actualPort());
@@ -287,8 +287,8 @@ public class BridgeTest extends ActiveMQTestBase {
 
   @Test(timeout = 20000)
   public void testBasicRequestReply(TestContext context) {
-    Async async = context.async();
-    Async replyAsync = context.async();
+    Async asyncRequest = context.async();
+    Async asyncShutdown = context.async();
 
     String destinationName = getTestName();
     String content = "myStringContent";
@@ -305,9 +305,15 @@ public class BridgeTest extends ActiveMQTestBase {
 
       producer.<JsonObject> send(body, reply -> {
         LOG.trace("Client got reply");
-        context.assertEquals(replyContent, reply.result().body().getValue(MessageHelper.BODY), "unexpected reply msg content");
+        context.assertEquals(replyContent, reply.result().body().getValue(MessageHelper.BODY),
+            "unexpected reply msg content");
 
-        replyAsync.complete();
+        LOG.trace("Shutting down");
+        bridge.shutdown(shutdownRes -> {
+          LOG.trace("Shutdown complete");
+          context.assertTrue(shutdownRes.succeeded());
+          asyncShutdown.complete();
+        });
       });
       LOG.trace("Client sent msg");
 
@@ -324,11 +330,80 @@ public class BridgeTest extends ActiveMQTestBase {
 
         msg.reply(replyBody);
 
-        async.complete();
+        asyncRequest.complete();
       });
     });
 
-    async.awaitSuccess();
-    replyAsync.awaitSuccess();
+    asyncRequest.awaitSuccess();
+    asyncShutdown.awaitSuccess();
+  }
+
+  @Test(timeout = 20000)
+  public void testReplyToOriginalReply(TestContext context) {
+    Async requestReceivedAsync = context.async();
+    Async replyRecievedAsync = context.async();
+    Async shutdownAsync = context.async();
+
+    String destinationName = getTestName();
+    String content = "myStringContent";
+    String replyContent = "myStringReply";
+    String replyToReplyContent = "myStringReplyToReply";
+
+    Bridge bridge = Bridge.bridge(vertx, getBrokerAmqpConnectorPort());
+    bridge.start(startResult -> {
+      context.assertTrue(startResult.succeeded());
+
+      MessageProducer<JsonObject> producer = bridge.createProducer(destinationName);
+
+      JsonObject body = new JsonObject();
+      body.put(MessageHelper.BODY, content);
+
+      producer.<JsonObject> send(body, reply -> {
+        LOG.trace("Client got reply");
+        Message<JsonObject> replyMessage = reply.result();
+        context.assertEquals(replyContent, replyMessage.body().getValue(MessageHelper.BODY),
+            "unexpected reply msg content");
+
+        replyRecievedAsync.complete();
+
+        JsonObject replyToReplyBody = new JsonObject();
+        replyToReplyBody.put(MessageHelper.BODY, replyToReplyContent);
+
+        replyMessage.reply(replyToReplyBody);
+      });
+      LOG.trace("Client sent msg");
+
+      MessageConsumer<JsonObject> consumer = bridge.createConsumer(destinationName);
+      consumer.handler(msg -> {
+        JsonObject receivedMsgBody = msg.body();
+        LOG.trace("Client got msg: " + receivedMsgBody);
+
+        context.assertNotNull(receivedMsgBody, "expected msg body but none found");
+        context.assertEquals(content, receivedMsgBody.getValue(MessageHelper.BODY), "unexpected msg content");
+
+        JsonObject replyBody = new JsonObject();
+        replyBody.put(MessageHelper.BODY, replyContent);
+
+        msg.<JsonObject> reply(replyBody, replyToReply -> {
+          LOG.trace("Client got reply to reply");
+          Message<JsonObject> replyToReplyMessage = replyToReply.result();
+          context.assertEquals(replyToReplyContent, replyToReplyMessage.body().getValue(MessageHelper.BODY),
+              "unexpected reply msg content");
+
+          LOG.trace("Shutting down");
+          bridge.shutdown(shutdownRes -> {
+            LOG.trace("Shutdown complete");
+            context.assertTrue(shutdownRes.succeeded());
+            shutdownAsync.complete();
+          });
+        });
+
+        requestReceivedAsync.complete();
+      });
+    });
+
+    requestReceivedAsync.awaitSuccess();
+    replyRecievedAsync.awaitSuccess();
+    shutdownAsync.awaitSuccess();
   }
 }

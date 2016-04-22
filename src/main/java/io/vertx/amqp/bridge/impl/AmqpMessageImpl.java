@@ -58,15 +58,18 @@ public class AmqpMessageImpl implements Message<JsonObject> {
     throw new UnsupportedOperationException();
   }
 
-  @Override
-  public void reply(Object replyMessageBody) {
-    bridge.sendReply(protonMessage, replyMessageBody);
+  private <R> void doReply(Object replyMessageBody, Handler<AsyncResult<Message<R>>> replyHandler) {
+    bridge.sendReply(protonMessage, replyMessageBody, replyHandler);
   }
 
   @Override
-  public <R> void reply(Object messageBody, Handler<AsyncResult<Message<R>>> replyHandler) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+  public void reply(Object replyMessageBody) {
+    doReply(replyMessageBody, null);
+  }
+
+  @Override
+  public <R> void reply(Object replyMessageBody, Handler<AsyncResult<Message<R>>> replyHandler) {
+    doReply(replyMessageBody, replyHandler);
   }
 
   @Override
