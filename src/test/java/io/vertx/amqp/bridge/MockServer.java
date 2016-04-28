@@ -32,7 +32,14 @@ public class MockServer {
   private boolean reuseAddress = false;
 
   public MockServer(Vertx vertx, Handler<ProtonConnection> connectionHandler) throws ExecutionException, InterruptedException {
-    ProtonServerOptions protonServerOptions = new ProtonServerOptions();
+    this(vertx, connectionHandler, null);
+  }
+
+  public MockServer(Vertx vertx, Handler<ProtonConnection> connectionHandler, ProtonServerOptions protonServerOptions) throws ExecutionException, InterruptedException {
+    if(protonServerOptions == null) {
+      protonServerOptions = new ProtonServerOptions();
+    }
+
     protonServerOptions.setReuseAddress(reuseAddress);
     server = ProtonServer.create(vertx, protonServerOptions);
     server.connectHandler(connectionHandler);

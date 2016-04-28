@@ -23,6 +23,7 @@ import org.apache.qpid.proton.amqp.Symbol;
 import org.apache.qpid.proton.amqp.messaging.Source;
 
 import io.vertx.amqp.bridge.Bridge;
+import io.vertx.amqp.bridge.BridgeOptions;
 import io.vertx.amqp.bridge.MessageHelper;
 import io.vertx.amqp.bridge.impl.AmqpProducerImpl;
 import io.vertx.amqp.bridge.impl.AmqpMessageImpl;
@@ -55,10 +56,12 @@ public class BridgeImpl implements Bridge {
   private Map<String, Handler<?>> replyToMapping = new HashMap<>();
   private MessageTranslatorImpl translator = new MessageTranslatorImpl();
   private boolean disableReplyHandlerSupport = false;
+  private BridgeOptions options;
 
-  public BridgeImpl(Vertx vertx, int port) {
+  public BridgeImpl(Vertx vertx, int port, BridgeOptions options) {
     client = ProtonClient.create(vertx);
     this.port = port;
+    this.options = options;
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(BridgeImpl.class);
@@ -66,7 +69,7 @@ public class BridgeImpl implements Bridge {
   @Override
   public Bridge start(Handler<AsyncResult<Void>> resultHandler) {
 
-    client.connect("localhost", port, connectResult -> {
+    client.connect(options, "localhost", port, connectResult -> {
       if (connectResult.succeeded()) {
         connection = connectResult.result();
 

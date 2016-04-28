@@ -33,10 +33,27 @@ public interface Bridge {
    *
    * @param vertx
    *          the vertx instance to use
+   * @param port
+   *          the port to connect to
    * @return the (not-yet-started) bridge.
    */
-  static Bridge bridge(Vertx vertx, int port) { // TODO: pass general options not just port
-    return new BridgeImpl(vertx, port);
+  static Bridge bridge(Vertx vertx, int port) {
+    return bridge(vertx, port, new BridgeOptions());
+  }
+
+  /**
+   * Creates a Bridge
+   *
+   * @param vertx
+   *          the vertx instance to use
+   * @param port
+   *          the port to connect to
+   * @param options
+   *          the options
+   * @return the (not-yet-started) bridge.
+   */
+  static Bridge bridge(Vertx vertx, int port, BridgeOptions options) {
+    return new BridgeImpl(vertx, port, options);
   }
 
   /**
