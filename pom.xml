@@ -38,8 +38,8 @@
 
   <properties>
     <stack.version>3.3.0-SNAPSHOT</stack.version>
-    <activemq.version>5.13.1</activemq.version>
-    <proton.version>0.12.0</proton.version>
+    <activemq.version>5.13.2</activemq.version>
+    <proton.version>0.12.2</proton.version>
   </properties>
 
   <scm>
@@ -68,7 +68,7 @@
     <dependency>
       <groupId>io.vertx</groupId>
       <artifactId>vertx-proton</artifactId>
-      <version>3.2.0</version> <!-- Not in vertx-dependencies and not yet publishing snapshots-->
+      <version>3.3.0-SNAPSHOT</version> <!-- Needs local snapshot build for now -->
     </dependency>
 
     <!-- test -->
