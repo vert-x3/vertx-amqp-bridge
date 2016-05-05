@@ -48,7 +48,6 @@ public class BridgeImpl implements Bridge {
 
   private ProtonClient client;
   private ProtonConnection connection;
-  private int port;
   private int replyToMsgIdIndex = 1;
   private ProtonReceiver replyToConsumer;
   private String replyToConsumerAddress;
@@ -58,18 +57,21 @@ public class BridgeImpl implements Bridge {
   private boolean disableReplyHandlerSupport = false;
   private BridgeOptions options;
 
-  public BridgeImpl(Vertx vertx, int port, BridgeOptions options) {
+  public BridgeImpl(Vertx vertx, BridgeOptions options) {
     client = ProtonClient.create(vertx);
-    this.port = port;
     this.options = options;
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(BridgeImpl.class);
 
   @Override
-  public Bridge start(Handler<AsyncResult<Void>> resultHandler) {
+  public Bridge start(String hostname, int port, Handler<AsyncResult<Void>> resultHandler) {
+    return start(hostname, port, null, null, resultHandler);
+  }
 
-    client.connect(options, "localhost", port, connectResult -> {
+  @Override
+  public Bridge start(String hostname, int port, String username, String password, Handler<AsyncResult<Void>> resultHandler) {
+    client.connect(options, hostname, port, username, password, connectResult -> {
       if (connectResult.succeeded()) {
         connection = connectResult.result();
 

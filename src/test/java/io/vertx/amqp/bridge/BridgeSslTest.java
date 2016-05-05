@@ -87,8 +87,8 @@ public class BridgeSslTest {
     PfxOptions clientPfxOptions = new PfxOptions().setPath(TRUSTSTORE).setPassword(PASSWORD);
     bridgeOptions.setPfxTrustOptions(clientPfxOptions);
 
-    Bridge bridge = Bridge.bridge(vertx, mockServer.actualPort(), bridgeOptions);
-    bridge.start(res -> {
+    Bridge bridge = Bridge.bridge(vertx, bridgeOptions);
+    bridge.start("localhost", mockServer.actualPort(), res -> {
       // Expect start to succeed
       context.assertTrue(res.succeeded(), "expected start to suceed");
       async.complete();
@@ -115,8 +115,8 @@ public class BridgeSslTest {
     PfxOptions pfxOptions = new PfxOptions().setPath(TRUSTSTORE).setPassword(PASSWORD);
     bridgeOptions.setPfxTrustOptions(pfxOptions);
 
-    Bridge bridge = Bridge.bridge(vertx, mockServer.actualPort(), bridgeOptions);
-    bridge.start(res -> {
+    Bridge bridge = Bridge.bridge(vertx, bridgeOptions);
+    bridge.start("localhost", mockServer.actualPort(), res -> {
       // Expect start to fail due to remote peer not doing SSL
       context.assertFalse(res.succeeded(), "expected start to fail due to server not using secure transport");
       async.complete();
@@ -144,8 +144,8 @@ public class BridgeSslTest {
     PfxOptions pfxOptions = new PfxOptions().setPath(OTHER_CA_TRUSTSTORE).setPassword(PASSWORD);
     bridgeOptions.setPfxTrustOptions(pfxOptions);
 
-    Bridge bridge = Bridge.bridge(vertx, mockServer.actualPort(), bridgeOptions);
-    bridge.start(res -> {
+    Bridge bridge = Bridge.bridge(vertx, bridgeOptions);
+    bridge.start("localhost", mockServer.actualPort(), res -> {
       // Expect start to fail due to remote peer not being trusted
       context.assertFalse(res.succeeded(), "expected start to fail due to untrusted server");
       async.complete();
@@ -172,8 +172,8 @@ public class BridgeSslTest {
     bridgeOptions.setSsl(true);
     bridgeOptions.setTrustAll(true);
 
-    Bridge bridge = Bridge.bridge(vertx, mockServer.actualPort(), bridgeOptions);
-    bridge.start(res -> {
+    Bridge bridge = Bridge.bridge(vertx, bridgeOptions);
+    bridge.start("localhost", mockServer.actualPort(), res -> {
       // Expect start to succeed
       context.assertTrue(res.succeeded(), "expected start to suceed due to trusting all certs");
       async.complete();
@@ -219,8 +219,8 @@ public class BridgeSslTest {
       bridgeOptions.setPfxKeyCertOptions(clientKeyPfxOptions);
     }
 
-    Bridge bridge = Bridge.bridge(vertx, mockServer.actualPort(), bridgeOptions);
-    bridge.start(res -> {
+    Bridge bridge = Bridge.bridge(vertx, bridgeOptions);
+    bridge.start("localhost", mockServer.actualPort(), res -> {
       if (supplyClientCert) {
         // Expect start to succeed
         context.assertTrue(res.succeeded(), "expected start to suceed due to supplying client certs");
@@ -270,8 +270,8 @@ public class BridgeSslTest {
       bridgeOptions.setHostnameVerificationAlgorithm(NO_VERIFY);
     }
 
-    Bridge bridge = Bridge.bridge(vertx, mockServer.actualPort(), bridgeOptions);
-    bridge.start(res -> {
+    Bridge bridge = Bridge.bridge(vertx, bridgeOptions);
+    bridge.start("localhost", mockServer.actualPort(), res -> {
       if (verifyHost) {
         // Expect start to fail
         context.assertFalse(res.succeeded(), "expected start to fail due to server cert not matching hostname");
@@ -285,8 +285,7 @@ public class BridgeSslTest {
     async.awaitSuccess();
   }
 
-  private void handleBridgeStartupProcess(ProtonConnection serverConnection,
-                                                                TestContext context) {
+  private void handleBridgeStartupProcess(ProtonConnection serverConnection, TestContext context) {
     // Expect a connection
     serverConnection.openHandler(serverSender -> {
       LOG.trace("Server connection open");

@@ -82,8 +82,8 @@ public class BridgeTest extends ActiveMQTestBase {
 
     Async async = context.async();
 
-    Bridge bridge = Bridge.bridge(vertx, getBrokerAmqpConnectorPort());
-    bridge.start(res -> {
+    Bridge bridge = Bridge.bridge(vertx);
+    bridge.start("localhost", getBrokerAmqpConnectorPort(), res -> {
       LOG.trace("Startup complete");
       context.assertTrue(res.succeeded());
 
@@ -152,9 +152,9 @@ public class BridgeTest extends ActiveMQTestBase {
       });
     });
 
-    Bridge bridge = Bridge.bridge(vertx, server.actualPort());
+    Bridge bridge = Bridge.bridge(vertx);
     ((BridgeImpl) bridge).setDisableReplyHandlerSupport(true);
-    bridge.start(res -> {
+    bridge.start("localhost", server.actualPort(), res -> {
       LOG.trace("Startup complete");
       asyncMetaData.awaitSuccess();
 
@@ -183,8 +183,8 @@ public class BridgeTest extends ActiveMQTestBase {
 
     int port = getBrokerAmqpConnectorPort();
 
-    Bridge bridge = Bridge.bridge(vertx, port);
-    bridge.start(res -> {
+    Bridge bridge = Bridge.bridge(vertx);
+    bridge.start("localhost", port, res -> {
       LOG.trace("Startup complete");
 
       // Set up a consumer using the bridge
@@ -243,8 +243,8 @@ public class BridgeTest extends ActiveMQTestBase {
 
     int port = getBrokerAmqpConnectorPort();
 
-    Bridge bridge = Bridge.bridge(vertx, port);
-    bridge.start(res -> {
+    Bridge bridge = Bridge.bridge(vertx);
+    bridge.start("localhost", port, res -> {
       // Set up a sender using the bridge
       context.assertTrue(res.succeeded());
 
@@ -294,8 +294,8 @@ public class BridgeTest extends ActiveMQTestBase {
     String content = "myStringContent";
     String replyContent = "myStringReply";
 
-    Bridge bridge = Bridge.bridge(vertx, getBrokerAmqpConnectorPort());
-    bridge.start(startResult -> {
+    Bridge bridge = Bridge.bridge(vertx);
+    bridge.start("localhost", getBrokerAmqpConnectorPort(), startResult -> {
       context.assertTrue(startResult.succeeded());
 
       MessageProducer<JsonObject> producer = bridge.createProducer(destinationName);
@@ -349,8 +349,8 @@ public class BridgeTest extends ActiveMQTestBase {
     String replyContent = "myStringReply";
     String replyToReplyContent = "myStringReplyToReply";
 
-    Bridge bridge = Bridge.bridge(vertx, getBrokerAmqpConnectorPort());
-    bridge.start(startResult -> {
+    Bridge bridge = Bridge.bridge(vertx);
+    bridge.start("localhost", getBrokerAmqpConnectorPort(), startResult -> {
       context.assertTrue(startResult.succeeded());
 
       MessageProducer<JsonObject> producer = bridge.createProducer(destinationName);

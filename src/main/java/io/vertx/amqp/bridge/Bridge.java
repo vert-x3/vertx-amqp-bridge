@@ -29,46 +29,64 @@ import io.vertx.core.json.JsonObject;
 public interface Bridge {
 
   /**
-   * Creates a Bridge
+   * Creates a Bridge.
    *
    * @param vertx
    *          the vertx instance to use
-   * @param port
-   *          the port to connect to
    * @return the (not-yet-started) bridge.
    */
-  static Bridge bridge(Vertx vertx, int port) {
-    return bridge(vertx, port, new BridgeOptions());
+  static Bridge bridge(Vertx vertx) {
+    return bridge(vertx, new BridgeOptions());
   }
 
   /**
-   * Creates a Bridge
+   * Creates a Bridge with the given options.
    *
    * @param vertx
    *          the vertx instance to use
-   * @param port
-   *          the port to connect to
    * @param options
    *          the options
    * @return the (not-yet-started) bridge.
    */
-  static Bridge bridge(Vertx vertx, int port, BridgeOptions options) {
-    return new BridgeImpl(vertx, port, options);
+  static Bridge bridge(Vertx vertx, BridgeOptions options) {
+    return new BridgeImpl(vertx, options);
   }
 
   /**
    * Starts the bridge, establishing the underlying connection.
    *
+   * @param hostname
+   *          the host name to connect to
+   * @param port
+   *          the port to connect to
+   * @param username
+   *          the username
+   * @param password
+   *          the password
    * @param resultHandler
    *          the result handler
    * @return the bridge
    */
-  Bridge start(Handler<AsyncResult<Void>> resultHandler);
+  Bridge start(String hostname, int port, String username, String password, Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Starts the bridge, establishing the underlying connection.
+   *
+   * @param hostname
+   *          the host name to connect to
+   * @param port
+   *          the port to connect to
+   * @param resultHandler
+   *          the result handler
+   * @return the bridge
+   */
+  Bridge start(String hostname, int port, Handler<AsyncResult<Void>> resultHandler);
 
   /**
    * Creates a consumer on the given AMQP address.
    *
-   * @param amqpAddress the address to consume from
+   * @param amqpAddress
+   *          the address to consume from
    * @return the consumer
    */
   MessageConsumer<JsonObject> createConsumer(String amqpAddress);
@@ -76,7 +94,8 @@ public interface Bridge {
   /**
    * Creates a producer to the given AMQP address.
    *
-   * @param amqpAddress the address to produce to
+   * @param amqpAddress
+   *          the address to produce to
    * @return the producer
    */
   MessageProducer<JsonObject> createProducer(String amqpAddress);
