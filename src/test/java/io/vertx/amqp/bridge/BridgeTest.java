@@ -16,6 +16,7 @@
 package io.vertx.amqp.bridge;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.activemq.broker.jmx.BrokerView;
 import org.apache.qpid.proton.Proton;
@@ -195,7 +196,7 @@ public class BridgeTest extends ActiveMQTestBase {
         Object amqpBodyContent = jsonObject.getValue(MessageHelper.BODY);
         context.assertNotNull(amqpBodyContent, "amqp message body content was null");
 
-        context.assertEquals(sentContent, amqpBodyContent, "amqp message body was null");
+        context.assertEquals(sentContent, amqpBodyContent, "amqp message body was not as expected");
 
         LOG.trace("Shutting down");
         bridge.shutdown(shutdownRes -> {
@@ -405,5 +406,83 @@ public class BridgeTest extends ActiveMQTestBase {
     requestReceivedAsync.awaitSuccess();
     replyRecievedAsync.awaitSuccess();
     shutdownAsync.awaitSuccess();
+  }
+
+  @Test(timeout = 20000)
+  public void testReceiveMultipleMessageAfterDelayedHandlerAddition(TestContext context) throws Exception {
+    String testName = getTestName();
+    String sentContent = "myMessageContent-" + testName;
+
+    Async asyncShutdown = context.async();
+    Async asyncSendMsg = context.async();
+
+    int port = getBrokerAmqpConnectorPort();
+    int msgCount = 5;
+
+    // Send some message from a regular AMQP client
+    ProtonClient client = ProtonClient.create(vertx);
+    client.connect("localhost", port, res -> {
+      context.assertTrue(res.succeeded());
+
+      org.apache.qpid.proton.message.Message protonMsg = Proton.message();
+      protonMsg.setBody(new AmqpValue(sentContent));
+
+      ProtonConnection conn = res.result().open();
+
+      ProtonSender sender = conn.createSender(testName).open();
+      for (int i = 1; i <= msgCount; i++) {
+        final int msgNum = i;
+        sender.send(protonMsg, delivery -> {
+          LOG.trace("Running onUpdated for sent message " + msgNum);
+          context.assertNotNull(delivery.getRemoteState(), "message " + msgNum + " had no remote state");
+          context.assertTrue(delivery.getRemoteState() instanceof Accepted, "message " + msgNum + " was not accepted");
+          context.assertTrue(delivery.remotelySettled(), "message " + msgNum + " was not settled");
+
+          if(msgNum == msgCount) {
+            conn.closeHandler(closeResult -> {
+              conn.disconnect();
+            }).close();
+            asyncSendMsg.complete();
+          }
+        });
+      }
+    });
+
+    Bridge bridge = Bridge.bridge(vertx);
+    bridge.start("localhost", port, res -> {
+      LOG.trace("Startup complete");
+
+      // Set up a consumer using the bridge but DONT register the handler
+      MessageConsumer<JsonObject> consumer = bridge.createConsumer(testName);
+
+      // Add the handler after a delay
+      vertx.setTimer(500, x -> {
+        AtomicInteger received = new AtomicInteger();
+        consumer.handler(msg -> {
+          int msgNum = received.incrementAndGet();
+          LOG.trace("Received message " + msgNum);
+
+          JsonObject jsonObject = msg.body();
+          context.assertNotNull(jsonObject, "message " + msgNum + " jsonObject body was null");
+
+          Object amqpBodyContent = jsonObject.getValue(MessageHelper.BODY);
+          context.assertNotNull(amqpBodyContent, "amqp message " + msgNum + " body content was null");
+
+          context.assertEquals(sentContent, amqpBodyContent, "amqp message " + msgNum + " body not as expected");
+
+          if(msgNum == msgCount) {
+            LOG.trace("Shutting down");
+            bridge.shutdown(shutdownRes -> {
+              LOG.trace("Shutdown complete");
+              context.assertTrue(shutdownRes.succeeded());
+              asyncShutdown.complete();
+            });
+          }
+        });
+      });
+    });
+
+    asyncSendMsg.awaitSuccess();
+    asyncShutdown.awaitSuccess();
   }
 }

@@ -15,8 +15,12 @@
 */
 package io.vertx.amqp.bridge.impl;
 
+import java.util.ArrayDeque;
+import java.util.Queue;
+
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
+import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.json.JsonObject;
@@ -26,15 +30,68 @@ import io.vertx.proton.ProtonReceiver;
 
 public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
 
-  private BridgeImpl bridge;
-  private ProtonReceiver receiver;
-  private MessageTranslatorImpl translator;
+  private final Vertx vertx;
+  private final BridgeImpl bridge;
+  private final ProtonReceiver receiver;
+  private final MessageTranslatorImpl translator;
+  private Handler<Message<JsonObject>> handler;
+  private final Queue<Message<JsonObject>> buffered = new ArrayDeque<>();
 
-  public AmqpConsumerImpl(BridgeImpl bridge, ProtonConnection connection, String amqpAddress) {
+  public AmqpConsumerImpl(Vertx vertx, BridgeImpl bridge, ProtonConnection connection, String amqpAddress) {
+    this.vertx = vertx;
     this.bridge = bridge;
-    receiver = connection.createReceiver(amqpAddress);
-    receiver.open(); // TODO: withhold credit until handler registered? buffer messages arriving before handler?
     translator = new MessageTranslatorImpl();
+
+    receiver = connection.createReceiver(amqpAddress);
+    receiver.handler((delivery, protonMessage) -> {
+      JsonObject body = translator.convertToJsonObject(protonMessage);
+      Message<JsonObject> vertxMessage = new AmqpMessageImpl(body, this.bridge, protonMessage);
+
+      handleMessage(vertxMessage);
+    });
+    receiver.open();
+  }
+
+  private void handleMessage(Message<JsonObject> vertxMessage) {
+    Handler<Message<JsonObject>> h = null;
+    if (handler != null && buffered.isEmpty()) {
+      h = handler;
+    } else if (handler != null) {
+      h = handler;
+
+      // Buffered messages present, deliver the oldest of those instead
+      buffered.add(vertxMessage);
+      vertxMessage = buffered.poll();
+
+      // Schedule a delivery for the next buffered message
+      scheduleBufferedMessageDelivery();
+    } else {
+      // Buffer message until we have a handler
+      buffered.add(vertxMessage);
+    }
+
+    if (h != null) {
+      deliverMessageToHandler(vertxMessage, h);
+    }
+  }
+
+  private void deliverMessageToHandler(Message<JsonObject> vertxMessage, Handler<Message<JsonObject>> h) {
+    h.handle(vertxMessage);
+    // TODO: manual accept and credit replenishment?
+  }
+
+  private void scheduleBufferedMessageDelivery() {
+    if (!buffered.isEmpty()) {
+      vertx.runOnContext(v -> {
+        if (handler != null) {
+          Message<JsonObject> message = buffered.poll();
+          if (message != null) {
+            deliverMessageToHandler(message, handler);
+            scheduleBufferedMessageDelivery();
+          }
+        }
+      });
+    }
   }
 
   @Override
@@ -45,13 +102,11 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
 
   @Override
   public MessageConsumer<JsonObject> handler(final Handler<Message<JsonObject>> handler) {
-    // TODO: complete
-    receiver.handler((delivery, protonMessage) -> {
-      JsonObject body = translator.convertToJsonObject(protonMessage);
-      Message<JsonObject> vertxMessage = new AmqpMessageImpl(body, bridge, protonMessage);
+    this.handler = handler;
 
-      handler.handle(vertxMessage);
-    });
+    if (handler != null) {
+      scheduleBufferedMessageDelivery();
+    }
 
     return this;
   }

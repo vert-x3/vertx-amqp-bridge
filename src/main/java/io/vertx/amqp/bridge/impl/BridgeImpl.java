@@ -56,8 +56,10 @@ public class BridgeImpl implements Bridge {
   private MessageTranslatorImpl translator = new MessageTranslatorImpl();
   private boolean disableReplyHandlerSupport = false;
   private BridgeOptions options;
+  private Vertx vertx;
 
   public BridgeImpl(Vertx vertx, BridgeOptions options) {
+    this.vertx = vertx;
     client = ProtonClient.create(vertx);
     this.options = options;
   }
@@ -125,7 +127,7 @@ public class BridgeImpl implements Bridge {
 
   @Override
   public MessageConsumer<JsonObject> createConsumer(String amqpAddress) {
-    return new AmqpConsumerImpl(this, connection, amqpAddress);
+    return new AmqpConsumerImpl(vertx, this, connection, amqpAddress);
   }
 
   // TODO: add result handler to tell that it opened? Producer creation has no way to plug this in, unlike consumer
