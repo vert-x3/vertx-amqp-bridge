@@ -35,8 +35,9 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
   private final ProtonReceiver receiver;
   private final MessageTranslatorImpl translator;
   private Handler<Message<JsonObject>> handler;
-  private final Queue<Message<JsonObject>> buffered = new ArrayDeque<>();
+  private final Queue<AmqpMessageImpl> buffered = new ArrayDeque<>();
   private boolean paused = false;
+  private int credits = 1000;
 
   public AmqpConsumerImpl(Vertx vertx, BridgeImpl bridge, ProtonConnection connection, String amqpAddress) {
     this.vertx = vertx;
@@ -46,14 +47,20 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
     receiver = connection.createReceiver(amqpAddress);
     receiver.handler((delivery, protonMessage) -> {
       JsonObject body = translator.convertToJsonObject(protonMessage);
-      Message<JsonObject> vertxMessage = new AmqpMessageImpl(body, this.bridge, protonMessage);
+      AmqpMessageImpl vertxMessage = new AmqpMessageImpl(body, this.bridge, protonMessage, delivery);
 
       handleMessage(vertxMessage);
     });
+    // Disable auto-accept and automated prefetch, we will manage disposition and credit
+    // manually to allow for delayed handler registration and pause/resume functionality.
+    receiver.setAutoAccept(false);
+    receiver.setPrefetch(0);
+    // Flow initial credit
+    receiver.flow(credits);
     receiver.open();
   }
 
-  private void handleMessage(Message<JsonObject> vertxMessage) {
+  private void handleMessage(AmqpMessageImpl vertxMessage) {
     Handler<Message<JsonObject>> h = null;
     if (handler != null && !paused && buffered.isEmpty()) {
       h = handler;
@@ -75,16 +82,17 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
     }
   }
 
-  private void deliverMessageToHandler(Message<JsonObject> vertxMessage, Handler<Message<JsonObject>> h) {
+  private void deliverMessageToHandler(AmqpMessageImpl vertxMessage, Handler<Message<JsonObject>> h) {
     h.handle(vertxMessage);
-    // TODO: manual accept and credit replenishment?
+    vertxMessage.accept();
+    receiver.flow(1);
   }
 
   private void scheduleBufferedMessageDelivery() {
     if (!buffered.isEmpty()) {
       vertx.runOnContext(v -> {
         if (handler != null) {
-          Message<JsonObject> message = buffered.poll();
+          AmqpMessageImpl message = buffered.poll();
           if (message != null) {
             deliverMessageToHandler(message, handler);
 

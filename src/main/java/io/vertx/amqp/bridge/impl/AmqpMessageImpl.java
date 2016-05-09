@@ -21,18 +21,22 @@ import io.vertx.core.MultiMap;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.json.JsonObject;
+import io.vertx.proton.ProtonDelivery;
+import io.vertx.proton.ProtonHelper;
 
 public class AmqpMessageImpl implements Message<JsonObject> {
 
   private JsonObject body;
   private BridgeImpl bridge;
   private org.apache.qpid.proton.message.Message protonMessage;
+  private ProtonDelivery delivery;
 
-  public AmqpMessageImpl(JsonObject body, BridgeImpl bridge, org.apache.qpid.proton.message.Message protonMessage) {
+  public AmqpMessageImpl(JsonObject body, BridgeImpl bridge, org.apache.qpid.proton.message.Message protonMessage, ProtonDelivery delivery) {
     // TODO: ensure non-null body?
     this.body = body;
     this.bridge = bridge;
     this.protonMessage = protonMessage;
+    this.delivery = delivery;
   }
 
   @Override
@@ -88,5 +92,9 @@ public class AmqpMessageImpl implements Message<JsonObject> {
   public void fail(int failureCode, String message) {
     // TODO Auto-generated method stub
     throw new UnsupportedOperationException();
+  }
+
+  void accept() {
+    ProtonHelper.accepted(delivery, true);
   }
 }
