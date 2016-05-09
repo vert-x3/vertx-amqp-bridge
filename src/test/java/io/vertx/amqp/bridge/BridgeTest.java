@@ -17,6 +17,7 @@ package io.vertx.amqp.bridge;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import org.apache.activemq.broker.jmx.BrokerView;
 import org.apache.qpid.proton.Proton;
@@ -438,7 +439,7 @@ public class BridgeTest extends ActiveMQTestBase {
           context.assertTrue(delivery.getRemoteState() instanceof Accepted, "message " + msgNum + " was not accepted");
           context.assertTrue(delivery.remotelySettled(), "message " + msgNum + " was not settled");
 
-          if(msgNum == msgCount) {
+          if (msgNum == msgCount) {
             conn.closeHandler(closeResult -> {
               conn.disconnect();
             }).close();
@@ -470,7 +471,7 @@ public class BridgeTest extends ActiveMQTestBase {
 
           context.assertEquals(sentContent, amqpBodyContent, "amqp message " + msgNum + " body not as expected");
 
-          if(msgNum == msgCount) {
+          if (msgNum == msgCount) {
             LOG.trace("Shutting down");
             bridge.shutdown(shutdownRes -> {
               LOG.trace("Shutdown complete");
@@ -479,6 +480,104 @@ public class BridgeTest extends ActiveMQTestBase {
             });
           }
         });
+      });
+    });
+
+    asyncSendMsg.awaitSuccess();
+    asyncShutdown.awaitSuccess();
+  }
+
+  @Test(timeout = 20000)
+  public void testReceiveMultipleMessageAfterPause(TestContext context) throws Exception {
+    String testName = getTestName();
+    String sentContent = "myMessageContent-" + testName;
+
+    Async asyncShutdown = context.async();
+    Async asyncSendMsg = context.async();
+
+    final int port = getBrokerAmqpConnectorPort();
+    final int pauseCount = 2;
+    final int totalMsgCount = 5;
+    final int delay = 500;
+
+    // Send some message from a regular AMQP client
+    ProtonClient client = ProtonClient.create(vertx);
+    client.connect("localhost", port, res -> {
+      context.assertTrue(res.succeeded());
+
+      org.apache.qpid.proton.message.Message protonMsg = Proton.message();
+      protonMsg.setBody(new AmqpValue(sentContent));
+
+      ProtonConnection conn = res.result().open();
+
+      ProtonSender sender = conn.createSender(testName).open();
+      for (int i = 1; i <= totalMsgCount; i++) {
+        final int msgNum = i;
+        sender.send(protonMsg, delivery -> {
+          LOG.trace("Running onUpdated for sent message " + msgNum);
+          context.assertNotNull(delivery.getRemoteState(), "message " + msgNum + " had no remote state");
+          context.assertTrue(delivery.getRemoteState() instanceof Accepted, "message " + msgNum + " was not accepted");
+          context.assertTrue(delivery.remotelySettled(), "message " + msgNum + " was not settled");
+
+          if (msgNum == totalMsgCount) {
+            conn.closeHandler(closeResult -> {
+              conn.disconnect();
+            }).close();
+            asyncSendMsg.complete();
+          }
+        });
+      }
+    });
+
+    Bridge bridge = Bridge.bridge(vertx);
+    bridge.start("localhost", port, res -> {
+      LOG.trace("Startup complete");
+
+      final AtomicInteger received = new AtomicInteger();
+      final AtomicLong pauseStartTime = new AtomicLong();
+
+      // Set up a consumer using the bridge
+      MessageConsumer<JsonObject> consumer = bridge.createConsumer(testName);
+      consumer.handler(msg -> {
+        int msgNum = received.incrementAndGet();
+        LOG.trace("Received message " + msgNum);
+
+        JsonObject jsonObject = msg.body();
+        context.assertNotNull(jsonObject, "message " + msgNum + " jsonObject body was null");
+
+        Object amqpBodyContent = jsonObject.getValue(MessageHelper.BODY);
+        context.assertNotNull(amqpBodyContent, "amqp message " + msgNum + " body content was null");
+
+        context.assertEquals(sentContent, amqpBodyContent, "amqp message " + msgNum + " body not as expected");
+
+        // Pause once we get initial messages
+        if (msgNum == pauseCount) {
+          LOG.trace("Pausing");
+          consumer.pause();
+
+          // Resume after a delay
+          pauseStartTime.set(System.currentTimeMillis());
+          vertx.setTimer(delay, x -> {
+            LOG.trace("Resuming");
+            consumer.resume();
+          });
+        }
+
+        // Verify subsequent deliveries occur after the expected delay
+        if (msgNum > pauseCount) {
+          context.assertTrue(pauseStartTime.get() > 0, "pause start not initialised before receiving msg" + msgNum);
+          context.assertTrue(System.currentTimeMillis() + delay > pauseStartTime.get(),
+              "delivery occurred before expected");
+        }
+
+        if (msgNum == totalMsgCount) {
+          LOG.trace("Shutting down");
+          bridge.shutdown(shutdownRes -> {
+            LOG.trace("Shutdown complete");
+            context.assertTrue(shutdownRes.succeeded());
+            asyncShutdown.complete();
+          });
+        }
       });
     });
 

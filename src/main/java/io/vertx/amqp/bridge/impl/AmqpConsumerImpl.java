@@ -36,6 +36,7 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
   private final MessageTranslatorImpl translator;
   private Handler<Message<JsonObject>> handler;
   private final Queue<Message<JsonObject>> buffered = new ArrayDeque<>();
+  private boolean paused = false;
 
   public AmqpConsumerImpl(Vertx vertx, BridgeImpl bridge, ProtonConnection connection, String amqpAddress) {
     this.vertx = vertx;
@@ -54,19 +55,18 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
 
   private void handleMessage(Message<JsonObject> vertxMessage) {
     Handler<Message<JsonObject>> h = null;
-    if (handler != null && buffered.isEmpty()) {
+    if (handler != null && !paused && buffered.isEmpty()) {
       h = handler;
-    } else if (handler != null) {
-      h = handler;
-
+    } else if (handler != null && !paused) {
       // Buffered messages present, deliver the oldest of those instead
       buffered.add(vertxMessage);
       vertxMessage = buffered.poll();
+      h = handler;
 
       // Schedule a delivery for the next buffered message
       scheduleBufferedMessageDelivery();
     } else {
-      // Buffer message until we have a handler
+      // Buffer message until we have a handler or aren't paused
       buffered.add(vertxMessage);
     }
 
@@ -87,6 +87,8 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
           Message<JsonObject> message = buffered.poll();
           if (message != null) {
             deliverMessageToHandler(message, handler);
+
+            // Schedule a delivery for a further buffered message if any
             scheduleBufferedMessageDelivery();
           }
         }
@@ -113,14 +115,15 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
 
   @Override
   public MessageConsumer<JsonObject> pause() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    paused = true;
+    return this;
   }
 
   @Override
   public MessageConsumer<JsonObject> resume() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    paused = false;
+    scheduleBufferedMessageDelivery();
+    return this;
   }
 
   @Override
