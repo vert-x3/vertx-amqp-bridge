@@ -19,6 +19,7 @@ import java.util.ArrayDeque;
 import java.util.Queue;
 
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
@@ -148,8 +149,7 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
 
   @Override
   public boolean isRegistered() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    return handler != null;
   }
 
   @Override
@@ -178,13 +178,22 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
 
   @Override
   public void unregister() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    unregister(null);
   }
 
   @Override
   public void unregister(Handler<AsyncResult<Void>> completionHandler) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    handler = null;
+
+    if (completionHandler != null) {
+      receiver.closeHandler((result) -> {
+        if (result.succeeded()) {
+          completionHandler.handle(Future.succeededFuture());
+        } else {
+          completionHandler.handle(Future.failedFuture(result.cause()));
+        }
+      });
+    }
+    receiver.close();
   }
 }

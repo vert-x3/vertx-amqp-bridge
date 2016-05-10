@@ -25,6 +25,7 @@ import org.apache.qpid.proton.amqp.Symbol;
 import org.apache.qpid.proton.amqp.messaging.Accepted;
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton.amqp.messaging.Section;
+import org.apache.qpid.proton.amqp.messaging.Source;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -583,5 +584,102 @@ public class BridgeTest extends ActiveMQTestBase {
 
     asyncSendMsg.awaitSuccess();
     asyncShutdown.awaitSuccess();
+  }
+
+  @Test(timeout = 20000)
+  public void testConsumerUnregisterCompletionNotification(TestContext context) throws Exception {
+    stopBroker();
+
+    String testName = getTestName();
+    String sentContent = "myMessageContent-" + testName;
+
+    Async asyncUnregister = context.async();
+    Async asyncShutdown = context.async();
+
+    MockServer server = new MockServer(vertx,
+        serverConnection -> handleReceiverOpenSendMessageThenClose(serverConnection, testName, sentContent, context));
+
+    Bridge bridge = Bridge.bridge(vertx);
+    ((BridgeImpl) bridge).setDisableReplyHandlerSupport(true);
+    bridge.start("localhost", server.actualPort(), res -> {
+      LOG.trace("Startup complete");
+
+      MessageConsumer<JsonObject> consumer = bridge.createConsumer(testName);
+      context.assertFalse(consumer.isRegistered(), "expected registered to be false");
+      consumer.handler(msg -> {
+        // Received message, verify it
+        JsonObject jsonObject = msg.body();
+        context.assertNotNull(jsonObject, "message jsonObject body was null");
+        Object amqpBodyContent = jsonObject.getValue(MessageHelper.BODY);
+        context.assertNotNull(amqpBodyContent, "amqp message body content was null");
+        context.assertEquals(sentContent, amqpBodyContent, "amqp message body not as expected");
+
+        // Unregister
+        consumer.unregister(unregisterResult -> {
+          LOG.trace("Unregister completed");
+          context.assertTrue(unregisterResult.succeeded(), "Expected unregistration to succeed");
+          asyncUnregister.complete();
+
+          // Shut down
+          LOG.trace("Shutting down");
+          bridge.shutdown(shutdownRes -> {
+            LOG.trace("Shutdown complete");
+            context.assertTrue(shutdownRes.succeeded());
+            asyncShutdown.complete();
+          });
+        });
+      });
+      context.assertTrue(consumer.isRegistered(), "expected registered to be true");
+    });
+
+    try {
+      asyncUnregister.awaitSuccess();
+      asyncShutdown.awaitSuccess();
+    } finally {
+      server.close();
+    }
+  }
+
+  private void handleReceiverOpenSendMessageThenClose(ProtonConnection serverConnection, String testAddress,
+                                                      String testContent, TestContext context) {
+    // Expect a connection
+    serverConnection.openHandler(serverSender -> {
+      LOG.trace("Server connection open");
+      // Add a close handler
+      serverConnection.closeHandler(x -> {
+        serverConnection.close();
+      });
+
+      serverConnection.open();
+    });
+
+    // Expect a session to open, when the receiver is created
+    serverConnection.sessionOpenHandler(serverSession -> {
+      LOG.trace("Server session open");
+      serverSession.open();
+    });
+
+    // Expect a sender link open for the receiver
+    serverConnection.senderOpenHandler(serverSender -> {
+      LOG.trace("Server sender open");
+      Source remoteSource = (Source) serverSender.getRemoteSource();
+      context.assertNotNull(remoteSource, "source should not be null");
+      context.assertEquals(testAddress, remoteSource.getAddress(), "expected given address");
+      // Naive test-only handling
+      serverSender.setSource(remoteSource.copy());
+
+      // Assume we will get credit, buffer the send immediately
+      org.apache.qpid.proton.message.Message protonMsg = Proton.message();
+      protonMsg.setBody(new AmqpValue(testContent));
+
+      serverSender.send(protonMsg);
+
+      // Add a close handler
+      serverSender.closeHandler(x -> {
+        serverSender.close();
+      });
+
+      serverSender.open();
+    });
   }
 }
