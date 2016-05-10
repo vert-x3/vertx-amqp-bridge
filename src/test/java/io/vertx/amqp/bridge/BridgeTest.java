@@ -309,10 +309,11 @@ public class BridgeTest extends ActiveMQTestBase {
       body.put(MessageHelper.BODY, content);
 
       producer.<JsonObject> send(body, reply -> {
-        LOG.trace("Client got reply");
+        LOG.trace("Sender got reply");
         context.assertEquals(replyContent, reply.result().body().getValue(MessageHelper.BODY),
             "unexpected reply msg content");
         context.assertNotNull(reply.result().address(), "address was not set on reply");
+        context.assertNull(reply.result().replyAddress(), "reply address was unexpectedly set on the reply");
 
         LOG.trace("Shutting down");
         bridge.shutdown(shutdownRes -> {
@@ -326,10 +327,11 @@ public class BridgeTest extends ActiveMQTestBase {
       MessageConsumer<JsonObject> consumer = bridge.createConsumer(destinationName);
       consumer.handler(msg -> {
         JsonObject receivedMsgBody = msg.body();
-        LOG.trace("Client got msg: " + receivedMsgBody);
+        LOG.trace("Consumer got request msg: " + receivedMsgBody);
 
         context.assertNotNull(receivedMsgBody, "expected msg body but none found");
         context.assertEquals(content, receivedMsgBody.getValue(MessageHelper.BODY), "unexpected msg content");
+        context.assertNotNull(msg.replyAddress(), "reply address was not set on the request");
 
         JsonObject replyBody = new JsonObject();
         replyBody.put(MessageHelper.BODY, replyContent);
@@ -365,10 +367,12 @@ public class BridgeTest extends ActiveMQTestBase {
       body.put(MessageHelper.BODY, content);
 
       producer.<JsonObject> send(body, reply -> {
-        LOG.trace("Client got reply");
+        LOG.trace("Sender got first reply");
         Message<JsonObject> replyMessage = reply.result();
         context.assertEquals(replyContent, replyMessage.body().getValue(MessageHelper.BODY),
             "unexpected reply msg content");
+        context.assertNotNull(replyMessage.address(), "address was not set on the reply");
+        context.assertNotNull(replyMessage.replyAddress(), "reply address was not set on the reply");
 
         replyRecievedAsync.complete();
 
@@ -382,19 +386,21 @@ public class BridgeTest extends ActiveMQTestBase {
       MessageConsumer<JsonObject> consumer = bridge.createConsumer(destinationName);
       consumer.handler(msg -> {
         JsonObject receivedMsgBody = msg.body();
-        LOG.trace("Client got msg: " + receivedMsgBody);
+        LOG.trace("Receiver got request: " + receivedMsgBody);
 
         context.assertNotNull(receivedMsgBody, "expected msg body but none found");
         context.assertEquals(content, receivedMsgBody.getValue(MessageHelper.BODY), "unexpected msg content");
+        context.assertNotNull(msg.replyAddress(), "reply address was not set on the request");
 
         JsonObject replyBody = new JsonObject();
         replyBody.put(MessageHelper.BODY, replyContent);
 
         msg.<JsonObject> reply(replyBody, replyToReply -> {
-          LOG.trace("Client got reply to reply");
+          LOG.trace("Receiver got reply to reply");
           Message<JsonObject> replyToReplyMessage = replyToReply.result();
           context.assertEquals(replyToReplyContent, replyToReplyMessage.body().getValue(MessageHelper.BODY),
-              "unexpected reply msg content");
+              "unexpected 2nd reply msg content");
+          context.assertNull(replyToReplyMessage.replyAddress(), "reply address was unexpectedly set on 2nd reply");
 
           LOG.trace("Shutting down");
           bridge.shutdown(shutdownRes -> {

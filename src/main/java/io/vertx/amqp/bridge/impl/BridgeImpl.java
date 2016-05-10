@@ -195,7 +195,7 @@ public class BridgeImpl implements Bridge {
 
         JsonObject body = translator.convertToJsonObject(protonMessage);
         Message<JsonObject> msg = new AmqpMessageImpl(body, BridgeImpl.this, protonMessage, delivery,
-            replyToConsumerAddress);
+            replyToConsumerAddress, protonMessage.getReplyTo());
 
         AsyncResult<Message<JsonObject>> result = Future.succeededFuture(msg);
         h.handle(result);

@@ -48,7 +48,8 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
     receiver = connection.createReceiver(amqpAddress);
     receiver.handler((delivery, protonMessage) -> {
       JsonObject body = translator.convertToJsonObject(protonMessage);
-      AmqpMessageImpl vertxMessage = new AmqpMessageImpl(body, this.bridge, protonMessage, delivery, amqpAddress);
+      AmqpMessageImpl vertxMessage = new AmqpMessageImpl(body, this.bridge, protonMessage, delivery, amqpAddress,
+          protonMessage.getReplyTo());
 
       handleMessage(vertxMessage);
     });

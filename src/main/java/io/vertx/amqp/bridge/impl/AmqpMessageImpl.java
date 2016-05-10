@@ -31,14 +31,17 @@ public class AmqpMessageImpl implements Message<JsonObject> {
   private final org.apache.qpid.proton.message.Message protonMessage;
   private final ProtonDelivery delivery;
   private final String amqpAddress;
+  private final String amqpReplyAddress;
 
-  public AmqpMessageImpl(JsonObject body, BridgeImpl bridge, org.apache.qpid.proton.message.Message protonMessage, ProtonDelivery delivery, String amqpAddress) {
+  public AmqpMessageImpl(JsonObject body, BridgeImpl bridge, org.apache.qpid.proton.message.Message protonMessage,
+      ProtonDelivery delivery, String amqpAddress, String amqpReplyAddress) {
     // TODO: ensure non-null body?
     this.body = body;
     this.bridge = bridge;
     this.protonMessage = protonMessage;
     this.delivery = delivery;
     this.amqpAddress = amqpAddress;
+    this.amqpReplyAddress = amqpReplyAddress;
   }
 
   @Override
@@ -59,8 +62,7 @@ public class AmqpMessageImpl implements Message<JsonObject> {
 
   @Override
   public String replyAddress() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    return amqpReplyAddress;
   }
 
   private <R> void doReply(Object replyMessageBody, Handler<AsyncResult<Message<R>>> replyHandler) {
