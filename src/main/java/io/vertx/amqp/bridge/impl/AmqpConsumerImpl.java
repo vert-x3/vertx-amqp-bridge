@@ -34,21 +34,21 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
   private final Vertx vertx;
   private final BridgeImpl bridge;
   private final ProtonReceiver receiver;
-  private final MessageTranslatorImpl translator;
-  private Handler<Message<JsonObject>> handler;
+  private final String amqpAddress;
+  private final MessageTranslatorImpl translator = new MessageTranslatorImpl();
   private final Queue<AmqpMessageImpl> buffered = new ArrayDeque<>();
+  private Handler<Message<JsonObject>> handler;
   private boolean paused = false;
   private int credits = 1000;
 
   public AmqpConsumerImpl(Vertx vertx, BridgeImpl bridge, ProtonConnection connection, String amqpAddress) {
     this.vertx = vertx;
     this.bridge = bridge;
-    translator = new MessageTranslatorImpl();
-
+    this.amqpAddress = amqpAddress;
     receiver = connection.createReceiver(amqpAddress);
     receiver.handler((delivery, protonMessage) -> {
       JsonObject body = translator.convertToJsonObject(protonMessage);
-      AmqpMessageImpl vertxMessage = new AmqpMessageImpl(body, this.bridge, protonMessage, delivery);
+      AmqpMessageImpl vertxMessage = new AmqpMessageImpl(body, this.bridge, protonMessage, delivery, amqpAddress);
 
       handleMessage(vertxMessage);
     });
@@ -154,8 +154,7 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
 
   @Override
   public String address() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    return amqpAddress;
   }
 
   @Override

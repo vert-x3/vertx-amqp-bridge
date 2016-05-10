@@ -26,23 +26,24 @@ import io.vertx.proton.ProtonHelper;
 
 public class AmqpMessageImpl implements Message<JsonObject> {
 
-  private JsonObject body;
-  private BridgeImpl bridge;
-  private org.apache.qpid.proton.message.Message protonMessage;
-  private ProtonDelivery delivery;
+  private final JsonObject body;
+  private final BridgeImpl bridge;
+  private final org.apache.qpid.proton.message.Message protonMessage;
+  private final ProtonDelivery delivery;
+  private final String amqpAddress;
 
-  public AmqpMessageImpl(JsonObject body, BridgeImpl bridge, org.apache.qpid.proton.message.Message protonMessage, ProtonDelivery delivery) {
+  public AmqpMessageImpl(JsonObject body, BridgeImpl bridge, org.apache.qpid.proton.message.Message protonMessage, ProtonDelivery delivery, String amqpAddress) {
     // TODO: ensure non-null body?
     this.body = body;
     this.bridge = bridge;
     this.protonMessage = protonMessage;
     this.delivery = delivery;
+    this.amqpAddress = amqpAddress;
   }
 
   @Override
   public String address() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    return amqpAddress;
   }
 
   @Override

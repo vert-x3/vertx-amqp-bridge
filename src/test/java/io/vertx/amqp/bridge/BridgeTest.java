@@ -191,7 +191,7 @@ public class BridgeTest extends ActiveMQTestBase {
       LOG.trace("Startup complete");
 
       // Set up a consumer using the bridge
-      bridge.createConsumer(testName).handler(msg -> {
+      MessageConsumer<JsonObject> consumer = bridge.createConsumer(testName).handler(msg -> {
         JsonObject jsonObject = msg.body();
         context.assertNotNull(jsonObject, "message jsonObject body was null");
 
@@ -207,6 +207,8 @@ public class BridgeTest extends ActiveMQTestBase {
           asyncShutdown.complete();
         });
       });
+
+      context.assertEquals(testName, consumer.address(), "address was not as expected");
     });
 
     // Send it a message from a regular AMQP client
@@ -310,6 +312,7 @@ public class BridgeTest extends ActiveMQTestBase {
         LOG.trace("Client got reply");
         context.assertEquals(replyContent, reply.result().body().getValue(MessageHelper.BODY),
             "unexpected reply msg content");
+        context.assertNotNull(reply.result().address(), "address was not set on reply");
 
         LOG.trace("Shutting down");
         bridge.shutdown(shutdownRes -> {
