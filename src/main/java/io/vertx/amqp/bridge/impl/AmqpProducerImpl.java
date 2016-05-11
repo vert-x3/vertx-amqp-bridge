@@ -39,8 +39,7 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
 
   @Override
   public boolean writeQueueFull() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    return sender.sendQueueFull();
   }
 
   @Override
@@ -90,8 +89,16 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
 
   @Override
   public MessageProducer<JsonObject> drainHandler(Handler<Void> handler) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    if(handler == null) {
+      sender.sendQueueDrainHandler(null);
+    } else {
+      //TODO: save the user handler?
+      sender.sendQueueDrainHandler(s -> {
+        handler.handle(null);
+      });
+    }
+
+    return this;
   }
 
   @Override

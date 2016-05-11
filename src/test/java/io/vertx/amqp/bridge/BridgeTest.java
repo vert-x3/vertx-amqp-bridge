@@ -26,6 +26,7 @@ import org.apache.qpid.proton.amqp.messaging.Accepted;
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton.amqp.messaging.Section;
 import org.apache.qpid.proton.amqp.messaging.Source;
+import org.apache.qpid.proton.amqp.messaging.Target;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -691,4 +692,137 @@ public class BridgeTest extends ActiveMQTestBase {
       serverSender.open();
     });
   }
+
+  @Test(timeout = 20000)
+  public void testSenderFlowControlMechanisms(TestContext context) throws Exception {
+    stopBroker();
+
+    final long delay = 250;
+    final String testName = getTestName();
+    final String sentContent = "myMessageContent-" + testName;
+
+    final Async asyncSendInitialCredit = context.async();
+    final Async asyncSendSubsequentCredit = context.async();
+    final Async asyncShutdown = context.async();
+
+    // === Server handling ====
+
+    MockServer server = new MockServer(vertx, serverConnection -> {
+      // Expect a connection
+      serverConnection.openHandler(serverSender -> {
+        LOG.trace("Server connection open");
+        // Add a close handler
+        serverConnection.closeHandler(x -> {
+          serverConnection.close();
+        });
+
+        serverConnection.open();
+      });
+
+      // Expect a session to open, when the sender is created
+      serverConnection.sessionOpenHandler(serverSession -> {
+        LOG.trace("Server session open");
+        serverSession.open();
+      });
+
+      // Expect a receiver link open for the sender
+      serverConnection.receiverOpenHandler(serverReceiver -> {
+        LOG.trace("Server receiver open");
+
+        Target remoteTarget = (Target) serverReceiver.getRemoteTarget();
+        context.assertNotNull(remoteTarget, "target should not be null");
+        context.assertEquals(testName, remoteTarget.getAddress(), "expected given address");
+        // Naive test-only handling
+        serverReceiver.setTarget(remoteTarget.copy());
+
+        // Assume we will get credit, just buffer the send immediately
+        org.apache.qpid.proton.message.Message protonMsg = Proton.message();
+        protonMsg.setBody(new AmqpValue(sentContent));
+
+        // Disable auto accept and credit prefetch handling, do it (or not) ourselves
+        serverReceiver.setAutoAccept(false);
+        serverReceiver.setPrefetch(0);
+
+        // Add the message handler
+        serverReceiver.handler((delivery, message) -> {
+          Section body = message.getBody();
+          context.assertNotNull(body, "received body was null");
+          context.assertTrue(body instanceof AmqpValue, "unexpected body section type: " + body.getClass());
+          context.assertEquals(sentContent, ((AmqpValue) body).getValue(), "Unexpected message body content");
+
+          // Only flow subsequent credit after a delay and related checks complete
+          vertx.setTimer(delay, x -> {
+            asyncSendSubsequentCredit.awaitSuccess();
+            LOG.trace("Sending subsequent credit after delay");
+            serverReceiver.flow(1);
+          });
+        });
+
+        // Add a close handler
+        serverReceiver.closeHandler(x -> {
+          serverReceiver.close();
+        });
+
+        serverReceiver.open();
+
+        // Only flow initial credit after a delay and initial checks complete
+        vertx.setTimer(delay, x -> {
+          asyncSendInitialCredit.awaitSuccess();
+          LOG.trace("Sending credit after delay");
+          serverReceiver.flow(1);
+        });
+      });
+    });
+
+    // === Bridge producer handling ====
+
+    Bridge bridge = Bridge.bridge(vertx);
+    ((BridgeImpl) bridge).setDisableReplyHandlerSupport(true);
+
+    bridge.start("localhost", server.actualPort(), res -> {
+      context.assertTrue(res.succeeded());
+
+      MessageProducer<JsonObject> producer = bridge.createProducer(testName);
+
+      context.assertTrue(producer.writeQueueFull(), "expected write queue to be full, we have not yet granted credit");
+      producer.drainHandler(x -> {
+        context.assertTrue(asyncSendInitialCredit.isSucceeded(), "should have been called after initial credit delay");
+        context.assertFalse(producer.writeQueueFull(), "expected write queue not to be full, we just granted credit");
+
+        // Send message using the credit
+        JsonObject body = new JsonObject();
+        body.put("body", sentContent);
+
+        producer.send(body);
+
+        context.assertTrue(producer.writeQueueFull(), "expected write queue to be full, we just used all the credit");
+
+        // Now replace the drain handler, have it act on subsequent credit arriving
+        producer.drainHandler(y -> {
+          context.assertTrue(asyncSendSubsequentCredit.isSucceeded(), "should have been called after 2nd credit delay");
+          context.assertFalse(producer.writeQueueFull(), "expected write queue not to be full, we just granted credit");
+
+          LOG.trace("Shutting down");
+          bridge.shutdown(shutdownRes -> {
+            LOG.trace("Shutdown complete");
+            context.assertTrue(shutdownRes.succeeded());
+            asyncShutdown.complete();
+          });
+        });
+
+        // Now allow server to send the subsequent credit
+        asyncSendSubsequentCredit.complete();
+      });
+
+      // Now allow to send initial credit. Things will kick off again in the drain handler.
+      asyncSendInitialCredit.complete();
+    });
+
+    try {
+      asyncShutdown.awaitSuccess();
+    } finally {
+      server.close();
+    }
+  }
+
 }
