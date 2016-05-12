@@ -599,6 +599,113 @@ public class BridgeTest extends ActiveMQTestBase {
   }
 
   @Test(timeout = 20000)
+  public void testProducerClose(TestContext context) throws Exception {
+    doProducerCloseTestImpl(context, false);
+  }
+
+  @Test(timeout = 20000)
+  public void testProducerEnd(TestContext context) throws Exception {
+    doProducerCloseTestImpl(context, true);
+  }
+
+  private void doProducerCloseTestImpl(TestContext context, boolean callEnd) throws Exception {
+    stopBroker();
+
+    String testName = getTestName();
+    String sentContent = "myMessageContent-" + testName;
+
+    Async asyncRecieveMsg = context.async();
+    Async asyncClose = context.async();
+    Async asyncShutdown = context.async();
+
+    // === Server handling ====
+
+    MockServer server = new MockServer(vertx, serverConnection -> {
+      // Expect a connection
+      serverConnection.openHandler(serverSender -> {
+        LOG.trace("Server connection open");
+        // Add a close handler
+        serverConnection.closeHandler(x -> {
+          serverConnection.close();
+        });
+
+        serverConnection.open();
+      });
+
+      // Expect a session to open, when the producer is created
+      serverConnection.sessionOpenHandler(serverSession -> {
+        LOG.trace("Server session open");
+        serverSession.open();
+      });
+
+      // Expect a receiver link open for the producer
+      serverConnection.receiverOpenHandler(serverReceiver -> {
+        LOG.trace("Server receiver open");
+
+        Target remoteTarget = (Target) serverReceiver.getRemoteTarget();
+        context.assertNotNull(remoteTarget, "target should not be null");
+        context.assertEquals(testName, remoteTarget.getAddress(), "expected given address");
+        // Naive test-only handling
+        serverReceiver.setTarget(remoteTarget.copy());
+
+        // Add the message handler
+        serverReceiver.handler((delivery, message) -> {
+          Section body = message.getBody();
+          context.assertNotNull(body, "received body was null");
+          context.assertTrue(body instanceof AmqpValue, "unexpected body section type: " + body.getClass());
+          context.assertEquals(sentContent, ((AmqpValue) body).getValue(), "Unexpected message body content");
+
+          asyncRecieveMsg.complete();
+        });
+
+        // Add a close handler
+        serverReceiver.closeHandler(x -> {
+          serverReceiver.close();
+          asyncClose.complete();
+        });
+
+        serverReceiver.open();
+      });
+    });
+
+    // === Bridge producer handling ====
+
+    Bridge bridge = Bridge.bridge(vertx);
+    ((BridgeImpl) bridge).setDisableReplyHandlerSupport(true);
+    bridge.start("localhost", server.actualPort(), res -> {
+      // Set up a producer using the bridge, use it, close it.
+      context.assertTrue(res.succeeded());
+
+      MessageProducer<JsonObject> producer = bridge.createProducer(testName);
+
+      JsonObject body = new JsonObject();
+      body.put("body", sentContent);
+
+      producer.send(body);
+
+      if (callEnd) {
+        producer.end();
+      } else {
+        producer.close();
+      }
+
+      bridge.shutdown(shutdownRes -> {
+        LOG.trace("Shutdown complete");
+        context.assertTrue(shutdownRes.succeeded());
+        asyncShutdown.complete();
+      });
+    });
+
+    try {
+      asyncRecieveMsg.awaitSuccess();
+      asyncClose.awaitSuccess();
+      asyncShutdown.awaitSuccess();
+    } finally {
+      server.close();
+    }
+  }
+
+  @Test(timeout = 20000)
   public void testConsumerUnregisterCompletionNotification(TestContext context) throws Exception {
     stopBroker();
 

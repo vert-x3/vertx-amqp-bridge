@@ -115,13 +115,11 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
 
   @Override
   public void end() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    close();
   }
 
   @Override
   public void close() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    sender.close();
   }
 }
