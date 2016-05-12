@@ -260,6 +260,8 @@ public class BridgeTest extends ActiveMQTestBase {
       body.put("body", sentContent);
 
       producer.send(body);
+
+      context.assertEquals(testName, producer.address(), "address was not as expected");
     });
 
     // Receive it with a regular AMQP client

@@ -26,15 +26,16 @@ import io.vertx.proton.ProtonSender;
 
 public class AmqpProducerImpl implements MessageProducer<JsonObject> {
 
-  private ProtonSender sender;
-  private MessageTranslatorImpl translator;
-  private BridgeImpl bridge;
+  private final ProtonSender sender;
+  private final MessageTranslatorImpl translator = new MessageTranslatorImpl();
+  private final BridgeImpl bridge;
+  private final String amqpAddress;
 
   public AmqpProducerImpl(BridgeImpl bridge, ProtonConnection connection, String amqpAddress) {
     sender = connection.createSender(amqpAddress);
     sender.open();
-    translator = new MessageTranslatorImpl();
     this.bridge = bridge;
+    this.amqpAddress= amqpAddress;
   }
 
   @Override
@@ -109,8 +110,7 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
 
   @Override
   public String address() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    return amqpAddress;
   }
 
   @Override
