@@ -737,10 +737,6 @@ public class BridgeTest extends ActiveMQTestBase {
         // Naive test-only handling
         serverReceiver.setTarget(remoteTarget.copy());
 
-        // Assume we will get credit, just buffer the send immediately
-        org.apache.qpid.proton.message.Message protonMsg = Proton.message();
-        protonMsg.setBody(new AmqpValue(sentContent));
-
         // Disable auto accept and credit prefetch handling, do it (or not) ourselves
         serverReceiver.setAutoAccept(false);
         serverReceiver.setPrefetch(0);
