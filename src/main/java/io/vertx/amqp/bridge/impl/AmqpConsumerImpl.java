@@ -22,6 +22,7 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxException;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.json.JsonObject;
@@ -38,14 +39,30 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
   private final MessageTranslatorImpl translator = new MessageTranslatorImpl();
   private final Queue<AmqpMessageImpl> buffered = new ArrayDeque<>();
   private Handler<Message<JsonObject>> handler;
-  private boolean paused = false;
   private int credits = 1000;
+  private boolean paused;
+  private boolean closed;
+  private Handler<Throwable> exceptionHandler;
 
   public AmqpConsumerImpl(Vertx vertx, BridgeImpl bridge, ProtonConnection connection, String amqpAddress) {
     this.vertx = vertx;
     this.bridge = bridge;
     this.amqpAddress = amqpAddress;
     receiver = connection.createReceiver(amqpAddress);
+    receiver.closeHandler(res -> {
+      if (!closed && exceptionHandler != null) {
+        if (res.succeeded()) {
+          exceptionHandler.handle(new VertxException("Consumer closed remotely"));
+        } else {
+          exceptionHandler.handle(new VertxException("Consumer closed remotely with error", res.cause()));
+        }
+      }
+
+      if(!closed) {
+        closed = true;
+        receiver.close();
+      }
+    });
     receiver.handler((delivery, protonMessage) -> {
       JsonObject body = translator.convertToJsonObject(protonMessage);
       AmqpMessageImpl vertxMessage = new AmqpMessageImpl(body, this.bridge, protonMessage, delivery, amqpAddress,
@@ -108,8 +125,9 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
 
   @Override
   public MessageConsumer<JsonObject> exceptionHandler(Handler<Throwable> handler) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    exceptionHandler = handler;
+
+    return this;
   }
 
   @Override
@@ -184,6 +202,7 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
   @Override
   public void unregister(Handler<AsyncResult<Void>> completionHandler) {
     handler = null;
+    closed = true;
 
     if (completionHandler != null) {
       receiver.closeHandler((result) -> {
