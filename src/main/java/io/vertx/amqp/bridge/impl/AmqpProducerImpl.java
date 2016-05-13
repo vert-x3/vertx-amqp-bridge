@@ -17,6 +17,7 @@ package io.vertx.amqp.bridge.impl;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
+import io.vertx.core.VertxException;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageProducer;
@@ -30,9 +31,25 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
   private final MessageTranslatorImpl translator = new MessageTranslatorImpl();
   private final BridgeImpl bridge;
   private final String amqpAddress;
+  private boolean closed;
+  private Handler<Throwable> exceptionHandler;
 
   public AmqpProducerImpl(BridgeImpl bridge, ProtonConnection connection, String amqpAddress) {
     sender = connection.createSender(amqpAddress);
+    sender.closeHandler(res -> {
+      if (!closed && exceptionHandler != null) {
+        if (res.succeeded()) {
+          exceptionHandler.handle(new VertxException("Producer closed remotely"));
+        } else {
+          exceptionHandler.handle(new VertxException("Producer closed remotely with error", res.cause()));
+        }
+      }
+
+      if(!closed) {
+        closed = true;
+        sender.close();
+      }
+    });
     sender.open();
     this.bridge = bridge;
     this.amqpAddress= amqpAddress;
@@ -73,8 +90,9 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
 
   @Override
   public MessageProducer<JsonObject> exceptionHandler(Handler<Throwable> handler) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    exceptionHandler = handler;
+
+    return this;
   }
 
   @Override
@@ -120,6 +138,7 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
 
   @Override
   public void close() {
+    closed = true;
     sender.close();
   }
 }

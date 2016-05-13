@@ -16,6 +16,7 @@
 package io.vertx.amqp.bridge;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -27,6 +28,7 @@ import org.apache.qpid.proton.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton.amqp.messaging.Section;
 import org.apache.qpid.proton.amqp.messaging.Source;
 import org.apache.qpid.proton.amqp.messaging.Target;
+import org.apache.qpid.proton.amqp.transport.AmqpError;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -36,6 +38,7 @@ import io.vertx.amqp.bridge.Bridge;
 import io.vertx.amqp.bridge.impl.BridgeImpl;
 import io.vertx.amqp.bridge.impl.BridgeMetaDataSupportImpl;
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxException;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.eventbus.MessageProducer;
@@ -47,6 +50,7 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 import io.vertx.proton.ProtonClient;
 import io.vertx.proton.ProtonConnection;
+import io.vertx.proton.ProtonHelper;
 import io.vertx.proton.ProtonReceiver;
 import io.vertx.proton.ProtonSender;
 
@@ -611,12 +615,14 @@ public class BridgeTest extends ActiveMQTestBase {
   private void doProducerCloseTestImpl(TestContext context, boolean callEnd) throws Exception {
     stopBroker();
 
-    String testName = getTestName();
-    String sentContent = "myMessageContent-" + testName;
+    final String testName = getTestName();
+    final String sentContent = "myMessageContent-" + testName;
 
-    Async asyncRecieveMsg = context.async();
-    Async asyncClose = context.async();
-    Async asyncShutdown = context.async();
+    final Async asyncRecieveMsg = context.async();
+    final Async asyncClose = context.async();
+    final Async asyncShutdown = context.async();
+
+    final AtomicBoolean exceptionHandlerCalled = new AtomicBoolean();
 
     // === Server handling ====
 
@@ -677,6 +683,9 @@ public class BridgeTest extends ActiveMQTestBase {
       context.assertTrue(res.succeeded());
 
       MessageProducer<JsonObject> producer = bridge.createProducer(testName);
+      producer.exceptionHandler(x -> {
+        exceptionHandlerCalled.set(true);
+      });
 
       JsonObject body = new JsonObject();
       body.put("body", sentContent);
@@ -700,6 +709,7 @@ public class BridgeTest extends ActiveMQTestBase {
       asyncRecieveMsg.awaitSuccess();
       asyncClose.awaitSuccess();
       asyncShutdown.awaitSuccess();
+      context.assertFalse(exceptionHandlerCalled.get(), "exception handler unexpectedly called");
     } finally {
       server.close();
     }
@@ -930,4 +940,120 @@ public class BridgeTest extends ActiveMQTestBase {
     }
   }
 
+  @Test(timeout = 20000)
+  public void testSenderClosedRemotelyCallsExceptionHandler(TestContext context) throws Exception {
+    doSenderClosedRemotelyCallsExceptionHandlerTestImpl(context, false);
+  }
+
+  @Test(timeout = 20000)
+  public void testSenderClosedRemotelyWithErrorCallsExceptionHandler(TestContext context) throws Exception {
+    doSenderClosedRemotelyCallsExceptionHandlerTestImpl(context, true);
+  }
+
+  private void doSenderClosedRemotelyCallsExceptionHandlerTestImpl(TestContext context, boolean closeWithError) throws Exception {
+    stopBroker();
+
+    final String testName = getTestName();
+    final String sentContent = "myMessageContent-" + testName;
+
+    final Async asyncShutdown = context.async();
+    final Async asyncExceptionHandlerCalled = context.async();
+
+    // === Server handling ====
+
+    MockServer server = new MockServer(vertx, serverConnection -> {
+      // Expect a connection
+      serverConnection.openHandler(serverSender -> {
+        LOG.trace("Server connection open");
+        // Add a close handler
+        serverConnection.closeHandler(x -> {
+          serverConnection.close();
+        });
+
+        serverConnection.open();
+      });
+
+      // Expect a session to open, when the sender is created
+      serverConnection.sessionOpenHandler(serverSession -> {
+        LOG.trace("Server session open");
+        serverSession.open();
+      });
+
+      // Expect a receiver link open for the sender
+      serverConnection.receiverOpenHandler(serverReceiver -> {
+        LOG.trace("Server receiver open");
+
+        Target remoteTarget = (Target) serverReceiver.getRemoteTarget();
+        context.assertNotNull(remoteTarget, "target should not be null");
+        context.assertEquals(testName, remoteTarget.getAddress(), "expected given address");
+        // Naive test-only handling
+        serverReceiver.setTarget(remoteTarget.copy());
+
+        // Add the message handler
+        serverReceiver.handler((delivery, message) -> {
+          Section body = message.getBody();
+          context.assertNotNull(body, "received body was null");
+          context.assertTrue(body instanceof AmqpValue, "unexpected body section type: " + body.getClass());
+          context.assertEquals(sentContent, ((AmqpValue) body).getValue(), "Unexpected message body content");
+
+          if (closeWithError) {
+            serverReceiver.setCondition(ProtonHelper.condition(AmqpError.INTERNAL_ERROR, "testing-error"));
+          }
+
+          // Now close the link server side
+          serverReceiver.close();
+        });
+
+        // Add a close handler
+        serverReceiver.closeHandler(x -> {
+          serverReceiver.close();
+        });
+
+        serverReceiver.open();
+      });
+    });
+
+    // === Bridge producer handling ====
+
+    Bridge bridge = Bridge.bridge(vertx);
+    ((BridgeImpl) bridge).setDisableReplyHandlerSupport(true);
+
+    bridge.start("localhost", server.actualPort(), res -> {
+      context.assertTrue(res.succeeded());
+
+      MessageProducer<JsonObject> producer = bridge.createProducer(testName);
+
+      producer.exceptionHandler(ex -> {
+        context.assertNotNull(ex, "expected exception");
+        context.assertTrue(ex instanceof VertxException, "expected vertx exception");
+        if(closeWithError) {
+          context.assertNotNull(ex.getCause(), "expected cause");
+        } else {
+          context.assertNull(ex.getCause(), "expected no cause");
+        }
+        LOG.trace("Producer exception handler called:", ex);
+
+        asyncExceptionHandlerCalled.complete();
+
+        LOG.trace("Shutting down");
+        bridge.shutdown(shutdownRes -> {
+          LOG.trace("Shutdown complete");
+          context.assertTrue(shutdownRes.succeeded());
+          asyncShutdown.complete();
+        });
+      });
+
+      JsonObject body = new JsonObject();
+      body.put("body", sentContent);
+
+      producer.send(body);
+    });
+
+    try {
+      asyncExceptionHandlerCalled.awaitSuccess();
+      asyncShutdown.awaitSuccess();
+    } finally {
+      server.close();
+    }
+  }
 }
