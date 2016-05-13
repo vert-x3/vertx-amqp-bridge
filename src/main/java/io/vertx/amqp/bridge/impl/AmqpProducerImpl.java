@@ -84,8 +84,8 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
 
   @Override
   public MessageProducer<JsonObject> setWriteQueueMaxSize(int maxSize) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    // No-op, available sending credit is controlled by recipient peer in AMQP 1.0.
+    return this;
   }
 
   @Override
