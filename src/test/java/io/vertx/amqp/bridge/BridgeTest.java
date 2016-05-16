@@ -53,6 +53,7 @@ import io.vertx.proton.ProtonConnection;
 import io.vertx.proton.ProtonHelper;
 import io.vertx.proton.ProtonReceiver;
 import io.vertx.proton.ProtonSender;
+import io.vertx.proton.impl.ProtonSenderImpl;
 
 @RunWith(VertxUnitRunner.class)
 public class BridgeTest extends ActiveMQTestBase {
@@ -1175,6 +1176,112 @@ public class BridgeTest extends ActiveMQTestBase {
 
     try {
       asyncExceptionHandlerCalled.awaitSuccess();
+      asyncShutdown.awaitSuccess();
+    } finally {
+      server.close();
+    }
+  }
+
+  @Test(timeout = 20000)
+  public void testInitialCredit(TestContext context) throws Exception {
+    doConsumerInitialCreditTestImpl(context, false, 1000);
+  }
+
+  @Test(timeout = 20000)
+  public void testInitialCreditInfluencedByConsumerBufferSize(TestContext context) throws Exception {
+    doConsumerInitialCreditTestImpl(context, true, 42);
+  }
+
+  private void doConsumerInitialCreditTestImpl(TestContext context, boolean setMaxBuffered,
+                                               int initialCredit) throws Exception {
+    stopBroker();
+
+    final String testName = getTestName();
+    final String sentContent = "myMessageContent-" + testName;
+
+    final AtomicBoolean firstSendQDrainHandlerCall = new AtomicBoolean();
+    final Async asyncInitialCredit = context.async();
+    final Async asyncShutdown = context.async();
+
+    // === Server handling ====
+
+    MockServer server = new MockServer(vertx, serverConnection -> {
+      // Expect a connection
+      serverConnection.openHandler(serverSender -> {
+        LOG.trace("Server connection open");
+        // Add a close handler
+        serverConnection.closeHandler(x -> {
+          serverConnection.close();
+        });
+
+        serverConnection.open();
+      });
+
+      // Expect a session to open, when the receiver is created
+      serverConnection.sessionOpenHandler(serverSession -> {
+        LOG.trace("Server session open");
+        serverSession.open();
+      });
+
+      // Expect a sender link open for the receiver
+      serverConnection.senderOpenHandler(serverSender -> {
+        LOG.trace("Server sender open");
+        Source remoteSource = (Source) serverSender.getRemoteSource();
+        context.assertNotNull(remoteSource, "source should not be null");
+        context.assertEquals(testName, remoteSource.getAddress(), "expected given address");
+        // Naive test-only handling
+        serverSender.setSource(remoteSource.copy());
+
+        serverSender.sendQueueDrainHandler(s -> {
+          // Verify the initial credit when the handler is first called and send a message
+          if (firstSendQDrainHandlerCall.compareAndSet(false, true)) {
+            context.assertEquals(initialCredit, ((ProtonSenderImpl)s).getCredit(), "unexpected initial credit");
+            context.assertFalse(s.sendQueueFull(), "expected send queue not to be full");
+
+            asyncInitialCredit.complete();
+
+            // send message
+            org.apache.qpid.proton.message.Message protonMsg = Proton.message();
+            protonMsg.setBody(new AmqpValue(sentContent));
+
+            serverSender.send(protonMsg);
+          }
+        });
+
+        serverSender.open();
+      });
+    });
+
+    // === Bridge consumer handling ====
+
+    Bridge bridge = Bridge.bridge(vertx);
+    ((BridgeImpl) bridge).setDisableReplyHandlerSupport(true);
+    bridge.start("localhost", server.actualPort(), res -> {
+      LOG.trace("Startup complete");
+
+      MessageConsumer<JsonObject> consumer = bridge.createConsumer(testName);
+      if (setMaxBuffered) {
+        consumer.setMaxBufferedMessages(initialCredit);
+      }
+      consumer.handler(msg -> {
+        // Received message, verify it
+        JsonObject jsonObject = msg.body();
+        context.assertNotNull(jsonObject, "message jsonObject body was null");
+        Object amqpBodyContent = jsonObject.getValue(MessageHelper.BODY);
+        context.assertNotNull(amqpBodyContent, "amqp message body content was null");
+        context.assertEquals(sentContent, amqpBodyContent, "amqp message body not as expected");
+
+        LOG.trace("Shutting down");
+        bridge.shutdown(shutdownRes -> {
+          LOG.trace("Shutdown complete");
+          context.assertTrue(shutdownRes.succeeded());
+          asyncShutdown.complete();
+        });
+      });
+    });
+
+    try {
+      asyncInitialCredit.awaitSuccess();
       asyncShutdown.awaitSuccess();
     } finally {
       server.close();

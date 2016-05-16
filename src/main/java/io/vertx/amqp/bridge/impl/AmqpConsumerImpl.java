@@ -39,10 +39,11 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
   private final MessageTranslatorImpl translator = new MessageTranslatorImpl();
   private final Queue<AmqpMessageImpl> buffered = new ArrayDeque<>();
   private Handler<Message<JsonObject>> handler;
-  private int credits = 1000;
   private boolean paused;
   private boolean closed;
   private Handler<Throwable> exceptionHandler;
+  private boolean initialCreditGiven;
+  private int initialCredit = 1000;
 
   public AmqpConsumerImpl(Vertx vertx, BridgeImpl bridge, ProtonConnection connection, String amqpAddress) {
     this.vertx = vertx;
@@ -74,8 +75,7 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
     // manually to allow for delayed handler registration and pause/resume functionality.
     receiver.setAutoAccept(false);
     receiver.setPrefetch(0);
-    // Flow initial credit
-    receiver.flow(credits);
+
     receiver.open();
   }
 
@@ -135,6 +135,11 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
     this.handler = handler;
 
     if (handler != null) {
+      // Flow initial credit if needed
+      if (!initialCreditGiven) {
+        initialCreditGiven = true;
+        receiver.flow(initialCredit);
+      }
       scheduleBufferedMessageDelivery();
     }
 
@@ -178,14 +183,16 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
 
   @Override
   public MessageConsumer<JsonObject> setMaxBufferedMessages(int maxBufferedMessages) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    if(!initialCreditGiven) {
+      initialCredit = maxBufferedMessages;
+    }
+
+    return this;
   }
 
   @Override
   public int getMaxBufferedMessages() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    return initialCredit;
   }
 
   @Override
