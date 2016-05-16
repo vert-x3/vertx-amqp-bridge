@@ -110,7 +110,7 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
   private void scheduleBufferedMessageDelivery() {
     if (!buffered.isEmpty()) {
       vertx.runOnContext(v -> {
-        if (handler != null) {
+        if (handler != null && !paused) {
           AmqpMessageImpl message = buffered.poll();
           if (message != null) {
             deliverMessageToHandler(message, handler);
