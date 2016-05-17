@@ -60,11 +60,11 @@ public class BridgeSslTest {
   @After
   public void tearDown() {
     try {
-      vertx.close();
-    } finally {
       if (mockServer != null) {
         mockServer.close();
       }
+    } finally {
+      vertx.close();
     }
   }
 
