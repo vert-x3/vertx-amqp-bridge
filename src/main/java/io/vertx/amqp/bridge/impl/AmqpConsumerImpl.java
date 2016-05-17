@@ -26,11 +26,15 @@ import io.vertx.core.VertxException;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.core.streams.ReadStream;
 import io.vertx.proton.ProtonConnection;
 import io.vertx.proton.ProtonReceiver;
 
 public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
+
+  private static final Logger LOG = LoggerFactory.getLogger(AmqpConsumerImpl.class);
 
   private final Vertx vertx;
   private final BridgeImpl bridge;
@@ -42,6 +46,7 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
   private boolean paused;
   private boolean closed;
   private Handler<Throwable> exceptionHandler;
+  private Handler<Void> endHandler;
   private boolean initialCreditGiven;
   private int initialCredit = 1000;
 
@@ -51,11 +56,24 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
     this.amqpAddress = amqpAddress;
     receiver = connection.createReceiver(amqpAddress);
     receiver.closeHandler(res -> {
-      if (!closed && exceptionHandler != null) {
+      boolean handled = false;
+      if (!closed && endHandler != null) {
+        handled = true;
+        endHandler.handle(null);
+      } else if (!closed && exceptionHandler != null) {
+        handled = true;
         if (res.succeeded()) {
           exceptionHandler.handle(new VertxException("Consumer closed remotely"));
         } else {
           exceptionHandler.handle(new VertxException("Consumer closed remotely with error", res.cause()));
+        }
+      }
+
+      if(!handled) {
+        if (res.succeeded()) {
+          LOG.warn("Consumer for address " + amqpAddress + " unexpectedly closed remotely");
+        } else {
+          LOG.warn("Consumer for address " + amqpAddress + " unexpectedly closed remotely with error", res.cause());
         }
       }
 
@@ -126,7 +144,6 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
   @Override
   public MessageConsumer<JsonObject> exceptionHandler(Handler<Throwable> handler) {
     exceptionHandler = handler;
-
     return this;
   }
 
@@ -161,8 +178,8 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
 
   @Override
   public MessageConsumer<JsonObject> endHandler(Handler<Void> endHandler) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    this.endHandler = endHandler;
+    return this;
   }
 
   @Override
@@ -219,6 +236,8 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
           completionHandler.handle(Future.failedFuture(result.cause()));
         }
       });
+    } else {
+      receiver.closeHandler(null);
     }
     receiver.close();
   }
