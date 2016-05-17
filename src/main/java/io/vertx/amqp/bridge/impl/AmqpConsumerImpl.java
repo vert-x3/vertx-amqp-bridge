@@ -25,6 +25,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
+import io.vertx.core.eventbus.impl.BodyReadStream;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -184,8 +185,7 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
 
   @Override
   public ReadStream<JsonObject> bodyStream() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    return new BodyReadStream<>(this);
   }
 
   @Override

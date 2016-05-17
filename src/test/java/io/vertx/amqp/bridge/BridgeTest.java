@@ -45,6 +45,7 @@ import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
+import io.vertx.core.streams.ReadStream;
 import io.vertx.ext.unit.Async;
 import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
@@ -215,6 +216,67 @@ public class BridgeTest extends ActiveMQTestBase {
       });
 
       context.assertEquals(testName, consumer.address(), "address was not as expected");
+    });
+
+    // Send it a message from a regular AMQP client
+    ProtonClient client = ProtonClient.create(vertx);
+    client.connect("localhost", port, res -> {
+      context.assertTrue(res.succeeded());
+
+      org.apache.qpid.proton.message.Message protonMsg = Proton.message();
+      protonMsg.setBody(new AmqpValue(sentContent));
+
+      ProtonConnection conn = res.result().open();
+
+      ProtonSender sender = conn.createSender(testName).open();
+      sender.send(protonMsg, delivery -> {
+        context.assertNotNull(delivery.getRemoteState(), "message had no remote state");
+        context.assertTrue(delivery.getRemoteState() instanceof Accepted, "message was not accepted");
+        context.assertTrue(delivery.remotelySettled(), "message was not settled");
+
+        conn.closeHandler(closeResult -> {
+          conn.disconnect();
+        }).close();
+
+        asyncSendMsg.complete();
+      });
+    });
+
+    asyncSendMsg.awaitSuccess();
+    asyncShutdown.awaitSuccess();
+  }
+
+  @Test(timeout = 20000)
+  public void testReceiveBasicMessageAsBodyStream(TestContext context) throws Exception {
+    String testName = getTestName();
+    String sentContent = "myMessageContent-" + testName;
+
+    Async asyncShutdown = context.async();
+    Async asyncSendMsg = context.async();
+
+    int port = getBrokerAmqpConnectorPort();
+
+    Bridge bridge = Bridge.bridge(vertx);
+    bridge.start("localhost", port, res -> {
+      LOG.trace("Startup complete");
+
+      // Set up a read stream using the bridge
+      ReadStream<JsonObject> stream = bridge.createConsumer(testName).bodyStream();
+      stream.handler(jsonObject -> {
+        context.assertNotNull(jsonObject, "jsonObject was null");
+
+        Object amqpBodyContent = jsonObject.getValue(MessageHelper.BODY);
+        context.assertNotNull(amqpBodyContent, "amqp message body content was null");
+
+        context.assertEquals(sentContent, amqpBodyContent, "amqp message body was not as expected");
+
+        LOG.trace("Shutting down");
+        bridge.shutdown(shutdownRes -> {
+          LOG.trace("Shutdown complete");
+          context.assertTrue(shutdownRes.succeeded());
+          asyncShutdown.complete();
+        });
+      });
     });
 
     // Send it a message from a regular AMQP client
