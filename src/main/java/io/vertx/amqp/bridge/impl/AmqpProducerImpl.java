@@ -33,6 +33,7 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
   private final String amqpAddress;
   private boolean closed;
   private Handler<Throwable> exceptionHandler;
+  private Handler<Void> drainHandler;
 
   public AmqpProducerImpl(BridgeImpl bridge, ProtonConnection connection, String amqpAddress) {
     sender = connection.createSender(amqpAddress);
@@ -48,6 +49,11 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
       if(!closed) {
         closed = true;
         sender.close();
+      }
+    });
+    sender.sendQueueDrainHandler(s -> {
+      if(drainHandler != null) {
+        drainHandler.handle(null);
       }
     });
     sender.open();
@@ -79,7 +85,6 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
     }
 
     if (replyHandler != null) {
-      // TODO: finish implementing replyHandler functionality
       bridge.registerReplyToHandler(msg, replyHandler);
     }
 
@@ -108,14 +113,7 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
 
   @Override
   public MessageProducer<JsonObject> drainHandler(Handler<Void> handler) {
-    if(handler == null) {
-      sender.sendQueueDrainHandler(null);
-    } else {
-      //TODO: save the user handler?
-      sender.sendQueueDrainHandler(s -> {
-        handler.handle(null);
-      });
-    }
+    drainHandler = handler;
 
     return this;
   }
