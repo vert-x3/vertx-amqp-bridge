@@ -23,8 +23,10 @@ import static org.junit.Assert.assertTrue;
 
 import org.apache.qpid.proton.Proton;
 import org.apache.qpid.proton.amqp.Symbol;
+import org.apache.qpid.proton.amqp.UnsignedByte;
 import org.apache.qpid.proton.amqp.UnsignedInteger;
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
+import org.apache.qpid.proton.amqp.messaging.Header;
 import org.apache.qpid.proton.amqp.messaging.Properties;
 import org.apache.qpid.proton.amqp.messaging.Section;
 import org.apache.qpid.proton.message.Message;
@@ -41,6 +43,102 @@ public class MessageTranslatorImplTest {
   @Before
   public void setUp() throws Exception {
     translator = new MessageTranslatorImpl();
+  }
+
+  // ============== header section ==============
+
+  @Test
+  public void testAMQP_to_JSON_WithNoHeaderSection() {
+    Message protonMsg = Proton.message();
+
+    JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
+    assertNotNull("expected converted msg", jsonObject);
+    assertFalse("expected properties element key not to be present", jsonObject.containsKey(MessageHelper.HEADER));
+  }
+
+  @Test
+  public void testJSON_to_AMQP_WithNoHeaderSection() {
+    JsonObject jsonObject = new JsonObject();
+
+    Message protonMsg = translator.convertToAmqpMessage(jsonObject);
+    assertNotNull("Expected converted msg", protonMsg);
+    assertNull("expected converted msg to have no properties section", protonMsg.getHeader());
+  }
+
+  @Test
+  public void testAMQP_to_JSON_VerifyMessageHeader() {
+    boolean testDurable = true;
+    short testPriority = 8;
+    long testTtl = 2345;
+    boolean testFirstAcquirer = true;
+    long testDeliveryCount = 3;
+
+    Message protonMsg = Proton.message();
+    protonMsg.setDurable(testDurable);
+    protonMsg.setPriority(testPriority);
+    protonMsg.setTtl(testTtl);
+    protonMsg.setFirstAcquirer(testFirstAcquirer);
+    protonMsg.setDeliveryCount(testDeliveryCount);
+
+    JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
+    assertNotNull("expected converted msg", jsonObject);
+    assertTrue("expected header element key to be present", jsonObject.containsKey(MessageHelper.HEADER));
+
+    JsonObject jsonHeader = jsonObject.getJsonObject(MessageHelper.HEADER);
+    assertNotNull("expected header element value to be non-null", jsonHeader);
+
+    assertTrue("expected durable key to be present", jsonHeader.containsKey(MessageHelper.HEADER_DURABLE));
+    assertEquals("expected durable value to be present", testDurable,
+        jsonHeader.getValue(MessageHelper.HEADER_DURABLE));
+
+    assertTrue("expected priority key to be present", jsonHeader.containsKey(MessageHelper.HEADER_PRIORITY));
+    assertEquals("expected priority value to be present", testPriority,
+        jsonHeader.getValue(MessageHelper.HEADER_PRIORITY));
+
+    assertTrue("expected ttl key to be present", jsonHeader.containsKey(MessageHelper.HEADER_TTL));
+    assertEquals("expected ttl value to be present", testTtl, jsonHeader.getValue(MessageHelper.HEADER_TTL));
+
+    assertTrue("expected first acquirer key to be present",
+        jsonHeader.containsKey(MessageHelper.HEADER_FIRST_ACQUIRER));
+    assertEquals("expected first acquirer  value to be present", testFirstAcquirer,
+        jsonHeader.getValue(MessageHelper.HEADER_FIRST_ACQUIRER));
+
+    assertTrue("expected delivery count key to be present",
+        jsonHeader.containsKey(MessageHelper.HEADER_DELIVERY_COUNT));
+    assertEquals("expected delivery count value to be present", testDeliveryCount,
+        jsonHeader.getValue(MessageHelper.HEADER_DELIVERY_COUNT));
+  }
+
+  @Test
+  public void testJSON_to_AMQP_VerifyMessageHeader() {
+    boolean testDurable = true;
+    byte testPriority = 8;
+    long testTtl = 2345;
+    boolean testFirstAcquirer = true;
+    long testDeliveryCount = 3;
+
+    JsonObject jsonHeader = new JsonObject();
+    jsonHeader.put(MessageHelper.HEADER_DURABLE, testDurable);
+    jsonHeader.put(MessageHelper.HEADER_PRIORITY, testPriority);
+    jsonHeader.put(MessageHelper.HEADER_TTL, testTtl);
+    jsonHeader.put(MessageHelper.HEADER_FIRST_ACQUIRER, testFirstAcquirer);
+    jsonHeader.put(MessageHelper.HEADER_DELIVERY_COUNT, testDeliveryCount);
+
+    JsonObject jsonObject = new JsonObject();
+    jsonObject.put(MessageHelper.HEADER, jsonHeader);
+
+    Message protonMsg = translator.convertToAmqpMessage(jsonObject);
+    assertNotNull("Expected converted msg", protonMsg);
+
+    Header header = protonMsg.getHeader();
+    assertNotNull("Header section not present", header);
+
+    assertEquals("expected durable value to be present", testDurable, header.getDurable());
+    assertEquals("expected priority value to be present", UnsignedByte.valueOf(testPriority), header.getPriority());
+    assertEquals("expected ttl value to be present", UnsignedInteger.valueOf(testTtl), header.getTtl());
+    assertEquals("expected first acquirer value to be present", testFirstAcquirer, header.getFirstAcquirer());
+    assertEquals("expected delivery count value to be present", UnsignedInteger.valueOf(testDeliveryCount),
+        header.getDeliveryCount());
   }
 
   // ============== body section ==============
@@ -132,8 +230,8 @@ public class MessageTranslatorImplTest {
     assertTrue("expected to key to be present", properties.containsKey(MessageHelper.PROPERTIES_TO));
     assertEquals("expected to value to be present", testToAddress, properties.getValue(MessageHelper.PROPERTIES_TO));
 
-    assertTrue("expected to key to be present", properties.containsKey(MessageHelper.PROPERTIES_REPLY_TO));
-    assertEquals("expected to value to be present", testReplyToAddress,
+    assertTrue("expected reply to key to be present", properties.containsKey(MessageHelper.PROPERTIES_REPLY_TO));
+    assertEquals("expected reply to value to be present", testReplyToAddress,
         properties.getValue(MessageHelper.PROPERTIES_REPLY_TO));
 
     assertTrue("expected message id key to be present", properties.containsKey(MessageHelper.PROPERTIES_MESSAGE_ID));
@@ -153,27 +251,33 @@ public class MessageTranslatorImplTest {
     assertEquals("expected group id value to be present", testGroupId,
         properties.getValue(MessageHelper.PROPERTIES_GROUP_ID));
 
-    assertTrue("expected group sequence key to be present", properties.containsKey(MessageHelper.PROPERTIES_GROUP_SEQUENCE));
+    assertTrue("expected group sequence key to be present",
+        properties.containsKey(MessageHelper.PROPERTIES_GROUP_SEQUENCE));
     assertEquals("expected group sequence value to be present", testGroupSeq,
         properties.getValue(MessageHelper.PROPERTIES_GROUP_SEQUENCE));
 
-    assertTrue("expected reply to group id key to be present", properties.containsKey(MessageHelper.PROPERTIES_REPLY_TO_GROUP_ID));
+    assertTrue("expected reply to group id key to be present",
+        properties.containsKey(MessageHelper.PROPERTIES_REPLY_TO_GROUP_ID));
     assertEquals("expected reply to group id value to be present", testReplyToGroupId,
         properties.getValue(MessageHelper.PROPERTIES_REPLY_TO_GROUP_ID));
 
-    assertTrue("expected content type key to be present", properties.containsKey(MessageHelper.PROPERTIES_CONTENT_TYPE));
+    assertTrue("expected content type key to be present",
+        properties.containsKey(MessageHelper.PROPERTIES_CONTENT_TYPE));
     assertEquals("expected content type  value to be present", testContentType,
         properties.getValue(MessageHelper.PROPERTIES_CONTENT_TYPE));
 
-    assertTrue("expected content encoding key to be present", properties.containsKey(MessageHelper.PROPERTIES_CONTENT_ENCODING));
+    assertTrue("expected content encoding key to be present",
+        properties.containsKey(MessageHelper.PROPERTIES_CONTENT_ENCODING));
     assertEquals("expected content encoding  value to be present", testContentEncoding,
         properties.getValue(MessageHelper.PROPERTIES_CONTENT_ENCODING));
 
-    assertTrue("expected creation time key to be present", properties.containsKey(MessageHelper.PROPERTIES_CREATION_TIME));
+    assertTrue("expected creation time key to be present",
+        properties.containsKey(MessageHelper.PROPERTIES_CREATION_TIME));
     assertEquals("expected creation time value to be present", testCreationTime,
         properties.getValue(MessageHelper.PROPERTIES_CREATION_TIME));
 
-    assertTrue("expected absolute expiry time key to be present", properties.containsKey(MessageHelper.PROPERTIES_ABSOLUTE_EXPIRY_TIME));
+    assertTrue("expected absolute expiry time key to be present",
+        properties.containsKey(MessageHelper.PROPERTIES_ABSOLUTE_EXPIRY_TIME));
     assertEquals("expected absolute expiry time value to be present", testAbsExpiryTime,
         properties.getValue(MessageHelper.PROPERTIES_ABSOLUTE_EXPIRY_TIME));
   }
@@ -217,16 +321,21 @@ public class MessageTranslatorImplTest {
     assertNotNull("Properties section not present", properties);
 
     assertEquals("expected to value to be present", testToAddress, properties.getTo());
-    assertEquals("expected to value to be present", testReplyToAddress, properties.getReplyTo());
+    assertEquals("expected reply to value to be present", testReplyToAddress, properties.getReplyTo());
     assertEquals("expected message id value to be present", testMessageId, properties.getMessageId());
     assertEquals("expected correlation id value to be present", testCorrelationId, properties.getCorrelationId());
     assertEquals("expected subject value to be present", testSubject, properties.getSubject());
     assertEquals("expected group id value to be present", testGroupId, properties.getGroupId());
-    assertEquals("expected group sequence value to be present", UnsignedInteger.valueOf(testGroupSeq), properties.getGroupSequence());
+    assertEquals("expected group sequence value to be present", UnsignedInteger.valueOf(testGroupSeq),
+        properties.getGroupSequence());
     assertEquals("expected reply to group id value to be present", testReplyToGroupId, properties.getReplyToGroupId());
-    assertEquals("expected content type value to be present", Symbol.valueOf(testContentType), properties.getContentType());
-    assertEquals("expected content encoding value to be present", Symbol.valueOf(testContentEncoding), properties.getContentEncoding());
-    assertEquals("expected creation time value to be present", testCreationTime, properties.getCreationTime().getTime());
-    assertEquals("expected absolute expiry time value to be present", testAbsExpiryTime, properties.getAbsoluteExpiryTime().getTime());
+    assertEquals("expected content type value to be present", Symbol.valueOf(testContentType),
+        properties.getContentType());
+    assertEquals("expected content encoding value to be present", Symbol.valueOf(testContentEncoding),
+        properties.getContentEncoding());
+    assertEquals("expected creation time value to be present", testCreationTime,
+        properties.getCreationTime().getTime());
+    assertEquals("expected absolute expiry time value to be present", testAbsExpiryTime,
+        properties.getAbsoluteExpiryTime().getTime());
   }
 }

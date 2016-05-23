@@ -18,8 +18,10 @@ package io.vertx.amqp.bridge.impl;
 import java.util.Date;
 
 import org.apache.qpid.proton.amqp.Symbol;
+import org.apache.qpid.proton.amqp.UnsignedByte;
 import org.apache.qpid.proton.amqp.UnsignedInteger;
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
+import org.apache.qpid.proton.amqp.messaging.Header;
 import org.apache.qpid.proton.amqp.messaging.Properties;
 import org.apache.qpid.proton.amqp.messaging.Section;
 import org.apache.qpid.proton.message.Message;
@@ -47,7 +49,40 @@ public class MessageTranslatorImpl {
       JsonObject jsonProps = createJsonProperties(props);
       jsonObject.put(MessageHelper.PROPERTIES, jsonProps);
     }
+
+    Header header = protonMessage.getHeader();
+    if (header != null) {
+      JsonObject jsonHeader = createJsonHeader(header);
+      jsonObject.put(MessageHelper.HEADER, jsonHeader);
+    }
+
     return jsonObject;
+  }
+
+  private JsonObject createJsonHeader(Header protonHeader) {
+    JsonObject jsonHeader = new JsonObject();
+
+    if (protonHeader.getDurable() != null) {
+      jsonHeader.put(MessageHelper.HEADER_DURABLE, protonHeader.getDurable());
+    }
+
+    if (protonHeader.getPriority() != null) {
+      jsonHeader.put(MessageHelper.HEADER_PRIORITY, protonHeader.getPriority().shortValue());
+    }
+
+    if (protonHeader.getTtl() != null) {
+      jsonHeader.put(MessageHelper.HEADER_TTL, protonHeader.getTtl().longValue());
+    }
+
+    if (protonHeader.getFirstAcquirer() != null) {
+      jsonHeader.put(MessageHelper.HEADER_FIRST_ACQUIRER, protonHeader.getFirstAcquirer());
+    }
+
+    if (protonHeader.getDeliveryCount() != null) {
+      jsonHeader.put(MessageHelper.HEADER_DELIVERY_COUNT, protonHeader.getDeliveryCount().longValue());
+    }
+
+    return jsonHeader;
   }
 
   private JsonObject createJsonProperties(Properties protonProps) {
@@ -123,7 +158,41 @@ public class MessageTranslatorImpl {
       protonMessage.setProperties(props);
     }
 
+    if (jsonObject.containsKey(MessageHelper.HEADER)) {
+      Header header = createAmqpHeader(jsonObject.getJsonObject(MessageHelper.HEADER));
+      protonMessage.setHeader(header);
+    }
+
     return protonMessage;
+  }
+
+  private Header createAmqpHeader(JsonObject jsonHeader) {
+    Header protonHeader = new Header();
+
+    if (jsonHeader.containsKey(MessageHelper.HEADER_DURABLE)) {
+      protonHeader.setDurable(jsonHeader.getBoolean(MessageHelper.HEADER_DURABLE));
+    }
+
+    if (jsonHeader.containsKey(MessageHelper.HEADER_PRIORITY)) {
+      int priority = jsonHeader.getInteger(MessageHelper.HEADER_PRIORITY);
+      protonHeader.setPriority(UnsignedByte.valueOf((byte) priority));
+    }
+
+    if (jsonHeader.containsKey(MessageHelper.HEADER_TTL)) {
+      Long ttl = jsonHeader.getLong(MessageHelper.HEADER_TTL);
+      protonHeader.setTtl(UnsignedInteger.valueOf(ttl));
+    }
+
+    if (jsonHeader.containsKey(MessageHelper.HEADER_FIRST_ACQUIRER)) {
+      protonHeader.setFirstAcquirer(jsonHeader.getBoolean(MessageHelper.HEADER_FIRST_ACQUIRER));
+    }
+
+    if (jsonHeader.containsKey(MessageHelper.HEADER_DELIVERY_COUNT)) {
+      Long dc = jsonHeader.getLong(MessageHelper.HEADER_DELIVERY_COUNT);
+      protonHeader.setDeliveryCount(UnsignedInteger.valueOf(dc));
+    }
+
+    return protonHeader;
   }
 
   private Properties createAmqpProperties(JsonObject jsonProps) {

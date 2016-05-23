@@ -15,10 +15,24 @@
 */
 package io.vertx.amqp.bridge;
 
+/**
+ * Helper for dealing with the various sections, and their constituent elements, that form the
+ * <a href="http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-messaging-v1.0-os.html#section-message-format">AMQP
+ * message</a>.
+ */
 public class MessageHelper {
+
   // sections
+  public static final String HEADER = "header";
   public static final String BODY = "body";
   public static final String PROPERTIES = "properties";
+
+  // header section
+  public static final String HEADER_DURABLE = "durable";
+  public static final String HEADER_PRIORITY = "priority";
+  public static final String HEADER_TTL = "ttl";
+  public static final String HEADER_FIRST_ACQUIRER = "first_acquirer";
+  public static final String HEADER_DELIVERY_COUNT = "delivery_count";
 
   // properties section
   public static final String PROPERTIES_TO = "to";
