@@ -15,6 +15,10 @@
 */
 package io.vertx.amqp.bridge.impl;
 
+import java.util.Date;
+
+import org.apache.qpid.proton.amqp.Symbol;
+import org.apache.qpid.proton.amqp.UnsignedInteger;
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton.amqp.messaging.Properties;
 import org.apache.qpid.proton.amqp.messaging.Section;
@@ -67,6 +71,39 @@ public class MessageTranslatorImpl {
       jsonProps.put(MessageHelper.PROPERTIES_CORRELATION_ID, protonProps.getCorrelationId().toString());
     }
 
+    if (protonProps.getSubject() != null) {
+      jsonProps.put(MessageHelper.PROPERTIES_SUBJECT, protonProps.getSubject());
+    }
+
+    if (protonProps.getGroupId() != null) {
+      jsonProps.put(MessageHelper.PROPERTIES_GROUP_ID, protonProps.getGroupId());
+    }
+
+    if (protonProps.getGroupSequence() != null) {
+      jsonProps.put(MessageHelper.PROPERTIES_GROUP_SEQUENCE, protonProps.getGroupSequence().longValue());
+    }
+
+    if (protonProps.getReplyToGroupId() != null) {
+      jsonProps.put(MessageHelper.PROPERTIES_REPLY_TO_GROUP_ID, protonProps.getReplyToGroupId());
+    }
+
+    if (protonProps.getContentType() != null) {
+      jsonProps.put(MessageHelper.PROPERTIES_CONTENT_TYPE, protonProps.getContentType().toString());
+    }
+
+    if (protonProps.getContentEncoding() != null) {
+      jsonProps.put(MessageHelper.PROPERTIES_CONTENT_ENCODING, protonProps.getContentEncoding().toString());
+    }
+
+    if (protonProps.getCreationTime() != null) {
+      jsonProps.put(MessageHelper.PROPERTIES_CREATION_TIME, protonProps.getCreationTime().getTime());
+    }
+
+    if (protonProps.getAbsoluteExpiryTime() != null) {
+      jsonProps.put(MessageHelper.PROPERTIES_ABSOLUTE_EXPIRY_TIME, protonProps.getAbsoluteExpiryTime().getTime());
+    }
+
+    // TODO: user-id
     return jsonProps;
   }
 
@@ -110,7 +147,44 @@ public class MessageTranslatorImpl {
       proptonProps.setCorrelationId(jsonProps.getString(MessageHelper.PROPERTIES_CORRELATION_ID));
     }
 
-    // TODO: handle other fields
+    if (jsonProps.containsKey(MessageHelper.PROPERTIES_SUBJECT)) {
+      proptonProps.setSubject(jsonProps.getString(MessageHelper.PROPERTIES_SUBJECT));
+    }
+
+    if (jsonProps.containsKey(MessageHelper.PROPERTIES_GROUP_ID)) {
+      proptonProps.setGroupId(jsonProps.getString(MessageHelper.PROPERTIES_GROUP_ID));
+    }
+
+    if (jsonProps.containsKey(MessageHelper.PROPERTIES_GROUP_SEQUENCE)) {
+      Long seq = jsonProps.getLong(MessageHelper.PROPERTIES_GROUP_SEQUENCE);
+      proptonProps.setGroupSequence(UnsignedInteger.valueOf(seq));
+    }
+
+    if (jsonProps.containsKey(MessageHelper.PROPERTIES_REPLY_TO_GROUP_ID)) {
+      proptonProps.setReplyToGroupId(jsonProps.getString(MessageHelper.PROPERTIES_REPLY_TO_GROUP_ID));
+    }
+
+    if (jsonProps.containsKey(MessageHelper.PROPERTIES_CONTENT_TYPE)) {
+      String contentType = jsonProps.getString(MessageHelper.PROPERTIES_CONTENT_TYPE);
+      proptonProps.setContentType(Symbol.valueOf(contentType));
+    }
+
+    if (jsonProps.containsKey(MessageHelper.PROPERTIES_CONTENT_ENCODING)) {
+      String contentEncoding = jsonProps.getString(MessageHelper.PROPERTIES_CONTENT_ENCODING);
+      proptonProps.setContentEncoding(Symbol.valueOf(contentEncoding));
+    }
+
+    if (jsonProps.containsKey(MessageHelper.PROPERTIES_CREATION_TIME)) {
+      Long creationTime = jsonProps.getLong(MessageHelper.PROPERTIES_CREATION_TIME);
+      proptonProps.setCreationTime(new Date(creationTime));
+    }
+
+    if (jsonProps.containsKey(MessageHelper.PROPERTIES_ABSOLUTE_EXPIRY_TIME)) {
+      Long expiryTime = jsonProps.getLong(MessageHelper.PROPERTIES_ABSOLUTE_EXPIRY_TIME);
+      proptonProps.setAbsoluteExpiryTime(new Date(expiryTime));
+    }
+
+    // TODO: user-id
     return proptonProps;
   }
 }

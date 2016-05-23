@@ -25,4 +25,12 @@ public class MessageHelper {
   public static final String PROPERTIES_REPLY_TO = "reply_to";
   public static final String PROPERTIES_MESSAGE_ID = "message_id";
   public static final String PROPERTIES_CORRELATION_ID = "correlation_id";
+  public static final String PROPERTIES_SUBJECT = "subject";
+  public static final String PROPERTIES_GROUP_ID = "group_id";
+  public static final String PROPERTIES_GROUP_SEQUENCE = "group_sequence";
+  public static final String PROPERTIES_REPLY_TO_GROUP_ID = "reply_to_group_id";
+  public static final String PROPERTIES_CONTENT_TYPE = "content_type";
+  public static final String PROPERTIES_CONTENT_ENCODING = "content_encoding";
+  public static final String PROPERTIES_CREATION_TIME = "creation_time";
+  public static final String PROPERTIES_ABSOLUTE_EXPIRY_TIME = "absolute_expiry_time";
 }
