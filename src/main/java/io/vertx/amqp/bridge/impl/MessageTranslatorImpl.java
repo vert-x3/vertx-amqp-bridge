@@ -167,6 +167,8 @@ public class MessageTranslatorImpl {
         byte[] bytes = new byte[bin.getLength()];
         System.arraycopy(bin.getArray(), bin.getArrayOffset(), bytes, 0, bin.getLength());
         value = bytes;
+      } else if (value instanceof Date) {
+        value = ((Date) value).getTime();
       }
 
       jsonAppProps.put(key, value);

@@ -23,6 +23,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -259,10 +260,41 @@ public class MessageTranslatorImplTest {
     assertTrue("expected key to be present", jsonAppProps.containsKey(binaryPropKey));
 
     Map<String, Object> propsMap = jsonAppProps.getMap();
-    assertTrue("expected value to be present, as encoded string", propsMap.containsKey(binaryPropKey));
-    assertTrue("expected key to be present", jsonAppProps.getValue(binaryPropKey) instanceof String);
+    assertTrue("expected key to be present", propsMap.containsKey(binaryPropKey));
+    assertTrue("expected value to be present, as encoded string", jsonAppProps.getValue(binaryPropKey) instanceof String);
     assertArrayEquals("unepected decoded bytes", binaryPropValueSource.getBytes(StandardCharsets.UTF_8),
         jsonAppProps.getBinary(binaryPropKey));
+  }
+
+  /**
+   * Verifies that an incoming timestamp AMQP application property is converted to a long [by the translator]
+   */
+  @Test
+  public void testAMQP_to_JSON_VerifyApplicationPropertyTimestamp() {
+    Map<String, Object> props = new HashMap<>();
+    ApplicationProperties appProps = new ApplicationProperties(props);
+
+    String timestampPropKey = "timestampPropKey";
+    long now = System.currentTimeMillis();
+
+    props.put(timestampPropKey, new Date(now));
+
+    Message protonMsg = Proton.message();
+    protonMsg.setApplicationProperties(appProps);
+
+    JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
+    assertNotNull("expected converted msg", jsonObject);
+    assertTrue("expected application properties element key to be present",
+        jsonObject.containsKey(MessageHelper.APPLICATION_PROPERTIES));
+
+    JsonObject jsonAppProps = jsonObject.getJsonObject(MessageHelper.APPLICATION_PROPERTIES);
+    assertNotNull("expected application properties element value to be non-null", jsonAppProps);
+
+    assertTrue("expected key to be present", jsonAppProps.containsKey(timestampPropKey));
+    Map<String, Object> propsMap = jsonAppProps.getMap();
+    assertTrue("expected key to be present", propsMap.containsKey(timestampPropKey));
+    assertTrue("expected value to be present, as encoded long", jsonAppProps.getValue(timestampPropKey) instanceof Long);
+    assertEquals("expected value to be equal", now, jsonAppProps.getValue(timestampPropKey));
   }
 
   @Test
