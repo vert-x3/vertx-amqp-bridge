@@ -199,6 +199,34 @@ public class MessageTranslatorImplTest {
     assertEquals("expected value to be equal", testPropValueA, jsonAppProps.getValue(testPropKeyA));
   }
 
+  /**
+   * Verifies that a Symbol application property is converted to a String [by the JsonObject]
+   */
+  @Test
+  public void testAMQP_to_JSON_VerifyApplicationPropertySymbol() {
+    Map<String, Object> props = new HashMap<>();
+    ApplicationProperties appProps = new ApplicationProperties(props);
+
+    String symbolPropKey = "symbolPropKey";
+    Symbol symbolPropValue = Symbol.valueOf("symbolPropValue");
+
+    props.put(symbolPropKey, symbolPropValue);
+
+    Message protonMsg = Proton.message();
+    protonMsg.setApplicationProperties(appProps);
+
+    JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
+    assertNotNull("expected converted msg", jsonObject);
+    assertTrue("expected application properties element key to be present",
+        jsonObject.containsKey(MessageHelper.APPLICATION_PROPERTIES));
+
+    JsonObject jsonAppProps = jsonObject.getJsonObject(MessageHelper.APPLICATION_PROPERTIES);
+    assertNotNull("expected application properties element value to be non-null", jsonAppProps);
+
+    assertTrue("expected key to be present", jsonAppProps.containsKey(symbolPropKey));
+    assertEquals("expected value to be equal, as a string", symbolPropValue.toString(), jsonAppProps.getValue(symbolPropKey));
+  }
+
   @Test
   public void testJSON_to_AMQP_VerifyMessageApplicationProperties() {
 
