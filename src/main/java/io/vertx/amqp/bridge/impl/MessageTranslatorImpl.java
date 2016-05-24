@@ -16,11 +16,15 @@
 package io.vertx.amqp.bridge.impl;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.qpid.proton.amqp.Symbol;
 import org.apache.qpid.proton.amqp.UnsignedByte;
 import org.apache.qpid.proton.amqp.UnsignedInteger;
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
+import org.apache.qpid.proton.amqp.messaging.ApplicationProperties;
 import org.apache.qpid.proton.amqp.messaging.Header;
 import org.apache.qpid.proton.amqp.messaging.Properties;
 import org.apache.qpid.proton.amqp.messaging.Section;
@@ -54,6 +58,13 @@ public class MessageTranslatorImpl {
     if (header != null) {
       JsonObject jsonHeader = createJsonHeader(header);
       jsonObject.put(MessageHelper.HEADER, jsonHeader);
+    }
+
+    ApplicationProperties appProps = protonMessage.getApplicationProperties();
+    if (appProps != null && appProps.getValue() != null) {
+      @SuppressWarnings("unchecked")
+      JsonObject jsonAppProps = createJsonApplicationProperties(appProps.getValue());
+      jsonObject.put(MessageHelper.APPLICATION_PROPERTIES, jsonAppProps);
     }
 
     return jsonObject;
@@ -142,6 +153,20 @@ public class MessageTranslatorImpl {
     return jsonProps;
   }
 
+  private JsonObject createJsonApplicationProperties(Map<String, Object> appProps) {
+    JsonObject jsonAppProps = new JsonObject();
+
+    for (Entry<String, Object> entry : appProps.entrySet()) {
+      String key = entry.getKey();
+      Object value = entry.getValue();
+
+      // TODO: Adjust certain values as appropriate?
+      jsonAppProps.put(key, value);
+    }
+
+    return jsonAppProps;
+  }
+
   public Message convertToAmqpMessage(JsonObject jsonObject) throws IllegalArgumentException {
     Message protonMessage = Message.Factory.create();
 
@@ -161,6 +186,12 @@ public class MessageTranslatorImpl {
     if (jsonObject.containsKey(MessageHelper.HEADER)) {
       Header header = createAmqpHeader(jsonObject.getJsonObject(MessageHelper.HEADER));
       protonMessage.setHeader(header);
+    }
+
+    if (jsonObject.containsKey(MessageHelper.APPLICATION_PROPERTIES)) {
+      ApplicationProperties appProps = createAmqpApplicationProperties(
+          jsonObject.getJsonObject(MessageHelper.APPLICATION_PROPERTIES));
+      protonMessage.setApplicationProperties(appProps);
     }
 
     return protonMessage;
@@ -193,6 +224,20 @@ public class MessageTranslatorImpl {
     }
 
     return protonHeader;
+  }
+
+  private ApplicationProperties createAmqpApplicationProperties(JsonObject jsonAppProps) {
+    Map<String, Object> props = new HashMap<>();
+    ApplicationProperties protonAppProps = new ApplicationProperties(props);
+
+    Map<String, Object> underlying = jsonAppProps.getMap();
+
+    for (Entry<String, Object> entry : underlying.entrySet()) {
+      // TODO: anything that needs adjusted/rejected? Arrays etc?
+      props.put(entry.getKey(), entry.getValue());
+    }
+
+    return protonAppProps;
   }
 
   private Properties createAmqpProperties(JsonObject jsonProps) {

@@ -21,11 +21,15 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.qpid.proton.Proton;
 import org.apache.qpid.proton.amqp.Symbol;
 import org.apache.qpid.proton.amqp.UnsignedByte;
 import org.apache.qpid.proton.amqp.UnsignedInteger;
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
+import org.apache.qpid.proton.amqp.messaging.ApplicationProperties;
 import org.apache.qpid.proton.amqp.messaging.Header;
 import org.apache.qpid.proton.amqp.messaging.Properties;
 import org.apache.qpid.proton.amqp.messaging.Section;
@@ -53,7 +57,7 @@ public class MessageTranslatorImplTest {
 
     JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
     assertNotNull("expected converted msg", jsonObject);
-    assertFalse("expected properties element key not to be present", jsonObject.containsKey(MessageHelper.HEADER));
+    assertFalse("expected header element key not to be present", jsonObject.containsKey(MessageHelper.HEADER));
   }
 
   @Test
@@ -62,7 +66,7 @@ public class MessageTranslatorImplTest {
 
     Message protonMsg = translator.convertToAmqpMessage(jsonObject);
     assertNotNull("Expected converted msg", protonMsg);
-    assertNull("expected converted msg to have no properties section", protonMsg.getHeader());
+    assertNull("expected converted msg to have no header section", protonMsg.getHeader());
   }
 
   @Test
@@ -139,6 +143,95 @@ public class MessageTranslatorImplTest {
     assertEquals("expected first acquirer value to be present", testFirstAcquirer, header.getFirstAcquirer());
     assertEquals("expected delivery count value to be present", UnsignedInteger.valueOf(testDeliveryCount),
         header.getDeliveryCount());
+  }
+
+  // ============== application-properties section ==============
+
+  @Test
+  public void testAMQP_to_JSON_WithNoApplicationPropertiesSection() {
+    Message protonMsg = Proton.message();
+
+    JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
+    assertNotNull("expected converted msg", jsonObject);
+    assertFalse("expected appliation properties element key not to be present",
+        jsonObject.containsKey(MessageHelper.APPLICATION_PROPERTIES));
+  }
+
+  @Test
+  public void testJSON_to_AMQP_WithNoApplicationPropertiesSection() {
+    JsonObject jsonObject = new JsonObject();
+
+    Message protonMsg = translator.convertToAmqpMessage(jsonObject);
+    assertNotNull("Expected converted msg", protonMsg);
+    assertNull("expected converted msg to have no application properties section",
+        protonMsg.getApplicationProperties());
+  }
+
+  @Test
+  public void testAMQP_to_JSON_VerifyMessageApplicationProperties() {
+
+    Map<String, Object> props = new HashMap<>();
+    ApplicationProperties appProps = new ApplicationProperties(props);
+
+    String testPropKeyA = "testPropKeyA";
+    String testPropValueA = "testPropValueA";
+    String testPropKeyB = "testPropKeyB";
+    String testPropValueB = "testPropValueB";
+
+    props.put(testPropKeyA, testPropValueA);
+    props.put(testPropKeyB, testPropValueB);
+
+    Message protonMsg = Proton.message();
+    protonMsg.setApplicationProperties(appProps);
+
+    JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
+    assertNotNull("expected converted msg", jsonObject);
+    assertTrue("expected application properties element key to be present",
+        jsonObject.containsKey(MessageHelper.APPLICATION_PROPERTIES));
+
+    JsonObject jsonAppProps = jsonObject.getJsonObject(MessageHelper.APPLICATION_PROPERTIES);
+    assertNotNull("expected application properties element value to be non-null", jsonAppProps);
+
+    assertTrue("expected key to be present", jsonAppProps.containsKey(testPropKeyB));
+    assertEquals("expected value to be equal", testPropValueB, jsonAppProps.getValue(testPropKeyB));
+
+    assertTrue("expected key to be present", jsonAppProps.containsKey(testPropKeyA));
+    assertEquals("expected value to be equal", testPropValueA, jsonAppProps.getValue(testPropKeyA));
+  }
+
+  @Test
+  public void testJSON_to_AMQP_VerifyMessageApplicationProperties() {
+
+    String testPropKeyA = "testPropKeyA";
+    String testPropValueA = "testPropValueA";
+    String testPropKeyB = "testPropKeyB";
+    String testPropValueB = "testPropValueB";
+
+    JsonObject jsonAppProps = new JsonObject();
+
+    jsonAppProps.put(testPropKeyA, testPropValueA);
+    jsonAppProps.put(testPropKeyB, testPropValueB);
+
+    JsonObject jsonObject = new JsonObject();
+    jsonObject.put(MessageHelper.APPLICATION_PROPERTIES, jsonAppProps);
+
+    Message protonMsg = translator.convertToAmqpMessage(jsonObject);
+    assertNotNull("Expected converted msg", protonMsg);
+
+    ApplicationProperties appProps = protonMsg.getApplicationProperties();
+    assertNotNull("Application properties section not present", appProps);
+
+    @SuppressWarnings("unchecked")
+    Map<String, Object> props = appProps.getValue();
+    assertNotNull("Application properties map not present", appProps);
+
+    assertTrue("expected key to be present", props.containsKey(testPropKeyA));
+    assertEquals("expected value to be equal", testPropValueA, props.get(testPropKeyA));
+
+    assertTrue("expected key to be present", props.containsKey(testPropKeyB));
+    assertEquals("expected value to be equal", testPropValueB, props.get(testPropKeyB));
+
+    assertEquals("unexpected number of props", 2, props.size());
   }
 
   // ============== body section ==============

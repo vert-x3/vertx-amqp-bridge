@@ -26,6 +26,7 @@ public class MessageHelper {
   public static final String HEADER = "header";
   public static final String BODY = "body";
   public static final String PROPERTIES = "properties";
+  public static final String APPLICATION_PROPERTIES = "application_properties";
 
   // header section
   public static final String HEADER_DURABLE = "durable";
