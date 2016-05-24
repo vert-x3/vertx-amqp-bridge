@@ -20,6 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.qpid.proton.amqp.Binary;
 import org.apache.qpid.proton.amqp.Symbol;
 import org.apache.qpid.proton.amqp.UnsignedByte;
 import org.apache.qpid.proton.amqp.UnsignedInteger;
@@ -161,6 +162,13 @@ public class MessageTranslatorImpl {
       Object value = entry.getValue();
 
       // TODO: Adjust certain values as appropriate?
+      if(value instanceof Binary) {
+        Binary bin = (Binary) value;
+        byte[] bytes = new byte[bin.getLength()];
+        System.arraycopy(bin.getArray(), bin.getArrayOffset(), bytes, 0, bin.getLength());
+        value = bytes;
+      }
+
       jsonAppProps.put(key, value);
     }
 

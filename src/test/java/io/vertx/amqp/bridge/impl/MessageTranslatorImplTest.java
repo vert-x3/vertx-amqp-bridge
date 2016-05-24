@@ -15,16 +15,19 @@
 */
 package io.vertx.amqp.bridge.impl;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.qpid.proton.Proton;
+import org.apache.qpid.proton.amqp.Binary;
 import org.apache.qpid.proton.amqp.Symbol;
 import org.apache.qpid.proton.amqp.UnsignedByte;
 import org.apache.qpid.proton.amqp.UnsignedInteger;
@@ -225,6 +228,41 @@ public class MessageTranslatorImplTest {
 
     assertTrue("expected key to be present", jsonAppProps.containsKey(symbolPropKey));
     assertEquals("expected value to be equal, as a string", symbolPropValue.toString(), jsonAppProps.getValue(symbolPropKey));
+  }
+
+  /**
+   * Verifies that an incoming Binary AMQP application property is converted into an encoded string [by combination of
+   * the translator and JsonObject itself]
+   */
+  @Test
+  public void testAMQP_to_JSON_VerifyApplicationPropertyBinary() {
+    Map<String, Object> props = new HashMap<>();
+    ApplicationProperties appProps = new ApplicationProperties(props);
+
+    String binaryPropKey = "binaryPropKey";
+    String binaryPropValueSource = "binaryPropValueSource";
+    Binary bin = new Binary(binaryPropValueSource.getBytes(StandardCharsets.UTF_8));
+
+    props.put(binaryPropKey, bin);
+
+    Message protonMsg = Proton.message();
+    protonMsg.setApplicationProperties(appProps);
+
+    JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
+    assertNotNull("expected converted msg", jsonObject);
+    assertTrue("expected application properties element key to be present",
+        jsonObject.containsKey(MessageHelper.APPLICATION_PROPERTIES));
+
+    JsonObject jsonAppProps = jsonObject.getJsonObject(MessageHelper.APPLICATION_PROPERTIES);
+    assertNotNull("expected application properties element value to be non-null", jsonAppProps);
+
+    assertTrue("expected key to be present", jsonAppProps.containsKey(binaryPropKey));
+
+    Map<String, Object> propsMap = jsonAppProps.getMap();
+    assertTrue("expected value to be present, as encoded string", propsMap.containsKey(binaryPropKey));
+    assertTrue("expected key to be present", jsonAppProps.getValue(binaryPropKey) instanceof String);
+    assertArrayEquals("unepected decoded bytes", binaryPropValueSource.getBytes(StandardCharsets.UTF_8),
+        jsonAppProps.getBinary(binaryPropKey));
   }
 
   @Test
