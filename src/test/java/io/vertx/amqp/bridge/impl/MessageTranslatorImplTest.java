@@ -35,6 +35,7 @@ import org.apache.qpid.proton.amqp.UnsignedInteger;
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton.amqp.messaging.ApplicationProperties;
 import org.apache.qpid.proton.amqp.messaging.Header;
+import org.apache.qpid.proton.amqp.messaging.MessageAnnotations;
 import org.apache.qpid.proton.amqp.messaging.Properties;
 import org.apache.qpid.proton.amqp.messaging.Section;
 import org.apache.qpid.proton.message.Message;
@@ -330,6 +331,97 @@ public class MessageTranslatorImplTest {
     assertEquals("expected value to be equal", testPropValueB, props.get(testPropKeyB));
 
     assertEquals("unexpected number of props", 2, props.size());
+  }
+
+  // ============== message-annotations section ==============
+
+  @Test
+  public void testAMQP_to_JSON_WithNoMessageAnnotations() {
+    Message protonMsg = Proton.message();
+
+    JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
+    assertNotNull("expected converted msg", jsonObject);
+    assertFalse("expected message annotations element key not to be present",
+        jsonObject.containsKey(MessageHelper.MESSAGE_ANNOTATIONS));
+  }
+
+  @Test
+  public void testJSON_to_AMQP_WithNoMessageAnnotations() {
+    JsonObject jsonObject = new JsonObject();
+
+    Message protonMsg = translator.convertToAmqpMessage(jsonObject);
+    assertNotNull("Expected converted msg", protonMsg);
+    assertNull("expected converted msg to have no message annotations section",
+        protonMsg.getMessageAnnotations());
+  }
+
+  @Test
+  public void testAMQP_to_JSON_VerifyMessageAnnotations() {
+
+    Map<Symbol, Object> annotations = new HashMap<>();
+    MessageAnnotations ma = new MessageAnnotations(annotations);
+
+    String testAnnKeyNameA = "testAnnKeyA";
+    String testAnnKeyNameB = "testAnnKeyB";
+    Symbol testAnnKeyA = Symbol.valueOf(testAnnKeyNameA);
+    String testAnnValueA = "testAnnValueA";
+    Symbol testAnnKeyB = Symbol.valueOf(testAnnKeyNameB);
+    String testAnnValueB = "testAnnValueB";
+
+    annotations.put(testAnnKeyA, testAnnValueA);
+    annotations.put(testAnnKeyB, testAnnValueB);
+
+    Message protonMsg = Proton.message();
+    protonMsg.setMessageAnnotations(ma);
+
+    JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
+    assertNotNull("expected converted msg", jsonObject);
+    assertTrue("expected message annotations element key to be present",
+        jsonObject.containsKey(MessageHelper.MESSAGE_ANNOTATIONS));
+
+    JsonObject jsonAppProps = jsonObject.getJsonObject(MessageHelper.MESSAGE_ANNOTATIONS);
+    assertNotNull("expected message annotations element value to be non-null", jsonAppProps);
+
+    assertTrue("expected key to be present", jsonAppProps.containsKey(testAnnKeyNameA));
+    assertEquals("expected value to be equal", testAnnValueA, jsonAppProps.getValue(testAnnKeyNameA));
+
+    assertTrue("expected key to be present", jsonAppProps.containsKey(testAnnKeyNameB));
+    assertEquals("expected value to be equal", testAnnValueB, jsonAppProps.getValue(testAnnKeyNameB));
+  }
+
+  @Test
+  public void testJSON_to_AMQP_VerifyMessageAnnotations() {
+    String testAnnKeyNameA = "testAnnKeyA";
+    String testAnnKeyNameB = "testAnnKeyB";
+    Symbol testAnnKeyA = Symbol.valueOf(testAnnKeyNameA);
+    String testAnnValueA = "testAnnValueA";
+    Symbol testAnnKeyB = Symbol.valueOf(testAnnKeyNameB);
+    String testAnnValueB = "testAnnValueB";
+
+    JsonObject jsonAppProps = new JsonObject();
+
+    jsonAppProps.put(testAnnKeyNameA, testAnnValueA);
+    jsonAppProps.put(testAnnKeyNameB, testAnnValueB);
+
+    JsonObject jsonObject = new JsonObject();
+    jsonObject.put(MessageHelper.MESSAGE_ANNOTATIONS, jsonAppProps);
+
+    Message protonMsg = translator.convertToAmqpMessage(jsonObject);
+    assertNotNull("Expected converted msg", protonMsg);
+
+    MessageAnnotations ma = protonMsg.getMessageAnnotations();
+    assertNotNull("message annotations  section not present", ma);
+
+    Map<Symbol, Object> annotations = ma.getValue();
+    assertNotNull("message annotations  map not present", ma);
+
+    assertTrue("expected key to be present", annotations.containsKey(testAnnKeyA));
+    assertEquals("expected value to be equal", testAnnValueA, annotations.get(testAnnKeyA));
+
+    assertTrue("expected key to be present", annotations.containsKey(testAnnKeyB));
+    assertEquals("expected value to be equal", testAnnValueB, annotations.get(testAnnKeyB));
+
+    assertEquals("unexpected number of props", 2, annotations.size());
   }
 
   // ============== body section ==============

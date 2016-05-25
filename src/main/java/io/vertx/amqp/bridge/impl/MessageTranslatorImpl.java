@@ -27,6 +27,7 @@ import org.apache.qpid.proton.amqp.UnsignedInteger;
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton.amqp.messaging.ApplicationProperties;
 import org.apache.qpid.proton.amqp.messaging.Header;
+import org.apache.qpid.proton.amqp.messaging.MessageAnnotations;
 import org.apache.qpid.proton.amqp.messaging.Properties;
 import org.apache.qpid.proton.amqp.messaging.Section;
 import org.apache.qpid.proton.message.Message;
@@ -68,6 +69,12 @@ public class MessageTranslatorImpl {
       jsonObject.put(MessageHelper.APPLICATION_PROPERTIES, jsonAppProps);
     }
 
+    MessageAnnotations msgAnn = protonMessage.getMessageAnnotations();
+    if (msgAnn != null && msgAnn.getValue() != null) {
+      JsonObject jsonMsgAnn = createJsonMessageAnnotations(msgAnn.getValue());
+      jsonObject.put(MessageHelper.MESSAGE_ANNOTATIONS, jsonMsgAnn);
+    }
+
     return jsonObject;
   }
 
@@ -95,6 +102,19 @@ public class MessageTranslatorImpl {
     }
 
     return jsonHeader;
+  }
+
+  private JsonObject createJsonMessageAnnotations(Map<Symbol, Object> msgAnn) {
+    JsonObject jsonMsgAnn = new JsonObject();
+
+    for (Entry<Symbol, Object> entry : msgAnn.entrySet()) {
+      Symbol key = entry.getKey();
+      Object value = translateToJsonCompatible(entry.getValue());
+
+      jsonMsgAnn.put(key.toString(), value);
+    }
+
+    return jsonMsgAnn;
   }
 
   private JsonObject createJsonProperties(Properties protonProps) {
@@ -159,22 +179,26 @@ public class MessageTranslatorImpl {
 
     for (Entry<String, Object> entry : appProps.entrySet()) {
       String key = entry.getKey();
-      Object value = entry.getValue();
-
-      // TODO: Adjust certain values as appropriate?
-      if(value instanceof Binary) {
-        Binary bin = (Binary) value;
-        byte[] bytes = new byte[bin.getLength()];
-        System.arraycopy(bin.getArray(), bin.getArrayOffset(), bytes, 0, bin.getLength());
-        value = bytes;
-      } else if (value instanceof Date) {
-        value = ((Date) value).getTime();
-      }
+      Object value = translateToJsonCompatible(entry.getValue());
 
       jsonAppProps.put(key, value);
     }
 
     return jsonAppProps;
+  }
+
+  private Object translateToJsonCompatible(Object value) {
+    // TODO: Adjust certain values as appropriate?
+    // Map+List, and nested values?
+    if (value instanceof Binary) {
+      Binary bin = (Binary) value;
+      byte[] bytes = new byte[bin.getLength()];
+      System.arraycopy(bin.getArray(), bin.getArrayOffset(), bytes, 0, bin.getLength());
+      value = bytes;
+    } else if (value instanceof Date) {
+      value = ((Date) value).getTime();
+    }
+    return value;
   }
 
   public Message convertToAmqpMessage(JsonObject jsonObject) throws IllegalArgumentException {
@@ -202,6 +226,12 @@ public class MessageTranslatorImpl {
       ApplicationProperties appProps = createAmqpApplicationProperties(
           jsonObject.getJsonObject(MessageHelper.APPLICATION_PROPERTIES));
       protonMessage.setApplicationProperties(appProps);
+    }
+
+    if (jsonObject.containsKey(MessageHelper.MESSAGE_ANNOTATIONS)) {
+      MessageAnnotations msgAnn = createAmqpMessageAnnotations(
+          jsonObject.getJsonObject(MessageHelper.MESSAGE_ANNOTATIONS));
+      protonMessage.setMessageAnnotations(msgAnn);
     }
 
     return protonMessage;
@@ -234,6 +264,20 @@ public class MessageTranslatorImpl {
     }
 
     return protonHeader;
+  }
+
+  private MessageAnnotations createAmqpMessageAnnotations(JsonObject jsonMsgAnn) {
+    Map<Symbol, Object> ann = new HashMap<>();
+    MessageAnnotations protonMsgAnn = new MessageAnnotations(ann);
+
+    Map<String, Object> underlying = jsonMsgAnn.getMap();
+
+    for (Entry<String, Object> entry : underlying.entrySet()) {
+      // TODO: anything that needs adjusted/rejected? Arrays etc?
+      ann.put(Symbol.valueOf(entry.getKey()), entry.getValue());
+    }
+
+    return protonMsgAnn;
   }
 
   private ApplicationProperties createAmqpApplicationProperties(JsonObject jsonAppProps) {
