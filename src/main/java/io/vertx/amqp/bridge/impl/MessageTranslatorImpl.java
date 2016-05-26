@@ -15,8 +15,11 @@
 */
 package io.vertx.amqp.bridge.impl;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -33,6 +36,7 @@ import org.apache.qpid.proton.amqp.messaging.Section;
 import org.apache.qpid.proton.message.Message;
 
 import io.vertx.amqp.bridge.MessageHelper;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class MessageTranslatorImpl {
@@ -188,9 +192,28 @@ public class MessageTranslatorImpl {
   }
 
   private Object translateToJsonCompatible(Object value) {
-    // TODO: Adjust certain values as appropriate?
-    // Map+List, and nested values?
-    if (value instanceof Binary) {
+    if (value instanceof Map) {
+      JsonObject jsonObject = new JsonObject();
+
+      for (Entry<?, ?> entry : ((Map<?, ?>) value).entrySet()) {
+        String key = String.valueOf(entry.getKey());
+        Object val = translateToJsonCompatible(entry.getValue());
+
+        jsonObject.put(key, val);
+      }
+
+      value = jsonObject;
+    } else if (value instanceof List) {
+      JsonArray jsonArray = new JsonArray();
+
+      for (Object entry : (List<?>) value) {
+        Object val = translateToJsonCompatible(entry);
+
+        jsonArray.add(val);
+      }
+
+      value = jsonArray;
+    } else if (value instanceof Binary) {
       Binary bin = (Binary) value;
       byte[] bytes = new byte[bin.getLength()];
       System.arraycopy(bin.getArray(), bin.getArrayOffset(), bytes, 0, bin.getLength());
@@ -273,8 +296,8 @@ public class MessageTranslatorImpl {
     Map<String, Object> underlying = jsonMsgAnn.getMap();
 
     for (Entry<String, Object> entry : underlying.entrySet()) {
-      // TODO: anything that needs adjusted/rejected? Arrays etc?
-      ann.put(Symbol.valueOf(entry.getKey()), entry.getValue());
+      Object value = translateToAmqpCompatible(entry.getValue());
+      ann.put(Symbol.valueOf(entry.getKey()), value);
     }
 
     return protonMsgAnn;
@@ -287,11 +310,37 @@ public class MessageTranslatorImpl {
     Map<String, Object> underlying = jsonAppProps.getMap();
 
     for (Entry<String, Object> entry : underlying.entrySet()) {
-      // TODO: anything that needs adjusted/rejected? Arrays etc?
-      props.put(entry.getKey(), entry.getValue());
+      Object value = translateToAmqpCompatible(entry.getValue());
+      props.put(entry.getKey(), value);
     }
 
     return protonAppProps;
+  }
+
+  private Object translateToAmqpCompatible(Object value) {
+    if (value instanceof JsonObject) {
+      Map<String,Object> map = new LinkedHashMap<>();
+
+      for (Entry<String, Object> entry : ((JsonObject) value)) {
+        Object val = translateToJsonCompatible(entry.getValue());
+
+        map.put(entry.getKey(), val);
+      }
+
+      value = map;
+    } else if (value instanceof JsonArray) {
+      List<Object> list = new ArrayList<>();
+
+      for (Object entry : ((JsonArray) value)) {
+        Object val = translateToJsonCompatible(entry);
+
+        list.add(val);
+      }
+
+      value = list;
+    }
+
+    return value;
   }
 
   private Properties createAmqpProperties(JsonObject jsonProps) {

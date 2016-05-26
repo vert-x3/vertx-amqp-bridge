@@ -23,8 +23,11 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.qpid.proton.Proton;
@@ -43,6 +46,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import io.vertx.amqp.bridge.MessageHelper;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 public class MessageTranslatorImplTest {
@@ -229,7 +233,8 @@ public class MessageTranslatorImplTest {
     assertNotNull("expected application properties element value to be non-null", jsonAppProps);
 
     assertTrue("expected key to be present", jsonAppProps.containsKey(symbolPropKey));
-    assertEquals("expected value to be equal, as a string", symbolPropValue.toString(), jsonAppProps.getValue(symbolPropKey));
+    assertEquals("expected value to be equal, as a string", symbolPropValue.toString(),
+        jsonAppProps.getValue(symbolPropKey));
   }
 
   /**
@@ -262,7 +267,8 @@ public class MessageTranslatorImplTest {
 
     Map<String, Object> propsMap = jsonAppProps.getMap();
     assertTrue("expected key to be present", propsMap.containsKey(binaryPropKey));
-    assertTrue("expected value to be present, as encoded string", jsonAppProps.getValue(binaryPropKey) instanceof String);
+    assertTrue("expected value to be present, as encoded string",
+        jsonAppProps.getValue(binaryPropKey) instanceof String);
     assertArrayEquals("unepected decoded bytes", binaryPropValueSource.getBytes(StandardCharsets.UTF_8),
         jsonAppProps.getBinary(binaryPropKey));
   }
@@ -294,7 +300,8 @@ public class MessageTranslatorImplTest {
     assertTrue("expected key to be present", jsonAppProps.containsKey(timestampPropKey));
     Map<String, Object> propsMap = jsonAppProps.getMap();
     assertTrue("expected key to be present", propsMap.containsKey(timestampPropKey));
-    assertTrue("expected value to be present, as encoded long", jsonAppProps.getValue(timestampPropKey) instanceof Long);
+    assertTrue("expected value to be present, as encoded long",
+        jsonAppProps.getValue(timestampPropKey) instanceof Long);
     assertEquals("expected value to be equal", now, jsonAppProps.getValue(timestampPropKey));
   }
 
@@ -351,8 +358,7 @@ public class MessageTranslatorImplTest {
 
     Message protonMsg = translator.convertToAmqpMessage(jsonObject);
     assertNotNull("Expected converted msg", protonMsg);
-    assertNull("expected converted msg to have no message annotations section",
-        protonMsg.getMessageAnnotations());
+    assertNull("expected converted msg to have no message annotations section", protonMsg.getMessageAnnotations());
   }
 
   @Test
@@ -379,14 +385,60 @@ public class MessageTranslatorImplTest {
     assertTrue("expected message annotations element key to be present",
         jsonObject.containsKey(MessageHelper.MESSAGE_ANNOTATIONS));
 
-    JsonObject jsonAppProps = jsonObject.getJsonObject(MessageHelper.MESSAGE_ANNOTATIONS);
-    assertNotNull("expected message annotations element value to be non-null", jsonAppProps);
+    JsonObject jsonMsgAnn = jsonObject.getJsonObject(MessageHelper.MESSAGE_ANNOTATIONS);
+    assertNotNull("expected message annotations element value to be non-null", jsonMsgAnn);
 
-    assertTrue("expected key to be present", jsonAppProps.containsKey(testAnnKeyNameA));
-    assertEquals("expected value to be equal", testAnnValueA, jsonAppProps.getValue(testAnnKeyNameA));
+    assertTrue("expected key to be present", jsonMsgAnn.containsKey(testAnnKeyNameA));
+    assertEquals("expected value to be equal", testAnnValueA, jsonMsgAnn.getValue(testAnnKeyNameA));
 
-    assertTrue("expected key to be present", jsonAppProps.containsKey(testAnnKeyNameB));
-    assertEquals("expected value to be equal", testAnnValueB, jsonAppProps.getValue(testAnnKeyNameB));
+    assertTrue("expected key to be present", jsonMsgAnn.containsKey(testAnnKeyNameB));
+    assertEquals("expected value to be equal", testAnnValueB, jsonMsgAnn.getValue(testAnnKeyNameB));
+  }
+
+  @Test
+  public void testAMQP_to_JSON_VerifyMessageAnnotationsNestedListAndMap() {
+    String nestedBinaryKey = "binaryPropKey";
+    String binaryValueSource = "binaryValueSource";
+
+    Map<String, Object> nestedMap = new HashMap<>();
+    nestedMap.put(nestedBinaryKey, new Binary(binaryValueSource.getBytes(StandardCharsets.UTF_8)));
+
+    List<Object> nestedList = new ArrayList<>();
+    nestedList.add(new Binary(binaryValueSource.getBytes(StandardCharsets.UTF_8)));
+
+    String testAnnMapKeyName = "testAnnMapKeyName";
+    Symbol testAnnMapKey = Symbol.valueOf(testAnnMapKeyName);
+    String testAnnListKeyName = "testAnnListKeyName";
+    Symbol testAnnListKey = Symbol.valueOf(testAnnListKeyName);
+
+    Map<Symbol, Object> annotations = new HashMap<>();
+    annotations.put(testAnnMapKey, nestedMap);
+    annotations.put(testAnnListKey, nestedList);
+    MessageAnnotations ma = new MessageAnnotations(annotations);
+
+    Message protonMsg = Proton.message();
+    protonMsg.setMessageAnnotations(ma);
+
+    JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
+    assertNotNull("expected converted msg", jsonObject);
+    assertTrue("expected message annotations element key to be present",
+        jsonObject.containsKey(MessageHelper.MESSAGE_ANNOTATIONS));
+
+    JsonObject jsonMsgAnn = jsonObject.getJsonObject(MessageHelper.MESSAGE_ANNOTATIONS);
+    assertNotNull("expected message annotations element value to be non-null", jsonMsgAnn);
+
+    assertTrue("expected map annotation key to be present", jsonMsgAnn.containsKey(testAnnMapKeyName));
+    assertTrue("expected value to be JsonObject", jsonMsgAnn.getValue(testAnnMapKeyName) instanceof JsonObject);
+    JsonObject nestedMapJson = jsonMsgAnn.getJsonObject(testAnnMapKeyName);
+    assertTrue("expected nested map key to be present", nestedMapJson.containsKey(nestedBinaryKey));
+    assertArrayEquals("expected nested value to be equal", binaryValueSource.getBytes(StandardCharsets.UTF_8),
+        nestedMapJson.getBinary(nestedBinaryKey));
+
+    assertTrue("expected list annotation key to be present", jsonMsgAnn.containsKey(testAnnListKeyName));
+    assertTrue("expected value to be JsonArray", jsonMsgAnn.getValue(testAnnListKeyName) instanceof JsonArray);
+    JsonArray nestedListJson = jsonMsgAnn.getJsonArray(testAnnListKeyName);
+    assertArrayEquals("expected nested value to be equal", binaryValueSource.getBytes(StandardCharsets.UTF_8),
+        nestedListJson.getBinary(0));
   }
 
   @Test
@@ -422,6 +474,54 @@ public class MessageTranslatorImplTest {
     assertEquals("expected value to be equal", testAnnValueB, annotations.get(testAnnKeyB));
 
     assertEquals("unexpected number of props", 2, annotations.size());
+  }
+
+  @Test
+  public void testJSON_to_AMQP_VerifyMessageAnnotationsNestedListMap() {
+    String nestedListAnnKeyName = "nestedListAnnKeyName";
+    String nestedMapAnnKeyName = "nestedMapAnnKeyName";
+    Symbol nestedListAnnKey = Symbol.valueOf(nestedListAnnKeyName);
+    Symbol nestedMapAnnKey = Symbol.valueOf(nestedMapAnnKeyName);
+
+    String nestedListEntry = "nestedListEntry";
+    JsonArray nestedJsonList = new JsonArray();
+    nestedJsonList.add(nestedListEntry);
+
+    String nestedMapEntryKey = "nestedMapEntryKey";
+    String nestedMapEntryValue = "nestedMapEntryValue";
+
+    JsonObject nestedJsonMap = new JsonObject();
+    nestedJsonMap.put(nestedMapEntryKey, nestedMapEntryValue);
+
+    JsonObject jsonMsgAnn = new JsonObject();
+    jsonMsgAnn.put(nestedListAnnKeyName, nestedJsonList);
+    jsonMsgAnn.put(nestedMapAnnKeyName, nestedJsonMap);
+
+    JsonObject jsonObject = new JsonObject();
+    jsonObject.put(MessageHelper.MESSAGE_ANNOTATIONS, jsonMsgAnn);
+
+    Message protonMsg = translator.convertToAmqpMessage(jsonObject);
+    assertNotNull("Expected converted msg", protonMsg);
+
+    MessageAnnotations ma = protonMsg.getMessageAnnotations();
+    assertNotNull("message annotations section not present", ma);
+
+    Map<Symbol, Object> annotations = ma.getValue();
+    assertNotNull("message annotations  map not present", ma);
+
+    List<Object> expectedList = new ArrayList<>();
+    expectedList.add(nestedListEntry);
+
+    assertTrue("expected key to be present", annotations.containsKey(nestedListAnnKey));
+    assertTrue("expected value to be list", annotations.get(nestedListAnnKey) instanceof List);
+    assertEquals("expected value to be equal", expectedList, annotations.get(nestedListAnnKey));
+
+    Map<String, Object> expectedMap = new LinkedHashMap<>();
+    expectedMap.put(nestedMapEntryKey, nestedMapEntryValue);
+
+    assertTrue("expected key to be present", annotations.containsKey(nestedMapAnnKey));
+    assertTrue("expected value to be map", annotations.get(nestedMapAnnKey) instanceof Map);
+    assertEquals("expected value to be equal", expectedMap, annotations.get(nestedMapAnnKey));
   }
 
   // ============== body section ==============
