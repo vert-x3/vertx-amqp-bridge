@@ -548,10 +548,22 @@ public class MessageTranslatorImplTest {
 
   @Test
   public void testJSON_to_AMQP_VerifyStringBody() {
+    doJSON_to_AMQP_VerifyStringBodyTestImpl(true);
+  }
+
+  @Test
+  public void testJSON_to_AMQP_VerifyStringBodyWithoutBodyTypeSet() {
+    doJSON_to_AMQP_VerifyStringBodyTestImpl(false);
+  }
+
+  private void doJSON_to_AMQP_VerifyStringBodyTestImpl(boolean setBodyType) {
     String testContent = "myTestContent";
 
     JsonObject jsonObject = new JsonObject();
     jsonObject.put(MessageHelper.BODY, testContent);
+    if(setBodyType){
+      jsonObject.put(MessageHelper.BODY_TYPE, MessageHelper.BODY_TYPE_VALUE);
+    }
 
     Message protonMsg = translator.convertToAmqpMessage(jsonObject);
 
