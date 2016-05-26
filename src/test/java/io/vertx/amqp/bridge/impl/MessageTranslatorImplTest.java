@@ -37,6 +37,7 @@ import org.apache.qpid.proton.amqp.UnsignedByte;
 import org.apache.qpid.proton.amqp.UnsignedInteger;
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton.amqp.messaging.ApplicationProperties;
+import org.apache.qpid.proton.amqp.messaging.Data;
 import org.apache.qpid.proton.amqp.messaging.Header;
 import org.apache.qpid.proton.amqp.messaging.MessageAnnotations;
 import org.apache.qpid.proton.amqp.messaging.Properties;
@@ -526,6 +527,8 @@ public class MessageTranslatorImplTest {
 
   // ============== body section ==============
 
+  // ------ amqp-value body section ------
+
   @Test
   public void testAMQP_to_JSON_VerifyBodyWithAmqpValueString() {
     String testContent = "myTestContent";
@@ -537,6 +540,8 @@ public class MessageTranslatorImplTest {
     assertTrue("expected body element key to be present", jsonObject.containsKey(MessageHelper.BODY));
     assertNotNull("expected body element value to be non-null", jsonObject.getValue(MessageHelper.BODY));
     assertEquals("body value not as expected", testContent, jsonObject.getValue(MessageHelper.BODY));
+    assertTrue("expected body_type element key to be present", jsonObject.containsKey(MessageHelper.BODY_TYPE));
+    assertEquals("unexpected body_type value", MessageHelper.BODY_TYPE_VALUE, jsonObject.getValue(MessageHelper.BODY_TYPE));
   }
 
   @Test
@@ -552,6 +557,45 @@ public class MessageTranslatorImplTest {
     Section body = protonMsg.getBody();
     assertTrue("Unexpected body type", body instanceof AmqpValue);
     assertEquals("Unexpected message body value", testContent, ((AmqpValue) body).getValue());
+  }
+
+  // ------ data body section ------
+
+  @Test
+  public void testAMQP_to_JSON_VerifyBodyWithDataSection() {
+    String testContent = "myTestContent";
+    Data data = new Data(new Binary(testContent.getBytes(StandardCharsets.UTF_8)));
+    Message protonMsg = Proton.message();
+    protonMsg.setBody(data);
+
+    JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
+    assertNotNull("expected converted msg", jsonObject);
+    assertTrue("expected body element key to be present", jsonObject.containsKey(MessageHelper.BODY));
+    assertNotNull("expected body element value to be non-null", jsonObject.getValue(MessageHelper.BODY));
+    assertTrue("expected body_type element key to be present", jsonObject.containsKey(MessageHelper.BODY_TYPE));
+    assertEquals("unexpected body_type value", MessageHelper.BODY_TYPE_DATA, jsonObject.getValue(MessageHelper.BODY_TYPE));
+
+    jsonObject.put(MessageHelper.BODY_TYPE, MessageHelper.BODY_TYPE_VALUE);
+    assertArrayEquals("body content not as expected", testContent.getBytes(StandardCharsets.UTF_8),
+        jsonObject.getBinary(MessageHelper.BODY));
+  }
+
+  @Test
+  public void testJSON_to_AMQP_VerifyDataBody() {
+    String testContent = "myTestContent";
+
+    JsonObject jsonObject = new JsonObject();
+    jsonObject.put(MessageHelper.BODY, testContent.getBytes(StandardCharsets.UTF_8));
+    jsonObject.put(MessageHelper.BODY_TYPE, MessageHelper.BODY_TYPE_DATA);
+
+    Message protonMsg = translator.convertToAmqpMessage(jsonObject);
+
+    assertNotNull("Expected converted msg", protonMsg);
+    Section body = protonMsg.getBody();
+    assertTrue("Unexpected body type", body instanceof Data);
+    assertNotNull("Unexpected body content", body);
+    assertEquals("Unexpected message body value", new Binary(testContent.getBytes(StandardCharsets.UTF_8)),
+        ((Data) body).getValue());
   }
 
   // ============== properties section ==============

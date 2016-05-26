@@ -15,6 +15,7 @@
 */
 package io.vertx.amqp.bridge.impl;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -29,6 +30,7 @@ import org.apache.qpid.proton.amqp.UnsignedByte;
 import org.apache.qpid.proton.amqp.UnsignedInteger;
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton.amqp.messaging.ApplicationProperties;
+import org.apache.qpid.proton.amqp.messaging.Data;
 import org.apache.qpid.proton.amqp.messaging.Header;
 import org.apache.qpid.proton.amqp.messaging.MessageAnnotations;
 import org.apache.qpid.proton.amqp.messaging.Properties;
@@ -52,6 +54,14 @@ public class MessageTranslatorImpl {
       Object value = ((AmqpValue) body).getValue();
       // TODO: validate value, make any necessary conversions
       jsonObject.put(MessageHelper.BODY, value);
+      jsonObject.put(MessageHelper.BODY_TYPE, MessageHelper.BODY_TYPE_VALUE);
+    } else if (body instanceof Data) {
+      Binary bin = ((Data) body).getValue();
+      byte[] bytes = new byte[bin.getLength()];
+      System.arraycopy(bin.getArray(), bin.getArrayOffset(), bytes, 0, bin.getLength());
+
+      jsonObject.put(MessageHelper.BODY, bytes);
+      jsonObject.put(MessageHelper.BODY_TYPE, MessageHelper.BODY_TYPE_DATA);
     }
 
     Properties props = protonMessage.getProperties();
@@ -228,10 +238,17 @@ public class MessageTranslatorImpl {
     Message protonMessage = Message.Factory.create();
 
     if (jsonObject.containsKey(MessageHelper.BODY)) {
-      Object o = jsonObject.getValue(MessageHelper.BODY);
-      // TODO: handle other body types
-      protonMessage.setBody(new AmqpValue(o));
+      String bodyType = jsonObject.getString(MessageHelper.BODY_TYPE);
+      if (bodyType == null || MessageHelper.BODY_TYPE_VALUE.equals(bodyType)) {
+        Object o = jsonObject.getValue(MessageHelper.BODY);
+        // TODO: translate payload types as necessary
+        protonMessage.setBody(new AmqpValue(o));
+      } else if (MessageHelper.BODY_TYPE_DATA.equals(bodyType)) {
+        byte[] bytes = jsonObject.getBinary(MessageHelper.BODY);
+        protonMessage.setBody(new Data(new Binary(bytes)));
+      } // TODO: handle other body section types
     } else {
+      // messages are meant to have a body section, set an 'empty' body (an amqp-value containing null).
       protonMessage.setBody(EMPTY_BODY_SECTION);
     }
 
@@ -319,10 +336,10 @@ public class MessageTranslatorImpl {
 
   private Object translateToAmqpCompatible(Object value) {
     if (value instanceof JsonObject) {
-      Map<String,Object> map = new LinkedHashMap<>();
+      Map<String, Object> map = new LinkedHashMap<>();
 
       for (Entry<String, Object> entry : ((JsonObject) value)) {
-        Object val = translateToJsonCompatible(entry.getValue());
+        Object val = translateToAmqpCompatible(entry.getValue());
 
         map.put(entry.getKey(), val);
       }
@@ -332,7 +349,7 @@ public class MessageTranslatorImpl {
       List<Object> list = new ArrayList<>();
 
       for (Object entry : ((JsonArray) value)) {
-        Object val = translateToJsonCompatible(entry);
+        Object val = translateToAmqpCompatible(entry);
 
         list.add(val);
       }
