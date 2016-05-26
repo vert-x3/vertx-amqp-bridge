@@ -35,6 +35,7 @@ import org.apache.qpid.proton.amqp.Binary;
 import org.apache.qpid.proton.amqp.Symbol;
 import org.apache.qpid.proton.amqp.UnsignedByte;
 import org.apache.qpid.proton.amqp.UnsignedInteger;
+import org.apache.qpid.proton.amqp.messaging.AmqpSequence;
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton.amqp.messaging.ApplicationProperties;
 import org.apache.qpid.proton.amqp.messaging.Data;
@@ -541,7 +542,8 @@ public class MessageTranslatorImplTest {
     assertNotNull("expected body element value to be non-null", jsonObject.getValue(MessageHelper.BODY));
     assertEquals("body value not as expected", testContent, jsonObject.getValue(MessageHelper.BODY));
     assertTrue("expected body_type element key to be present", jsonObject.containsKey(MessageHelper.BODY_TYPE));
-    assertEquals("unexpected body_type value", MessageHelper.BODY_TYPE_VALUE, jsonObject.getValue(MessageHelper.BODY_TYPE));
+    assertEquals("unexpected body_type value", MessageHelper.BODY_TYPE_VALUE,
+        jsonObject.getValue(MessageHelper.BODY_TYPE));
   }
 
   @Test
@@ -573,7 +575,8 @@ public class MessageTranslatorImplTest {
     assertTrue("expected body element key to be present", jsonObject.containsKey(MessageHelper.BODY));
     assertNotNull("expected body element value to be non-null", jsonObject.getValue(MessageHelper.BODY));
     assertTrue("expected body_type element key to be present", jsonObject.containsKey(MessageHelper.BODY_TYPE));
-    assertEquals("unexpected body_type value", MessageHelper.BODY_TYPE_DATA, jsonObject.getValue(MessageHelper.BODY_TYPE));
+    assertEquals("unexpected body_type value", MessageHelper.BODY_TYPE_DATA,
+        jsonObject.getValue(MessageHelper.BODY_TYPE));
 
     jsonObject.put(MessageHelper.BODY_TYPE, MessageHelper.BODY_TYPE_VALUE);
     assertArrayEquals("body content not as expected", testContent.getBytes(StandardCharsets.UTF_8),
@@ -596,6 +599,60 @@ public class MessageTranslatorImplTest {
     assertNotNull("Unexpected body content", body);
     assertEquals("Unexpected message body value", new Binary(testContent.getBytes(StandardCharsets.UTF_8)),
         ((Data) body).getValue());
+  }
+
+  // ------ amqp-sequence body section ------
+
+  @Test
+  public void testAMQP_to_JSON_VerifyBodyWithAmqpSequence() {
+    String testContent = "myTestContent";
+    List<Object> elements = new ArrayList<>();
+    elements.add(new Binary(testContent.getBytes(StandardCharsets.UTF_8)));
+
+    Message protonMsg = Proton.message();
+    protonMsg.setBody(new AmqpSequence(elements));
+
+    JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
+
+    assertNotNull("expected converted msg", jsonObject);
+    assertTrue("expected body element key to be present", jsonObject.containsKey(MessageHelper.BODY));
+    assertNotNull("expected body element value to be non-null", jsonObject.getValue(MessageHelper.BODY));
+    assertTrue("expected body_type element key to be present", jsonObject.containsKey(MessageHelper.BODY_TYPE));
+    assertEquals("unexpected body_type value", MessageHelper.BODY_TYPE_SEQUENCE,
+        jsonObject.getValue(MessageHelper.BODY_TYPE));
+    JsonArray jsonSequence = jsonObject.getJsonArray(MessageHelper.BODY);
+    assertArrayEquals("sequence element value not as expected", testContent.getBytes(StandardCharsets.UTF_8),
+        jsonSequence.getBinary(0));
+    assertTrue("expected body_type element key to be present", jsonObject.containsKey(MessageHelper.BODY_TYPE));
+  }
+
+  @Test
+  public void testJSON_to_AMQP_VerifySequenceBody() {
+    String testKey = "testKey";
+    String testValue = "testValue";
+    JsonObject nestedJsonMap = new JsonObject();
+    nestedJsonMap.put(testKey, testValue);
+
+    JsonArray jsonSequence = new JsonArray();
+    jsonSequence.add(nestedJsonMap);
+
+    JsonObject jsonObject = new JsonObject();
+    jsonObject.put(MessageHelper.BODY, jsonSequence);
+    jsonObject.put(MessageHelper.BODY_TYPE, MessageHelper.BODY_TYPE_SEQUENCE);
+
+    Message protonMsg = translator.convertToAmqpMessage(jsonObject);
+
+    assertNotNull("Expected converted msg", protonMsg);
+    Section body = protonMsg.getBody();
+    assertTrue("Unexpected body type", body instanceof AmqpSequence);
+    @SuppressWarnings("unchecked")
+    List<Object> sequenceElements = ((AmqpSequence) body).getValue();
+    assertNotNull("Unexpected sequence element list", sequenceElements);
+    assertEquals("Unexpected sequence size", 1, sequenceElements.size());
+    Object sequenceElement = sequenceElements.get(0);
+    assertTrue("Unexpected sequence element type", sequenceElement instanceof Map);
+    assertTrue("Key not present in nested map", ((Map<?,?>)sequenceElement).containsKey(testKey));
+    assertEquals("Value not as expected in nested map", testValue, ((Map<?,?>)sequenceElement).get(testKey));
   }
 
   // ============== properties section ==============

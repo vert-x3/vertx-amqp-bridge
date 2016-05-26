@@ -22,10 +22,11 @@ package io.vertx.amqp.bridge;
  */
 public class MessageHelper {
 
-  //Body Type
+  // body Type
   public static final String BODY_TYPE = "body_type";
   public static final String BODY_TYPE_VALUE = "value";
   public static final String BODY_TYPE_DATA = "data";
+  public static final String BODY_TYPE_SEQUENCE = "sequence";
 
   // sections
   public static final String HEADER = "header";

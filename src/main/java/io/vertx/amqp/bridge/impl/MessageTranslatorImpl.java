@@ -28,6 +28,7 @@ import org.apache.qpid.proton.amqp.Binary;
 import org.apache.qpid.proton.amqp.Symbol;
 import org.apache.qpid.proton.amqp.UnsignedByte;
 import org.apache.qpid.proton.amqp.UnsignedInteger;
+import org.apache.qpid.proton.amqp.messaging.AmqpSequence;
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
 import org.apache.qpid.proton.amqp.messaging.ApplicationProperties;
 import org.apache.qpid.proton.amqp.messaging.Data;
@@ -49,7 +50,6 @@ public class MessageTranslatorImpl {
     JsonObject jsonObject = new JsonObject();
 
     Section body = protonMessage.getBody();
-    // TODO: handle other body types
     if (body instanceof AmqpValue) {
       Object value = ((AmqpValue) body).getValue();
       // TODO: validate value, make any necessary conversions
@@ -62,6 +62,11 @@ public class MessageTranslatorImpl {
 
       jsonObject.put(MessageHelper.BODY, bytes);
       jsonObject.put(MessageHelper.BODY_TYPE, MessageHelper.BODY_TYPE_DATA);
+    } else if (body instanceof AmqpSequence) {
+      JsonArray jsonSequence = (JsonArray) translateToJsonCompatible(((AmqpSequence) body).getValue());
+
+      jsonObject.put(MessageHelper.BODY, jsonSequence);
+      jsonObject.put(MessageHelper.BODY_TYPE, MessageHelper.BODY_TYPE_SEQUENCE);
     }
 
     Properties props = protonMessage.getProperties();
@@ -246,7 +251,12 @@ public class MessageTranslatorImpl {
       } else if (MessageHelper.BODY_TYPE_DATA.equals(bodyType)) {
         byte[] bytes = jsonObject.getBinary(MessageHelper.BODY);
         protonMessage.setBody(new Data(new Binary(bytes)));
-      } // TODO: handle other body section types
+      } else if (MessageHelper.BODY_TYPE_SEQUENCE.equals(bodyType)) {
+        JsonArray jsonSequence = jsonObject.getJsonArray(MessageHelper.BODY);
+        @SuppressWarnings("unchecked")
+        List<Object> list = (List<Object>) translateToAmqpCompatible(jsonSequence);
+        protonMessage.setBody(new AmqpSequence(list));
+      }
     } else {
       // messages are meant to have a body section, set an 'empty' body (an amqp-value containing null).
       protonMessage.setBody(EMPTY_BODY_SECTION);
