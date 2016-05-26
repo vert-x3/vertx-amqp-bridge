@@ -51,8 +51,7 @@ public class MessageTranslatorImpl {
 
     Section body = protonMessage.getBody();
     if (body instanceof AmqpValue) {
-      Object value = ((AmqpValue) body).getValue();
-      // TODO: validate value, make any necessary conversions
+      Object value = translateToJsonCompatible(((AmqpValue) body).getValue());
       jsonObject.put(MessageHelper.BODY, value);
       jsonObject.put(MessageHelper.BODY_TYPE, MessageHelper.BODY_TYPE_VALUE);
     } else if (body instanceof Data) {
@@ -245,9 +244,8 @@ public class MessageTranslatorImpl {
     if (jsonObject.containsKey(MessageHelper.BODY)) {
       String bodyType = jsonObject.getString(MessageHelper.BODY_TYPE);
       if (bodyType == null || MessageHelper.BODY_TYPE_VALUE.equals(bodyType)) {
-        Object o = jsonObject.getValue(MessageHelper.BODY);
-        // TODO: translate payload types as necessary
-        protonMessage.setBody(new AmqpValue(o));
+        Object value = translateToAmqpCompatible(jsonObject.getValue(MessageHelper.BODY));
+        protonMessage.setBody(new AmqpValue(value));
       } else if (MessageHelper.BODY_TYPE_DATA.equals(bodyType)) {
         byte[] bytes = jsonObject.getBinary(MessageHelper.BODY);
         protonMessage.setBody(new Data(new Binary(bytes)));
