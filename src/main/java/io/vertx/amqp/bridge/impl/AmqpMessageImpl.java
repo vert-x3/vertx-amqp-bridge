@@ -66,7 +66,11 @@ public class AmqpMessageImpl implements Message<JsonObject> {
   }
 
   private <R> void doReply(Object replyMessageBody, Handler<AsyncResult<Message<R>>> replyHandler) {
-    bridge.sendReply(protonMessage, replyMessageBody, replyHandler);
+    if(!(replyMessageBody instanceof JsonObject)) {
+      throw new IllegalArgumentException("The reply body must be an instance of JsonObject");
+    }
+
+    bridge.sendReply(protonMessage, (JsonObject) replyMessageBody, replyHandler);
   }
 
   @Override
