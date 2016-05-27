@@ -130,8 +130,6 @@ public class BridgeImpl implements Bridge {
     return new AmqpConsumerImpl(vertx, this, connection, amqpAddress);
   }
 
-  // TODO: add result handler to tell that it opened? Producer creation has no way to plug this in, unlike consumer
-  // 'completion handler' which could be used for the purpose. Might be simpler to have callback on create for both.
   @Override
   public MessageProducer<JsonObject> createProducer(String amqpAddress) {
     return new AmqpProducerImpl(this, connection, amqpAddress);
