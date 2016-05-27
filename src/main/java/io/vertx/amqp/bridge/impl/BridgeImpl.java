@@ -189,7 +189,6 @@ public class BridgeImpl implements Bridge {
       }
     }
 
-    // TODO: either had no id, or no matching handler...handle the message in some way?
     LOG.error("Received message on replyTo consumer, could not match to a replyHandler: " + protonMessage);
   }
 
@@ -200,8 +199,8 @@ public class BridgeImpl implements Bridge {
       throw new IllegalStateException("Original message has no reply-to address, unable to send reply");
     }
 
-    // Set the correlationId to the messageId value if there was one, so the recipient reply handler can be found if it
-    // is also a vertx amqp bridge
+    // Set the correlationId to the messageId value if there was one, so that if the reply recipient is also a
+    // vertx amqp bridge it can match the response to a reply handler if set when sending.
     Object origMessageId = origIncomingMessage.getMessageId();
     if (origMessageId != null) {
       JsonObject replyBodyProps = replyBody.getJsonObject(MessageHelper.PROPERTIES);
@@ -210,10 +209,7 @@ public class BridgeImpl implements Bridge {
         replyBody.put(MessageHelper.PROPERTIES, replyBodyProps);
       }
 
-      // TODO: preserve existing correlation-id if there was one?
       replyBodyProps.put(MessageHelper.PROPERTIES_CORRELATION_ID, origMessageId);
-    } else {
-      // TODO: Anything? Could just be a non-bridge recipient who didn't set one on their request
     }
 
     replySender.doSend(replyBody, replyHandler, replyAddress);
