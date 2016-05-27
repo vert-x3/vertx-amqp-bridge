@@ -188,7 +188,12 @@ public class MessageTranslatorImpl {
       jsonProps.put(MessageHelper.PROPERTIES_ABSOLUTE_EXPIRY_TIME, protonProps.getAbsoluteExpiryTime().getTime());
     }
 
-    // TODO: user-id
+    if (protonProps.getUserId() != null) {
+      Binary bin = protonProps.getUserId();
+      String userId = new String(bin.getArray(), bin.getArrayOffset(), bin.getLength(), StandardCharsets.UTF_8);
+      jsonProps.put(MessageHelper.PROPERTIES_USER_ID, userId);
+    }
+
     return jsonProps;
   }
 
@@ -426,7 +431,11 @@ public class MessageTranslatorImpl {
       proptonProps.setAbsoluteExpiryTime(new Date(expiryTime));
     }
 
-    // TODO: user-id
+    if (jsonProps.containsKey(MessageHelper.PROPERTIES_USER_ID)) {
+      String userId = jsonProps.getString(MessageHelper.PROPERTIES_USER_ID);
+      proptonProps.setUserId(new Binary(userId.getBytes(StandardCharsets.UTF_8)));
+    }
+
     return proptonProps;
   }
 }

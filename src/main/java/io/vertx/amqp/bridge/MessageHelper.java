@@ -55,4 +55,5 @@ public class MessageHelper {
   public static final String PROPERTIES_CONTENT_ENCODING = "content_encoding";
   public static final String PROPERTIES_CREATION_TIME = "creation_time";
   public static final String PROPERTIES_ABSOLUTE_EXPIRY_TIME = "absolute_expiry_time";
+  public static final String PROPERTIES_USER_ID = "user_id";
 }

@@ -759,6 +759,7 @@ public class MessageTranslatorImplTest {
     String testContentEncoding = "myContentEncoding";
     long testCreationTime = System.currentTimeMillis();
     long testAbsExpiryTime = testCreationTime + 3456;
+    String testUserId = "myUserId";
 
     Message protonMsg = Proton.message();
     protonMsg.setAddress(testToAddress);
@@ -773,6 +774,7 @@ public class MessageTranslatorImplTest {
     protonMsg.setContentEncoding(testContentEncoding);
     protonMsg.setCreationTime(testCreationTime);
     protonMsg.setExpiryTime(testAbsExpiryTime);
+    protonMsg.setUserId(testUserId.getBytes(StandardCharsets.UTF_8));
 
     JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
     assertNotNull("expected converted msg", jsonObject);
@@ -834,6 +836,11 @@ public class MessageTranslatorImplTest {
         properties.containsKey(MessageHelper.PROPERTIES_ABSOLUTE_EXPIRY_TIME));
     assertEquals("expected absolute expiry time value to be present", testAbsExpiryTime,
         properties.getValue(MessageHelper.PROPERTIES_ABSOLUTE_EXPIRY_TIME));
+
+    assertTrue("expected user id key to be present",
+        properties.containsKey(MessageHelper.PROPERTIES_USER_ID));
+    assertEquals("expected user id value to be present", testUserId,
+        properties.getValue(MessageHelper.PROPERTIES_USER_ID));
   }
 
   @Test
@@ -850,6 +857,7 @@ public class MessageTranslatorImplTest {
     String testContentEncoding = "myContentEncoding";
     long testCreationTime = System.currentTimeMillis();
     long testAbsExpiryTime = testCreationTime + 3456;
+    String testUserId = "myUserId";
 
     JsonObject jsonProps = new JsonObject();
     jsonProps.put(MessageHelper.PROPERTIES_TO, testToAddress);
@@ -864,6 +872,7 @@ public class MessageTranslatorImplTest {
     jsonProps.put(MessageHelper.PROPERTIES_CONTENT_ENCODING, testContentEncoding);
     jsonProps.put(MessageHelper.PROPERTIES_CREATION_TIME, testCreationTime);
     jsonProps.put(MessageHelper.PROPERTIES_ABSOLUTE_EXPIRY_TIME, testAbsExpiryTime);
+    jsonProps.put(MessageHelper.PROPERTIES_USER_ID, testUserId);
 
     JsonObject jsonObject = new JsonObject();
     jsonObject.put(MessageHelper.PROPERTIES, jsonProps);
@@ -891,5 +900,7 @@ public class MessageTranslatorImplTest {
         properties.getCreationTime().getTime());
     assertEquals("expected absolute expiry time value to be present", testAbsExpiryTime,
         properties.getAbsoluteExpiryTime().getTime());
+    assertEquals("expected user id value to be present",
+        new Binary(testUserId.getBytes(StandardCharsets.UTF_8)), properties.getUserId());
   }
 }
