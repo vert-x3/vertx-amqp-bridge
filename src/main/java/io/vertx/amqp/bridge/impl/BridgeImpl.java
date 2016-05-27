@@ -18,6 +18,7 @@ package io.vertx.amqp.bridge.impl;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import org.apache.qpid.proton.amqp.Symbol;
 import org.apache.qpid.proton.amqp.messaging.Source;
@@ -48,7 +49,6 @@ public class BridgeImpl implements Bridge {
 
   private ProtonClient client;
   private ProtonConnection connection;
-  private int replyToMsgIdIndex = 1;
   private ProtonReceiver replyToConsumer;
   private String replyToConsumerAddress;
   private AmqpProducerImpl replySender;
@@ -157,28 +157,15 @@ public class BridgeImpl implements Bridge {
 
   <R> void registerReplyToHandler(org.apache.qpid.proton.message.Message msg,
                                   Handler<AsyncResult<Message<R>>> replyHandler) {
-    // TODO: complete, possibly do something nicer with the message generics in the producer
-
     if (replyToConsumerAddress == null) {
       throw new IllegalStateException("No reply-to address available, unable register reply handler");
     }
-
     msg.setReplyTo(replyToConsumerAddress);
 
-    if (msg.getMessageId() == null) {
-      String generatedMessageId = generateMessageId();
-      msg.setMessageId(generatedMessageId);
+    String generatedMessageId = UUID.randomUUID().toString();
+    msg.setMessageId(generatedMessageId);
 
-      replyToMapping.put(generatedMessageId, replyHandler);
-    } else {
-      // TODO: use as-is? convert? fail? enforce it is always going to be string we/producer set?
-      throw new IllegalStateException("Not yet implemented");
-    }
-  }
-
-  private String generateMessageId() {
-    // TODO generate a proper ID. Pure UUID string? Use some kind of connection prefix for trace?
-    return "myMessageId-" + (replyToMsgIdIndex++);
+    replyToMapping.put(generatedMessageId, replyHandler);
   }
 
   private void handleIncomingMessageReply(ProtonDelivery delivery,
