@@ -35,7 +35,6 @@ public class AmqpMessageImpl implements Message<JsonObject> {
 
   public AmqpMessageImpl(JsonObject body, BridgeImpl bridge, org.apache.qpid.proton.message.Message protonMessage,
       ProtonDelivery delivery, String amqpAddress, String amqpReplyAddress) {
-    // TODO: ensure non-null body?
     this.body = body;
     this.bridge = bridge;
     this.protonMessage = protonMessage;
@@ -51,8 +50,8 @@ public class AmqpMessageImpl implements Message<JsonObject> {
 
   @Override
   public MultiMap headers() {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException(
+        "Use the AMQP application-properties section via the JsonObject payload body, headers method is not supported");
   }
 
   @Override
@@ -85,20 +84,17 @@ public class AmqpMessageImpl implements Message<JsonObject> {
 
   @Override
   public void reply(Object messageBody, DeliveryOptions options) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException("DeliveryOptions are not supported");
   }
 
   @Override
   public <R> void reply(Object messageBody, DeliveryOptions options, Handler<AsyncResult<Message<R>>> replyHandler) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException("DeliveryOptions are not supported");
   }
 
   @Override
   public void fail(int failureCode, String message) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException("Implicit failure responses are not supported, send a message explicitly.");
   }
 
   void accept() {

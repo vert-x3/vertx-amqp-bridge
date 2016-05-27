@@ -120,8 +120,7 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
 
   @Override
   public MessageProducer<JsonObject> deliveryOptions(DeliveryOptions options) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException("DeliveryOptions are not supported by this producer");
   }
 
   @Override

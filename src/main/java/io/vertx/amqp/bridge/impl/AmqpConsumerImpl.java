@@ -214,8 +214,7 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
 
   @Override
   public void completionHandler(Handler<AsyncResult<Void>> completionHandler) {
-    // TODO Auto-generated method stub
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException("Registration completion handler is not supported by this consumer");
   }
 
   @Override
