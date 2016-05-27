@@ -163,7 +163,7 @@ public class BridgeTest extends ActiveMQTestBase {
     });
 
     Bridge bridge = Bridge.bridge(vertx);
-    ((BridgeImpl) bridge).setDisableReplyHandlerSupport(true);
+    ((BridgeImpl) bridge).setReplyHandlerSupported(false);
     bridge.start("localhost", server.actualPort(), res -> {
       LOG.trace("Startup complete");
       asyncMetaData.awaitSuccess();
@@ -740,7 +740,7 @@ public class BridgeTest extends ActiveMQTestBase {
     // === Bridge producer handling ====
 
     Bridge bridge = Bridge.bridge(vertx);
-    ((BridgeImpl) bridge).setDisableReplyHandlerSupport(true);
+    ((BridgeImpl) bridge).setReplyHandlerSupported(false);
     bridge.start("localhost", server.actualPort(), res -> {
       // Set up a producer using the bridge, use it, close it.
       context.assertTrue(res.succeeded());
@@ -794,7 +794,7 @@ public class BridgeTest extends ActiveMQTestBase {
         serverConnection -> handleReceiverOpenSendMessageThenClose(serverConnection, testName, sentContent, context));
 
     Bridge bridge = Bridge.bridge(vertx);
-    ((BridgeImpl) bridge).setDisableReplyHandlerSupport(true);
+    ((BridgeImpl) bridge).setReplyHandlerSupported(false);
     bridge.start("localhost", server.actualPort(), res -> {
       LOG.trace("Startup complete");
 
@@ -961,7 +961,7 @@ public class BridgeTest extends ActiveMQTestBase {
     // === Bridge producer handling ====
 
     Bridge bridge = Bridge.bridge(vertx);
-    ((BridgeImpl) bridge).setDisableReplyHandlerSupport(true);
+    ((BridgeImpl) bridge).setReplyHandlerSupported(false);
 
     bridge.start("localhost", server.actualPort(), res -> {
       context.assertTrue(res.succeeded());
@@ -1086,7 +1086,7 @@ public class BridgeTest extends ActiveMQTestBase {
     // === Bridge producer handling ====
 
     Bridge bridge = Bridge.bridge(vertx);
-    ((BridgeImpl) bridge).setDisableReplyHandlerSupport(true);
+    ((BridgeImpl) bridge).setReplyHandlerSupported(false);
 
     bridge.start("localhost", server.actualPort(), res -> {
       context.assertTrue(res.succeeded());
@@ -1198,7 +1198,7 @@ public class BridgeTest extends ActiveMQTestBase {
     // === Bridge consumer handling ====
 
     Bridge bridge = Bridge.bridge(vertx);
-    ((BridgeImpl) bridge).setDisableReplyHandlerSupport(true);
+    ((BridgeImpl) bridge).setReplyHandlerSupported(false);
     bridge.start("localhost", server.actualPort(), res -> {
       LOG.trace("Startup complete");
 
@@ -1303,7 +1303,7 @@ public class BridgeTest extends ActiveMQTestBase {
     // === Bridge consumer handling ====
 
     Bridge bridge = Bridge.bridge(vertx);
-    ((BridgeImpl) bridge).setDisableReplyHandlerSupport(true);
+    ((BridgeImpl) bridge).setReplyHandlerSupported(false);
     bridge.start("localhost", server.actualPort(), res -> {
       LOG.trace("Startup complete");
 
@@ -1396,7 +1396,7 @@ public class BridgeTest extends ActiveMQTestBase {
     // === Bridge consumer handling ====
 
     Bridge bridge = Bridge.bridge(vertx);
-    ((BridgeImpl) bridge).setDisableReplyHandlerSupport(true);
+    ((BridgeImpl) bridge).setReplyHandlerSupported(false);
     bridge.start("localhost", server.actualPort(), res -> {
       LOG.trace("Startup complete");
 
@@ -1506,7 +1506,7 @@ public class BridgeTest extends ActiveMQTestBase {
     // === Bridge consumer handling ====
 
     Bridge bridge = Bridge.bridge(vertx);
-    ((BridgeImpl) bridge).setDisableReplyHandlerSupport(true);
+    ((BridgeImpl) bridge).setReplyHandlerSupported(false);
     bridge.start("localhost", server.actualPort(), res -> {
       LOG.trace("Startup complete");
 

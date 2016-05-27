@@ -54,7 +54,7 @@ public class BridgeImpl implements Bridge {
   private AmqpProducerImpl replySender;
   private Map<String, Handler<?>> replyToMapping = new HashMap<>();
   private MessageTranslatorImpl translator = new MessageTranslatorImpl();
-  private boolean disableReplyHandlerSupport = false;
+  private boolean replyHandlerSupport = true;
   private BridgeOptions options;
   private Vertx vertx;
 
@@ -85,7 +85,7 @@ public class BridgeImpl implements Bridge {
         connection.openHandler(openResult -> {
           LOG.trace("Bridge connection open complete");
           if (openResult.succeeded()) {
-            if (disableReplyHandlerSupport) {
+            if (!replyHandlerSupport) {
               resultHandler.handle(Future.succeededFuture());
               return;
             }
@@ -232,8 +232,11 @@ public class BridgeImpl implements Bridge {
     replySender.doSend(replyBody, replyHandler, replyAddress);
   }
 
-  public Bridge setDisableReplyHandlerSupport(boolean disableReplyHandlerSupport) {
-    this.disableReplyHandlerSupport = disableReplyHandlerSupport;
+  /**
+   * Internal test related method.
+   */
+  public Bridge setReplyHandlerSupported(boolean replyHandlerSupport) {
+    this.replyHandlerSupport = replyHandlerSupport;
     return this;
   }
 }
