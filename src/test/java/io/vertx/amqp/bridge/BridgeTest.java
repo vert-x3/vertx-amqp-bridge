@@ -198,7 +198,7 @@ public class BridgeTest extends ActiveMQTestBase {
       LOG.trace("Startup complete");
 
       // Set up a consumer using the bridge
-      MessageConsumer<JsonObject> consumer = bridge.createConsumer(testName).handler(msg -> {
+      MessageConsumer<JsonObject> consumer = bridge.<JsonObject>createConsumer(testName).handler(msg -> {
         JsonObject jsonObject = msg.body();
         context.assertNotNull(jsonObject, "message jsonObject body was null");
 
@@ -261,7 +261,7 @@ public class BridgeTest extends ActiveMQTestBase {
       LOG.trace("Startup complete");
 
       // Set up a read stream using the bridge
-      ReadStream<JsonObject> stream = bridge.createConsumer(testName).bodyStream();
+      ReadStream<JsonObject> stream = bridge.<JsonObject>createConsumer(testName).bodyStream();
       stream.handler(jsonObject -> {
         context.assertNotNull(jsonObject, "jsonObject was null");
 

@@ -28,14 +28,14 @@ import io.vertx.proton.ProtonClientOptions;
 /**
  * Options for configuring {@link io.vertx.amqp.bridge.Bridge}.
  */
-@DataObject
+@DataObject(generateConverter = true, inheritConverter = true)
 public class BridgeOptions extends ProtonClientOptions {
 
   public BridgeOptions() {
   }
 
   public BridgeOptions(JsonObject json) {
-    throw new UnsupportedOperationException("todo");
+    BridgeOptionsConverter.fromJson(json, this);
   }
 
   @Override
