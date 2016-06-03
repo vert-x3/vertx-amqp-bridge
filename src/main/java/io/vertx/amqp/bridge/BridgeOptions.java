@@ -15,7 +15,9 @@
 */
 package io.vertx.amqp.bridge;
 
+import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.buffer.Buffer;
+import io.vertx.core.json.JsonObject;
 import io.vertx.core.net.JksOptions;
 import io.vertx.core.net.PemKeyCertOptions;
 import io.vertx.core.net.PemTrustOptions;
@@ -26,7 +28,15 @@ import io.vertx.proton.ProtonClientOptions;
 /**
  * Options for configuring {@link io.vertx.amqp.bridge.Bridge}.
  */
+@DataObject
 public class BridgeOptions extends ProtonClientOptions {
+
+  public BridgeOptions() {
+  }
+
+  public BridgeOptions(JsonObject json) {
+    throw new UnsupportedOperationException("todo");
+  }
 
   @Override
   public BridgeOptions addEnabledSaslMechanism(String saslMechanism) {

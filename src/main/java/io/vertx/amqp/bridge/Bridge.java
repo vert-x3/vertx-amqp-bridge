@@ -16,16 +16,18 @@
 package io.vertx.amqp.bridge;
 
 import io.vertx.amqp.bridge.impl.BridgeImpl;
+import io.vertx.codegen.annotations.Fluent;
+import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.eventbus.MessageProducer;
-import io.vertx.core.json.JsonObject;
 
 /**
  * Vert.x AMQP Bridge. Facilitates sending and receiving AMQP messages.
  */
+@VertxGen
 public interface Bridge {
 
   /**
@@ -67,6 +69,7 @@ public interface Bridge {
    *          the result handler
    * @return the bridge
    */
+  @Fluent
   Bridge start(String hostname, int port, String username, String password, Handler<AsyncResult<Void>> resultHandler);
 
   /**
@@ -80,6 +83,7 @@ public interface Bridge {
    *          the result handler
    * @return the bridge
    */
+  @Fluent
   Bridge start(String hostname, int port, Handler<AsyncResult<Void>> resultHandler);
 
   /**
@@ -89,7 +93,7 @@ public interface Bridge {
    *          the address to consume from
    * @return the consumer
    */
-  MessageConsumer<JsonObject> createConsumer(String amqpAddress);
+  <T> MessageConsumer<T> createConsumer(String amqpAddress);
 
   /**
    * Creates a producer to the given AMQP address.
@@ -98,7 +102,7 @@ public interface Bridge {
    *          the address to produce to
    * @return the producer
    */
-  MessageProducer<JsonObject> createProducer(String amqpAddress);
+  <T> MessageProducer<T> createProducer(String amqpAddress);
 
   /**
    * Shuts the bridge down, closing the underlying connection.
@@ -107,5 +111,6 @@ public interface Bridge {
    *          the result handler
    * @return the bridge
    */
+  @Fluent
   Bridge shutdown(Handler<AsyncResult<Void>> resultHandler);
 }

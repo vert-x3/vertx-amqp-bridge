@@ -22,6 +22,8 @@
  * WARNING: this module has the tech preview status, this means the API can change between versions.
  */
 @Document(fileName = "index.adoc")
+@ModuleGen(name = "vertx-amqp-bridge", groupPackage = "io.vertx")
 package io.vertx.amqp.bridge;
 
+import io.vertx.codegen.annotations.ModuleGen;
 import io.vertx.docgen.Document;
