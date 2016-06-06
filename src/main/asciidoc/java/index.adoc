@@ -1,5 +1,71 @@
 = Vert.x AMQP Bridge
 
-This component facilitates sending and receiving AMQP messages.
+This component provides AMQP 1.0 producer and consumer support via a bridging layer implementing the Vert.x event bus
+MessageProducer and MessageConsumer APIs over the top of link:https://github.com/vert-x3/vertx-proton/[vertx-proton].
 
 WARNING: this module has the tech preview status, this means the API can change between versions.
+
+== Using Vert.x AMQP Bridge
+
+To use Vert.x AMQP Bridge, add the following dependency to the _dependencies_ section of your build descriptor:
+
+* Maven (in your `pom.xml`):
+
+[source,xml,subs="+attributes"]
+----
+<dependency>
+  <groupId>io.vertx</groupId>
+  <artifactId>vertx-amqp-bridge</artifactId>
+  <version>3.3.0-SNAPSHOT</version>
+</dependency>
+----
+
+* Gradle (in your `build.gradle` file):
+
+[source,groovy,subs="+attributes"]
+----
+compile io.vertx:vertx-amqp-bridge:3.3.0-SNAPSHOT
+----
+
+=== Creating a MessageProducer
+
+Here is a simple example of creating a MessageProducer and sending a message with it. First, a Bridge is created and
+started to establish the underlying AMQP connection, then when this is complete the MessageProducer is created and
+message sent with it.
+
+[source,java]
+----
+Bridge bridge = Bridge.bridge(vertx);
+// Start the bridge, then use the event loop thread to process things thereafter.
+bridge.start("localhost", 5672, res -> {
+  // Set up a producer using the bridge, send a message with it.
+  MessageProducer<JsonObject> producer = bridge.createProducer("myAmqpAddress");
+
+  JsonObject body = new JsonObject();
+  body.put(MessageHelper.BODY, "myStringContent");
+
+  producer.send(body);
+});
+----
+
+=== Creating a MessageConsumer
+
+Here is a simple example of creating a MessageConsumer and registering a handler with it. First, a Bridge is created
+and started to establish the underlying AMQP connection, then when this is complete the MessageConsumer is created
+and a handler registered that prints the body of incoming AMQP messages.
+
+[source,java]
+----
+Bridge bridge = Bridge.bridge(vertx);
+// Start the bridge, then use the event loop thread to process things thereafter.
+bridge.start("localhost", 5672, res -> {
+  // Set up a consumer using the bridge, register a handler for it.
+  MessageConsumer<JsonObject> consumer = bridge.createConsumer("myAmqpAddress");
+  consumer.handler(vertxMsg -> {
+    JsonObject amqpPayload = vertxMsg.body();
+    Object amqpBody = amqpPayload.getValue(MessageHelper.BODY);
+
+    System.out.println("Got msg with content:" + amqpBody);
+  });
+});
+----
