@@ -20,9 +20,11 @@
 |[[enabledSecureTransportProtocols]]`enabledSecureTransportProtocols`|`Array of String`|-
 |[[hostnameVerificationAlgorithm]]`hostnameVerificationAlgorithm`|`String`|-
 |[[idleTimeout]]`idleTimeout`|`Number (int)`|-
+|[[jdkSslEngineOptions]]`jdkSslEngineOptions`|`link:dataobjects.html#JdkSSLEngineOptions[JdkSSLEngineOptions]`|-
 |[[keyStoreOptions]]`keyStoreOptions`|`link:dataobjects.html#JksOptions[JksOptions]`|-
 |[[logActivity]]`logActivity`|`Boolean`|-
 |[[metricsName]]`metricsName`|`String`|-
+|[[openSslEngineOptions]]`openSslEngineOptions`|`link:dataobjects.html#OpenSSLEngineOptions[OpenSSLEngineOptions]`|-
 |[[pemKeyCertOptions]]`pemKeyCertOptions`|`link:dataobjects.html#PemKeyCertOptions[PemKeyCertOptions]`|-
 |[[pemTrustOptions]]`pemTrustOptions`|`link:dataobjects.html#PemTrustOptions[PemTrustOptions]`|-
 |[[pfxKeyCertOptions]]`pfxKeyCertOptions`|`link:dataobjects.html#PfxOptions[PfxOptions]`|-
@@ -35,7 +37,6 @@
 |[[sendBufferSize]]`sendBufferSize`|`Number (int)`|-
 |[[soLinger]]`soLinger`|`Number (int)`|-
 |[[ssl]]`ssl`|`Boolean`|-
-|[[sslEngine]]`sslEngine`|`link:enums.html#SSLEngine[SSLEngine]`|-
 |[[tcpKeepAlive]]`tcpKeepAlive`|`Boolean`|-
 |[[tcpNoDelay]]`tcpNoDelay`|`Boolean`|-
 |[[trafficClass]]`trafficClass`|`Number (int)`|-

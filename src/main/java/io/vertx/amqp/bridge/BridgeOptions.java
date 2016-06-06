@@ -18,11 +18,16 @@ package io.vertx.amqp.bridge;
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.net.JdkSSLEngineOptions;
 import io.vertx.core.net.JksOptions;
+import io.vertx.core.net.KeyCertOptions;
+import io.vertx.core.net.OpenSSLEngineOptions;
 import io.vertx.core.net.PemKeyCertOptions;
 import io.vertx.core.net.PemTrustOptions;
 import io.vertx.core.net.PfxOptions;
-import io.vertx.core.net.SSLEngine;
+import io.vertx.core.net.ProxyOptions;
+import io.vertx.core.net.SSLEngineOptions;
+import io.vertx.core.net.TrustOptions;
 import io.vertx.proton.ProtonClientOptions;
 
 /**
@@ -183,12 +188,6 @@ public class BridgeOptions extends ProtonClientOptions {
   }
 
   @Override
-  public BridgeOptions setSslEngine(SSLEngine sslEngine) {
-    super.setSslEngine(sslEngine);
-    return this;
-  }
-
-  @Override
   public BridgeOptions setUseAlpn(boolean useAlpn) {
     throw new UnsupportedOperationException();
   }
@@ -205,4 +204,51 @@ public class BridgeOptions extends ProtonClientOptions {
     return this;
   }
 
+  @Override
+  public BridgeOptions setKeyCertOptions(KeyCertOptions options) {
+    super.setKeyCertOptions(options);
+    return this;
+  }
+
+  @Override
+  public BridgeOptions setLogActivity(boolean logEnabled) {
+    super.setLogActivity(logEnabled);
+    return this;
+  }
+
+  @Override
+  public BridgeOptions setMetricsName(String metricsName) {
+    super.setMetricsName(metricsName);
+    return this;
+  }
+
+  @Override
+  public BridgeOptions setProxyOptions(ProxyOptions proxyOptions) {
+    super.setProxyOptions(proxyOptions);
+    return this;
+  }
+
+  @Override
+  public BridgeOptions setTrustOptions(TrustOptions options) {
+    super.setTrustOptions(options);
+    return this;
+  }
+
+  @Override
+  public BridgeOptions setJdkSslEngineOptions(JdkSSLEngineOptions sslEngineOptions) {
+    super.setJdkSslEngineOptions(sslEngineOptions);
+    return this;
+  }
+
+  @Override
+  public BridgeOptions setOpenSslEngineOptions(OpenSSLEngineOptions sslEngineOptions) {
+    super.setOpenSslEngineOptions(sslEngineOptions);
+    return this;
+  }
+
+  @Override
+  public BridgeOptions setSslEngineOptions(SSLEngineOptions sslEngineOptions) {
+    super.setSslEngineOptions(sslEngineOptions);
+    return this;
+  }
 }
