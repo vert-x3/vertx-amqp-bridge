@@ -16,11 +16,11 @@
 package io.vertx.amqp.bridge;
 
 /**
- * Helper for dealing with the various sections, and their constituent elements, that form the
+ * Helpful constants for dealing with the various sections/elements forming the JsonObject representation of the
  * <a href="http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-messaging-v1.0-os.html#section-message-format">AMQP
  * message</a>.
  */
-public class MessageHelper {
+public class AmqpConstants {
 
   // body Type
   public static final String BODY_TYPE = "body_type";

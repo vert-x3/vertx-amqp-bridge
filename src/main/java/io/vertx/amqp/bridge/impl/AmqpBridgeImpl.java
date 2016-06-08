@@ -25,7 +25,7 @@ import org.apache.qpid.proton.amqp.messaging.Source;
 
 import io.vertx.amqp.bridge.AmqpBridge;
 import io.vertx.amqp.bridge.AmqpBridgeOptions;
-import io.vertx.amqp.bridge.MessageHelper;
+import io.vertx.amqp.bridge.AmqpConstants;
 import io.vertx.amqp.bridge.impl.AmqpProducerImpl;
 import io.vertx.amqp.bridge.impl.AmqpMessageImpl;
 import io.vertx.amqp.bridge.impl.AmqpBridgeImpl;
@@ -205,13 +205,13 @@ public class AmqpBridgeImpl implements AmqpBridge {
     // vertx amqp bridge it can match the response to a reply handler if set when sending.
     Object origMessageId = origIncomingMessage.getMessageId();
     if (origMessageId != null) {
-      JsonObject replyBodyProps = replyBody.getJsonObject(MessageHelper.PROPERTIES);
+      JsonObject replyBodyProps = replyBody.getJsonObject(AmqpConstants.PROPERTIES);
       if (replyBodyProps == null) {
         replyBodyProps = new JsonObject();
-        replyBody.put(MessageHelper.PROPERTIES, replyBodyProps);
+        replyBody.put(AmqpConstants.PROPERTIES, replyBodyProps);
       }
 
-      replyBodyProps.put(MessageHelper.PROPERTIES_CORRELATION_ID, origMessageId);
+      replyBodyProps.put(AmqpConstants.PROPERTIES_CORRELATION_ID, origMessageId);
     }
 
     replySender.doSend(replyBody, replyHandler, replyAddress);

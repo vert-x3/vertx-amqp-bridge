@@ -202,7 +202,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
         JsonObject jsonObject = msg.body();
         context.assertNotNull(jsonObject, "message jsonObject body was null");
 
-        Object amqpBodyContent = jsonObject.getValue(MessageHelper.BODY);
+        Object amqpBodyContent = jsonObject.getValue(AmqpConstants.BODY);
         context.assertNotNull(amqpBodyContent, "amqp message body content was null");
 
         context.assertEquals(sentContent, amqpBodyContent, "amqp message body was not as expected");
@@ -265,7 +265,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
       stream.handler(jsonObject -> {
         context.assertNotNull(jsonObject, "jsonObject was null");
 
-        Object amqpBodyContent = jsonObject.getValue(MessageHelper.BODY);
+        Object amqpBodyContent = jsonObject.getValue(AmqpConstants.BODY);
         context.assertNotNull(amqpBodyContent, "amqp message body content was null");
 
         context.assertEquals(sentContent, amqpBodyContent, "amqp message body was not as expected");
@@ -376,11 +376,11 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
       MessageProducer<JsonObject> producer = bridge.createProducer(destinationName);
 
       JsonObject body = new JsonObject();
-      body.put(MessageHelper.BODY, content);
+      body.put(AmqpConstants.BODY, content);
 
       producer.<JsonObject> send(body, reply -> {
         LOG.trace("Sender got reply");
-        context.assertEquals(replyContent, reply.result().body().getValue(MessageHelper.BODY),
+        context.assertEquals(replyContent, reply.result().body().getValue(AmqpConstants.BODY),
             "unexpected reply msg content");
         context.assertNotNull(reply.result().address(), "address was not set on reply");
         context.assertNull(reply.result().replyAddress(), "reply address was unexpectedly set on the reply");
@@ -400,11 +400,11 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
         LOG.trace("Consumer got request msg: " + receivedMsgBody);
 
         context.assertNotNull(receivedMsgBody, "expected msg body but none found");
-        context.assertEquals(content, receivedMsgBody.getValue(MessageHelper.BODY), "unexpected msg content");
+        context.assertEquals(content, receivedMsgBody.getValue(AmqpConstants.BODY), "unexpected msg content");
         context.assertNotNull(msg.replyAddress(), "reply address was not set on the request");
 
         JsonObject replyBody = new JsonObject();
-        replyBody.put(MessageHelper.BODY, replyContent);
+        replyBody.put(AmqpConstants.BODY, replyContent);
 
         msg.reply(replyBody);
 
@@ -434,12 +434,12 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
       MessageProducer<JsonObject> producer = bridge.createProducer(destinationName);
 
       JsonObject body = new JsonObject();
-      body.put(MessageHelper.BODY, content);
+      body.put(AmqpConstants.BODY, content);
 
       producer.<JsonObject> send(body, reply -> {
         LOG.trace("Sender got first reply");
         Message<JsonObject> replyMessage = reply.result();
-        context.assertEquals(replyContent, replyMessage.body().getValue(MessageHelper.BODY),
+        context.assertEquals(replyContent, replyMessage.body().getValue(AmqpConstants.BODY),
             "unexpected reply msg content");
         context.assertNotNull(replyMessage.address(), "address was not set on the reply");
         context.assertNotNull(replyMessage.replyAddress(), "reply address was not set on the reply");
@@ -447,7 +447,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
         replyRecievedAsync.complete();
 
         JsonObject replyToReplyBody = new JsonObject();
-        replyToReplyBody.put(MessageHelper.BODY, replyToReplyContent);
+        replyToReplyBody.put(AmqpConstants.BODY, replyToReplyContent);
 
         replyMessage.reply(replyToReplyBody);
       });
@@ -459,16 +459,16 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
         LOG.trace("Receiver got request: " + receivedMsgBody);
 
         context.assertNotNull(receivedMsgBody, "expected msg body but none found");
-        context.assertEquals(content, receivedMsgBody.getValue(MessageHelper.BODY), "unexpected msg content");
+        context.assertEquals(content, receivedMsgBody.getValue(AmqpConstants.BODY), "unexpected msg content");
         context.assertNotNull(msg.replyAddress(), "reply address was not set on the request");
 
         JsonObject replyBody = new JsonObject();
-        replyBody.put(MessageHelper.BODY, replyContent);
+        replyBody.put(AmqpConstants.BODY, replyContent);
 
         msg.<JsonObject> reply(replyBody, replyToReply -> {
           LOG.trace("Receiver got reply to reply");
           Message<JsonObject> replyToReplyMessage = replyToReply.result();
-          context.assertEquals(replyToReplyContent, replyToReplyMessage.body().getValue(MessageHelper.BODY),
+          context.assertEquals(replyToReplyContent, replyToReplyMessage.body().getValue(AmqpConstants.BODY),
               "unexpected 2nd reply msg content");
           context.assertNull(replyToReplyMessage.replyAddress(), "reply address was unexpectedly set on 2nd reply");
 
@@ -546,7 +546,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
           JsonObject jsonObject = msg.body();
           context.assertNotNull(jsonObject, "message " + msgNum + " jsonObject body was null");
 
-          Object amqpBodyContent = jsonObject.getValue(MessageHelper.BODY);
+          Object amqpBodyContent = jsonObject.getValue(AmqpConstants.BODY);
           context.assertNotNull(amqpBodyContent, "amqp message " + msgNum + " body content was null");
 
           context.assertEquals(sentContent, amqpBodyContent, "amqp message " + msgNum + " body not as expected");
@@ -625,7 +625,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
         JsonObject jsonObject = msg.body();
         context.assertNotNull(jsonObject, "message " + msgNum + " jsonObject body was null");
 
-        Object amqpBodyContent = jsonObject.getValue(MessageHelper.BODY);
+        Object amqpBodyContent = jsonObject.getValue(AmqpConstants.BODY);
         context.assertNotNull(amqpBodyContent, "amqp message " + msgNum + " body content was null");
 
         context.assertEquals(sentContent, amqpBodyContent, "amqp message " + msgNum + " body not as expected");
@@ -807,7 +807,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
         // Received message, verify it
         JsonObject jsonObject = msg.body();
         context.assertNotNull(jsonObject, "message jsonObject body was null");
-        Object amqpBodyContent = jsonObject.getValue(MessageHelper.BODY);
+        Object amqpBodyContent = jsonObject.getValue(AmqpConstants.BODY);
         context.assertNotNull(amqpBodyContent, "amqp message body content was null");
         context.assertEquals(sentContent, amqpBodyContent, "amqp message body not as expected");
 
@@ -1228,7 +1228,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
         // Received message, verify it
         JsonObject jsonObject = msg.body();
         context.assertNotNull(jsonObject, "message jsonObject body was null");
-        Object amqpBodyContent = jsonObject.getValue(MessageHelper.BODY);
+        Object amqpBodyContent = jsonObject.getValue(AmqpConstants.BODY);
         context.assertNotNull(amqpBodyContent, "amqp message body content was null");
         context.assertEquals(sentContent, amqpBodyContent, "amqp message body not as expected");
 
@@ -1324,7 +1324,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
         // Received message, verify it
         JsonObject jsonObject = msg.body();
         context.assertNotNull(jsonObject, "message jsonObject body was null");
-        Object amqpBodyContent = jsonObject.getValue(MessageHelper.BODY);
+        Object amqpBodyContent = jsonObject.getValue(AmqpConstants.BODY);
         context.assertNotNull(amqpBodyContent, "amqp message body content was null");
         context.assertEquals(sentContent, amqpBodyContent, "amqp message body not as expected");
 
@@ -1408,7 +1408,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
         // Received message, verify it
         JsonObject jsonObject = msg.body();
         context.assertNotNull(jsonObject, "message jsonObject body was null");
-        Object amqpBodyContent = jsonObject.getValue(MessageHelper.BODY);
+        Object amqpBodyContent = jsonObject.getValue(AmqpConstants.BODY);
         context.assertNotNull(amqpBodyContent, "amqp message body content was null");
         context.assertEquals(sentContent, amqpBodyContent, "amqp message body not as expected");
 
@@ -1518,7 +1518,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
         // Received message, verify it
         JsonObject jsonObject = msg.body();
         context.assertNotNull(jsonObject, "message jsonObject body was null");
-        Object amqpBodyContent = jsonObject.getValue(MessageHelper.BODY);
+        Object amqpBodyContent = jsonObject.getValue(AmqpConstants.BODY);
         context.assertNotNull(amqpBodyContent, "amqp message body content was null");
         context.assertEquals(sentContent, amqpBodyContent, "amqp message body not as expected");
 

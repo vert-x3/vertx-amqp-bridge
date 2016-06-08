@@ -47,7 +47,7 @@ import org.apache.qpid.proton.message.Message;
 import org.junit.Before;
 import org.junit.Test;
 
-import io.vertx.amqp.bridge.MessageHelper;
+import io.vertx.amqp.bridge.AmqpConstants;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -68,7 +68,7 @@ public class MessageTranslatorImplTest {
 
     JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
     assertNotNull("expected converted msg", jsonObject);
-    assertFalse("expected header element key not to be present", jsonObject.containsKey(MessageHelper.HEADER));
+    assertFalse("expected header element key not to be present", jsonObject.containsKey(AmqpConstants.HEADER));
   }
 
   @Test
@@ -97,31 +97,31 @@ public class MessageTranslatorImplTest {
 
     JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
     assertNotNull("expected converted msg", jsonObject);
-    assertTrue("expected header element key to be present", jsonObject.containsKey(MessageHelper.HEADER));
+    assertTrue("expected header element key to be present", jsonObject.containsKey(AmqpConstants.HEADER));
 
-    JsonObject jsonHeader = jsonObject.getJsonObject(MessageHelper.HEADER);
+    JsonObject jsonHeader = jsonObject.getJsonObject(AmqpConstants.HEADER);
     assertNotNull("expected header element value to be non-null", jsonHeader);
 
-    assertTrue("expected durable key to be present", jsonHeader.containsKey(MessageHelper.HEADER_DURABLE));
+    assertTrue("expected durable key to be present", jsonHeader.containsKey(AmqpConstants.HEADER_DURABLE));
     assertEquals("expected durable value to be present", testDurable,
-        jsonHeader.getValue(MessageHelper.HEADER_DURABLE));
+        jsonHeader.getValue(AmqpConstants.HEADER_DURABLE));
 
-    assertTrue("expected priority key to be present", jsonHeader.containsKey(MessageHelper.HEADER_PRIORITY));
+    assertTrue("expected priority key to be present", jsonHeader.containsKey(AmqpConstants.HEADER_PRIORITY));
     assertEquals("expected priority value to be present", testPriority,
-        jsonHeader.getValue(MessageHelper.HEADER_PRIORITY));
+        jsonHeader.getValue(AmqpConstants.HEADER_PRIORITY));
 
-    assertTrue("expected ttl key to be present", jsonHeader.containsKey(MessageHelper.HEADER_TTL));
-    assertEquals("expected ttl value to be present", testTtl, jsonHeader.getValue(MessageHelper.HEADER_TTL));
+    assertTrue("expected ttl key to be present", jsonHeader.containsKey(AmqpConstants.HEADER_TTL));
+    assertEquals("expected ttl value to be present", testTtl, jsonHeader.getValue(AmqpConstants.HEADER_TTL));
 
     assertTrue("expected first acquirer key to be present",
-        jsonHeader.containsKey(MessageHelper.HEADER_FIRST_ACQUIRER));
+        jsonHeader.containsKey(AmqpConstants.HEADER_FIRST_ACQUIRER));
     assertEquals("expected first acquirer  value to be present", testFirstAcquirer,
-        jsonHeader.getValue(MessageHelper.HEADER_FIRST_ACQUIRER));
+        jsonHeader.getValue(AmqpConstants.HEADER_FIRST_ACQUIRER));
 
     assertTrue("expected delivery count key to be present",
-        jsonHeader.containsKey(MessageHelper.HEADER_DELIVERY_COUNT));
+        jsonHeader.containsKey(AmqpConstants.HEADER_DELIVERY_COUNT));
     assertEquals("expected delivery count value to be present", testDeliveryCount,
-        jsonHeader.getValue(MessageHelper.HEADER_DELIVERY_COUNT));
+        jsonHeader.getValue(AmqpConstants.HEADER_DELIVERY_COUNT));
   }
 
   @Test
@@ -133,14 +133,14 @@ public class MessageTranslatorImplTest {
     long testDeliveryCount = 3;
 
     JsonObject jsonHeader = new JsonObject();
-    jsonHeader.put(MessageHelper.HEADER_DURABLE, testDurable);
-    jsonHeader.put(MessageHelper.HEADER_PRIORITY, testPriority);
-    jsonHeader.put(MessageHelper.HEADER_TTL, testTtl);
-    jsonHeader.put(MessageHelper.HEADER_FIRST_ACQUIRER, testFirstAcquirer);
-    jsonHeader.put(MessageHelper.HEADER_DELIVERY_COUNT, testDeliveryCount);
+    jsonHeader.put(AmqpConstants.HEADER_DURABLE, testDurable);
+    jsonHeader.put(AmqpConstants.HEADER_PRIORITY, testPriority);
+    jsonHeader.put(AmqpConstants.HEADER_TTL, testTtl);
+    jsonHeader.put(AmqpConstants.HEADER_FIRST_ACQUIRER, testFirstAcquirer);
+    jsonHeader.put(AmqpConstants.HEADER_DELIVERY_COUNT, testDeliveryCount);
 
     JsonObject jsonObject = new JsonObject();
-    jsonObject.put(MessageHelper.HEADER, jsonHeader);
+    jsonObject.put(AmqpConstants.HEADER, jsonHeader);
 
     Message protonMsg = translator.convertToAmqpMessage(jsonObject);
     assertNotNull("Expected converted msg", protonMsg);
@@ -165,7 +165,7 @@ public class MessageTranslatorImplTest {
     JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
     assertNotNull("expected converted msg", jsonObject);
     assertFalse("expected appliation properties element key not to be present",
-        jsonObject.containsKey(MessageHelper.APPLICATION_PROPERTIES));
+        jsonObject.containsKey(AmqpConstants.APPLICATION_PROPERTIES));
   }
 
   @Test
@@ -198,9 +198,9 @@ public class MessageTranslatorImplTest {
     JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
     assertNotNull("expected converted msg", jsonObject);
     assertTrue("expected application properties element key to be present",
-        jsonObject.containsKey(MessageHelper.APPLICATION_PROPERTIES));
+        jsonObject.containsKey(AmqpConstants.APPLICATION_PROPERTIES));
 
-    JsonObject jsonAppProps = jsonObject.getJsonObject(MessageHelper.APPLICATION_PROPERTIES);
+    JsonObject jsonAppProps = jsonObject.getJsonObject(AmqpConstants.APPLICATION_PROPERTIES);
     assertNotNull("expected application properties element value to be non-null", jsonAppProps);
 
     assertTrue("expected key to be present", jsonAppProps.containsKey(testPropKeyB));
@@ -229,9 +229,9 @@ public class MessageTranslatorImplTest {
     JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
     assertNotNull("expected converted msg", jsonObject);
     assertTrue("expected application properties element key to be present",
-        jsonObject.containsKey(MessageHelper.APPLICATION_PROPERTIES));
+        jsonObject.containsKey(AmqpConstants.APPLICATION_PROPERTIES));
 
-    JsonObject jsonAppProps = jsonObject.getJsonObject(MessageHelper.APPLICATION_PROPERTIES);
+    JsonObject jsonAppProps = jsonObject.getJsonObject(AmqpConstants.APPLICATION_PROPERTIES);
     assertNotNull("expected application properties element value to be non-null", jsonAppProps);
 
     assertTrue("expected key to be present", jsonAppProps.containsKey(symbolPropKey));
@@ -260,9 +260,9 @@ public class MessageTranslatorImplTest {
     JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
     assertNotNull("expected converted msg", jsonObject);
     assertTrue("expected application properties element key to be present",
-        jsonObject.containsKey(MessageHelper.APPLICATION_PROPERTIES));
+        jsonObject.containsKey(AmqpConstants.APPLICATION_PROPERTIES));
 
-    JsonObject jsonAppProps = jsonObject.getJsonObject(MessageHelper.APPLICATION_PROPERTIES);
+    JsonObject jsonAppProps = jsonObject.getJsonObject(AmqpConstants.APPLICATION_PROPERTIES);
     assertNotNull("expected application properties element value to be non-null", jsonAppProps);
 
     assertTrue("expected key to be present", jsonAppProps.containsKey(binaryPropKey));
@@ -294,9 +294,9 @@ public class MessageTranslatorImplTest {
     JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
     assertNotNull("expected converted msg", jsonObject);
     assertTrue("expected application properties element key to be present",
-        jsonObject.containsKey(MessageHelper.APPLICATION_PROPERTIES));
+        jsonObject.containsKey(AmqpConstants.APPLICATION_PROPERTIES));
 
-    JsonObject jsonAppProps = jsonObject.getJsonObject(MessageHelper.APPLICATION_PROPERTIES);
+    JsonObject jsonAppProps = jsonObject.getJsonObject(AmqpConstants.APPLICATION_PROPERTIES);
     assertNotNull("expected application properties element value to be non-null", jsonAppProps);
 
     assertTrue("expected key to be present", jsonAppProps.containsKey(timestampPropKey));
@@ -321,7 +321,7 @@ public class MessageTranslatorImplTest {
     jsonAppProps.put(testPropKeyB, testPropValueB);
 
     JsonObject jsonObject = new JsonObject();
-    jsonObject.put(MessageHelper.APPLICATION_PROPERTIES, jsonAppProps);
+    jsonObject.put(AmqpConstants.APPLICATION_PROPERTIES, jsonAppProps);
 
     Message protonMsg = translator.convertToAmqpMessage(jsonObject);
     assertNotNull("Expected converted msg", protonMsg);
@@ -351,7 +351,7 @@ public class MessageTranslatorImplTest {
     JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
     assertNotNull("expected converted msg", jsonObject);
     assertFalse("expected message annotations element key not to be present",
-        jsonObject.containsKey(MessageHelper.MESSAGE_ANNOTATIONS));
+        jsonObject.containsKey(AmqpConstants.MESSAGE_ANNOTATIONS));
   }
 
   @Test
@@ -385,9 +385,9 @@ public class MessageTranslatorImplTest {
     JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
     assertNotNull("expected converted msg", jsonObject);
     assertTrue("expected message annotations element key to be present",
-        jsonObject.containsKey(MessageHelper.MESSAGE_ANNOTATIONS));
+        jsonObject.containsKey(AmqpConstants.MESSAGE_ANNOTATIONS));
 
-    JsonObject jsonMsgAnn = jsonObject.getJsonObject(MessageHelper.MESSAGE_ANNOTATIONS);
+    JsonObject jsonMsgAnn = jsonObject.getJsonObject(AmqpConstants.MESSAGE_ANNOTATIONS);
     assertNotNull("expected message annotations element value to be non-null", jsonMsgAnn);
 
     assertTrue("expected key to be present", jsonMsgAnn.containsKey(testAnnKeyNameA));
@@ -424,9 +424,9 @@ public class MessageTranslatorImplTest {
     JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
     assertNotNull("expected converted msg", jsonObject);
     assertTrue("expected message annotations element key to be present",
-        jsonObject.containsKey(MessageHelper.MESSAGE_ANNOTATIONS));
+        jsonObject.containsKey(AmqpConstants.MESSAGE_ANNOTATIONS));
 
-    JsonObject jsonMsgAnn = jsonObject.getJsonObject(MessageHelper.MESSAGE_ANNOTATIONS);
+    JsonObject jsonMsgAnn = jsonObject.getJsonObject(AmqpConstants.MESSAGE_ANNOTATIONS);
     assertNotNull("expected message annotations element value to be non-null", jsonMsgAnn);
 
     assertTrue("expected map annotation key to be present", jsonMsgAnn.containsKey(testAnnMapKeyName));
@@ -458,7 +458,7 @@ public class MessageTranslatorImplTest {
     jsonAppProps.put(testAnnKeyNameB, testAnnValueB);
 
     JsonObject jsonObject = new JsonObject();
-    jsonObject.put(MessageHelper.MESSAGE_ANNOTATIONS, jsonAppProps);
+    jsonObject.put(AmqpConstants.MESSAGE_ANNOTATIONS, jsonAppProps);
 
     Message protonMsg = translator.convertToAmqpMessage(jsonObject);
     assertNotNull("Expected converted msg", protonMsg);
@@ -500,7 +500,7 @@ public class MessageTranslatorImplTest {
     jsonMsgAnn.put(nestedMapAnnKeyName, nestedJsonMap);
 
     JsonObject jsonObject = new JsonObject();
-    jsonObject.put(MessageHelper.MESSAGE_ANNOTATIONS, jsonMsgAnn);
+    jsonObject.put(AmqpConstants.MESSAGE_ANNOTATIONS, jsonMsgAnn);
 
     Message protonMsg = translator.convertToAmqpMessage(jsonObject);
     assertNotNull("Expected converted msg", protonMsg);
@@ -538,12 +538,12 @@ public class MessageTranslatorImplTest {
 
     JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
     assertNotNull("expected converted msg", jsonObject);
-    assertTrue("expected body element key to be present", jsonObject.containsKey(MessageHelper.BODY));
-    assertNotNull("expected body element value to be non-null", jsonObject.getValue(MessageHelper.BODY));
-    assertEquals("body value not as expected", testContent, jsonObject.getValue(MessageHelper.BODY));
-    assertTrue("expected body_type element key to be present", jsonObject.containsKey(MessageHelper.BODY_TYPE));
-    assertEquals("unexpected body_type value", MessageHelper.BODY_TYPE_VALUE,
-        jsonObject.getValue(MessageHelper.BODY_TYPE));
+    assertTrue("expected body element key to be present", jsonObject.containsKey(AmqpConstants.BODY));
+    assertNotNull("expected body element value to be non-null", jsonObject.getValue(AmqpConstants.BODY));
+    assertEquals("body value not as expected", testContent, jsonObject.getValue(AmqpConstants.BODY));
+    assertTrue("expected body_type element key to be present", jsonObject.containsKey(AmqpConstants.BODY_TYPE));
+    assertEquals("unexpected body_type value", AmqpConstants.BODY_TYPE_VALUE,
+        jsonObject.getValue(AmqpConstants.BODY_TYPE));
   }
 
   @Test
@@ -560,9 +560,9 @@ public class MessageTranslatorImplTest {
     String testContent = "myTestContent";
 
     JsonObject jsonObject = new JsonObject();
-    jsonObject.put(MessageHelper.BODY, testContent);
+    jsonObject.put(AmqpConstants.BODY, testContent);
     if(setBodyType){
-      jsonObject.put(MessageHelper.BODY_TYPE, MessageHelper.BODY_TYPE_VALUE);
+      jsonObject.put(AmqpConstants.BODY_TYPE, AmqpConstants.BODY_TYPE_VALUE);
     }
 
     Message protonMsg = translator.convertToAmqpMessage(jsonObject);
@@ -588,12 +588,12 @@ public class MessageTranslatorImplTest {
 
     JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
     assertNotNull("expected converted msg", jsonObject);
-    assertTrue("expected body element key to be present", jsonObject.containsKey(MessageHelper.BODY));
-    assertNotNull("expected body element value to be non-null", jsonObject.getValue(MessageHelper.BODY));
-    assertTrue("expected body_type element key to be present", jsonObject.containsKey(MessageHelper.BODY_TYPE));
-    assertEquals("unexpected body_type value", MessageHelper.BODY_TYPE_VALUE,
-        jsonObject.getValue(MessageHelper.BODY_TYPE));
-    JsonObject jsonMap = jsonObject.getJsonObject(MessageHelper.BODY);
+    assertTrue("expected body element key to be present", jsonObject.containsKey(AmqpConstants.BODY));
+    assertNotNull("expected body element value to be non-null", jsonObject.getValue(AmqpConstants.BODY));
+    assertTrue("expected body_type element key to be present", jsonObject.containsKey(AmqpConstants.BODY_TYPE));
+    assertEquals("unexpected body_type value", AmqpConstants.BODY_TYPE_VALUE,
+        jsonObject.getValue(AmqpConstants.BODY_TYPE));
+    JsonObject jsonMap = jsonObject.getJsonObject(AmqpConstants.BODY);
 
     assertTrue("expected list element key to be present", jsonMap.containsKey(testKey));
     assertNotNull("expected list element value to be non-null", jsonMap.getValue(testKey));
@@ -613,8 +613,8 @@ public class MessageTranslatorImplTest {
     jsonList.add(nestedJsonMap);
 
     JsonObject jsonObject = new JsonObject();
-    jsonObject.put(MessageHelper.BODY, jsonList);
-    jsonObject.put(MessageHelper.BODY_TYPE, MessageHelper.BODY_TYPE_VALUE);
+    jsonObject.put(AmqpConstants.BODY, jsonList);
+    jsonObject.put(AmqpConstants.BODY_TYPE, AmqpConstants.BODY_TYPE_VALUE);
 
     Message protonMsg = translator.convertToAmqpMessage(jsonObject);
 
@@ -642,15 +642,15 @@ public class MessageTranslatorImplTest {
 
     JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
     assertNotNull("expected converted msg", jsonObject);
-    assertTrue("expected body element key to be present", jsonObject.containsKey(MessageHelper.BODY));
-    assertNotNull("expected body element value to be non-null", jsonObject.getValue(MessageHelper.BODY));
-    assertTrue("expected body_type element key to be present", jsonObject.containsKey(MessageHelper.BODY_TYPE));
-    assertEquals("unexpected body_type value", MessageHelper.BODY_TYPE_DATA,
-        jsonObject.getValue(MessageHelper.BODY_TYPE));
+    assertTrue("expected body element key to be present", jsonObject.containsKey(AmqpConstants.BODY));
+    assertNotNull("expected body element value to be non-null", jsonObject.getValue(AmqpConstants.BODY));
+    assertTrue("expected body_type element key to be present", jsonObject.containsKey(AmqpConstants.BODY_TYPE));
+    assertEquals("unexpected body_type value", AmqpConstants.BODY_TYPE_DATA,
+        jsonObject.getValue(AmqpConstants.BODY_TYPE));
 
-    jsonObject.put(MessageHelper.BODY_TYPE, MessageHelper.BODY_TYPE_VALUE);
+    jsonObject.put(AmqpConstants.BODY_TYPE, AmqpConstants.BODY_TYPE_VALUE);
     assertArrayEquals("body content not as expected", testContent.getBytes(StandardCharsets.UTF_8),
-        jsonObject.getBinary(MessageHelper.BODY));
+        jsonObject.getBinary(AmqpConstants.BODY));
   }
 
   @Test
@@ -658,8 +658,8 @@ public class MessageTranslatorImplTest {
     String testContent = "myTestContent";
 
     JsonObject jsonObject = new JsonObject();
-    jsonObject.put(MessageHelper.BODY, testContent.getBytes(StandardCharsets.UTF_8));
-    jsonObject.put(MessageHelper.BODY_TYPE, MessageHelper.BODY_TYPE_DATA);
+    jsonObject.put(AmqpConstants.BODY, testContent.getBytes(StandardCharsets.UTF_8));
+    jsonObject.put(AmqpConstants.BODY_TYPE, AmqpConstants.BODY_TYPE_DATA);
 
     Message protonMsg = translator.convertToAmqpMessage(jsonObject);
 
@@ -685,15 +685,15 @@ public class MessageTranslatorImplTest {
     JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
 
     assertNotNull("expected converted msg", jsonObject);
-    assertTrue("expected body element key to be present", jsonObject.containsKey(MessageHelper.BODY));
-    assertNotNull("expected body element value to be non-null", jsonObject.getValue(MessageHelper.BODY));
-    assertTrue("expected body_type element key to be present", jsonObject.containsKey(MessageHelper.BODY_TYPE));
-    assertEquals("unexpected body_type value", MessageHelper.BODY_TYPE_SEQUENCE,
-        jsonObject.getValue(MessageHelper.BODY_TYPE));
-    JsonArray jsonSequence = jsonObject.getJsonArray(MessageHelper.BODY);
+    assertTrue("expected body element key to be present", jsonObject.containsKey(AmqpConstants.BODY));
+    assertNotNull("expected body element value to be non-null", jsonObject.getValue(AmqpConstants.BODY));
+    assertTrue("expected body_type element key to be present", jsonObject.containsKey(AmqpConstants.BODY_TYPE));
+    assertEquals("unexpected body_type value", AmqpConstants.BODY_TYPE_SEQUENCE,
+        jsonObject.getValue(AmqpConstants.BODY_TYPE));
+    JsonArray jsonSequence = jsonObject.getJsonArray(AmqpConstants.BODY);
     assertArrayEquals("sequence element value not as expected", testContent.getBytes(StandardCharsets.UTF_8),
         jsonSequence.getBinary(0));
-    assertTrue("expected body_type element key to be present", jsonObject.containsKey(MessageHelper.BODY_TYPE));
+    assertTrue("expected body_type element key to be present", jsonObject.containsKey(AmqpConstants.BODY_TYPE));
   }
 
   @Test
@@ -707,8 +707,8 @@ public class MessageTranslatorImplTest {
     jsonSequence.add(nestedJsonMap);
 
     JsonObject jsonObject = new JsonObject();
-    jsonObject.put(MessageHelper.BODY, jsonSequence);
-    jsonObject.put(MessageHelper.BODY_TYPE, MessageHelper.BODY_TYPE_SEQUENCE);
+    jsonObject.put(AmqpConstants.BODY, jsonSequence);
+    jsonObject.put(AmqpConstants.BODY_TYPE, AmqpConstants.BODY_TYPE_SEQUENCE);
 
     Message protonMsg = translator.convertToAmqpMessage(jsonObject);
 
@@ -733,7 +733,7 @@ public class MessageTranslatorImplTest {
 
     JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
     assertNotNull("expected converted msg", jsonObject);
-    assertFalse("expected properties element key not to be present", jsonObject.containsKey(MessageHelper.PROPERTIES));
+    assertFalse("expected properties element key not to be present", jsonObject.containsKey(AmqpConstants.PROPERTIES));
   }
 
   @Test
@@ -778,69 +778,69 @@ public class MessageTranslatorImplTest {
 
     JsonObject jsonObject = translator.convertToJsonObject(protonMsg);
     assertNotNull("expected converted msg", jsonObject);
-    assertTrue("expected properties element key to be present", jsonObject.containsKey(MessageHelper.PROPERTIES));
+    assertTrue("expected properties element key to be present", jsonObject.containsKey(AmqpConstants.PROPERTIES));
 
-    JsonObject properties = jsonObject.getJsonObject(MessageHelper.PROPERTIES);
+    JsonObject properties = jsonObject.getJsonObject(AmqpConstants.PROPERTIES);
     assertNotNull("expected properties element value to be non-null", properties);
 
-    assertTrue("expected to key to be present", properties.containsKey(MessageHelper.PROPERTIES_TO));
-    assertEquals("expected to value to be present", testToAddress, properties.getValue(MessageHelper.PROPERTIES_TO));
+    assertTrue("expected to key to be present", properties.containsKey(AmqpConstants.PROPERTIES_TO));
+    assertEquals("expected to value to be present", testToAddress, properties.getValue(AmqpConstants.PROPERTIES_TO));
 
-    assertTrue("expected reply to key to be present", properties.containsKey(MessageHelper.PROPERTIES_REPLY_TO));
+    assertTrue("expected reply to key to be present", properties.containsKey(AmqpConstants.PROPERTIES_REPLY_TO));
     assertEquals("expected reply to value to be present", testReplyToAddress,
-        properties.getValue(MessageHelper.PROPERTIES_REPLY_TO));
+        properties.getValue(AmqpConstants.PROPERTIES_REPLY_TO));
 
-    assertTrue("expected message id key to be present", properties.containsKey(MessageHelper.PROPERTIES_MESSAGE_ID));
+    assertTrue("expected message id key to be present", properties.containsKey(AmqpConstants.PROPERTIES_MESSAGE_ID));
     assertEquals("expected message id value to be present", testMessageId,
-        properties.getValue(MessageHelper.PROPERTIES_MESSAGE_ID));
+        properties.getValue(AmqpConstants.PROPERTIES_MESSAGE_ID));
 
     assertTrue("expected correlation id key to be present",
-        properties.containsKey(MessageHelper.PROPERTIES_CORRELATION_ID));
+        properties.containsKey(AmqpConstants.PROPERTIES_CORRELATION_ID));
     assertEquals("expected correlation id value to be present", testCorrelationId,
-        properties.getValue(MessageHelper.PROPERTIES_CORRELATION_ID));
+        properties.getValue(AmqpConstants.PROPERTIES_CORRELATION_ID));
 
-    assertTrue("expected subject key to be present", properties.containsKey(MessageHelper.PROPERTIES_SUBJECT));
+    assertTrue("expected subject key to be present", properties.containsKey(AmqpConstants.PROPERTIES_SUBJECT));
     assertEquals("expected subject value to be present", testSubject,
-        properties.getValue(MessageHelper.PROPERTIES_SUBJECT));
+        properties.getValue(AmqpConstants.PROPERTIES_SUBJECT));
 
-    assertTrue("expected group id key to be present", properties.containsKey(MessageHelper.PROPERTIES_GROUP_ID));
+    assertTrue("expected group id key to be present", properties.containsKey(AmqpConstants.PROPERTIES_GROUP_ID));
     assertEquals("expected group id value to be present", testGroupId,
-        properties.getValue(MessageHelper.PROPERTIES_GROUP_ID));
+        properties.getValue(AmqpConstants.PROPERTIES_GROUP_ID));
 
     assertTrue("expected group sequence key to be present",
-        properties.containsKey(MessageHelper.PROPERTIES_GROUP_SEQUENCE));
+        properties.containsKey(AmqpConstants.PROPERTIES_GROUP_SEQUENCE));
     assertEquals("expected group sequence value to be present", testGroupSeq,
-        properties.getValue(MessageHelper.PROPERTIES_GROUP_SEQUENCE));
+        properties.getValue(AmqpConstants.PROPERTIES_GROUP_SEQUENCE));
 
     assertTrue("expected reply to group id key to be present",
-        properties.containsKey(MessageHelper.PROPERTIES_REPLY_TO_GROUP_ID));
+        properties.containsKey(AmqpConstants.PROPERTIES_REPLY_TO_GROUP_ID));
     assertEquals("expected reply to group id value to be present", testReplyToGroupId,
-        properties.getValue(MessageHelper.PROPERTIES_REPLY_TO_GROUP_ID));
+        properties.getValue(AmqpConstants.PROPERTIES_REPLY_TO_GROUP_ID));
 
     assertTrue("expected content type key to be present",
-        properties.containsKey(MessageHelper.PROPERTIES_CONTENT_TYPE));
+        properties.containsKey(AmqpConstants.PROPERTIES_CONTENT_TYPE));
     assertEquals("expected content type  value to be present", testContentType,
-        properties.getValue(MessageHelper.PROPERTIES_CONTENT_TYPE));
+        properties.getValue(AmqpConstants.PROPERTIES_CONTENT_TYPE));
 
     assertTrue("expected content encoding key to be present",
-        properties.containsKey(MessageHelper.PROPERTIES_CONTENT_ENCODING));
+        properties.containsKey(AmqpConstants.PROPERTIES_CONTENT_ENCODING));
     assertEquals("expected content encoding  value to be present", testContentEncoding,
-        properties.getValue(MessageHelper.PROPERTIES_CONTENT_ENCODING));
+        properties.getValue(AmqpConstants.PROPERTIES_CONTENT_ENCODING));
 
     assertTrue("expected creation time key to be present",
-        properties.containsKey(MessageHelper.PROPERTIES_CREATION_TIME));
+        properties.containsKey(AmqpConstants.PROPERTIES_CREATION_TIME));
     assertEquals("expected creation time value to be present", testCreationTime,
-        properties.getValue(MessageHelper.PROPERTIES_CREATION_TIME));
+        properties.getValue(AmqpConstants.PROPERTIES_CREATION_TIME));
 
     assertTrue("expected absolute expiry time key to be present",
-        properties.containsKey(MessageHelper.PROPERTIES_ABSOLUTE_EXPIRY_TIME));
+        properties.containsKey(AmqpConstants.PROPERTIES_ABSOLUTE_EXPIRY_TIME));
     assertEquals("expected absolute expiry time value to be present", testAbsExpiryTime,
-        properties.getValue(MessageHelper.PROPERTIES_ABSOLUTE_EXPIRY_TIME));
+        properties.getValue(AmqpConstants.PROPERTIES_ABSOLUTE_EXPIRY_TIME));
 
     assertTrue("expected user id key to be present",
-        properties.containsKey(MessageHelper.PROPERTIES_USER_ID));
+        properties.containsKey(AmqpConstants.PROPERTIES_USER_ID));
     assertEquals("expected user id value to be present", testUserId,
-        properties.getValue(MessageHelper.PROPERTIES_USER_ID));
+        properties.getValue(AmqpConstants.PROPERTIES_USER_ID));
   }
 
   @Test
@@ -860,22 +860,22 @@ public class MessageTranslatorImplTest {
     String testUserId = "myUserId";
 
     JsonObject jsonProps = new JsonObject();
-    jsonProps.put(MessageHelper.PROPERTIES_TO, testToAddress);
-    jsonProps.put(MessageHelper.PROPERTIES_REPLY_TO, testReplyToAddress);
-    jsonProps.put(MessageHelper.PROPERTIES_MESSAGE_ID, testMessageId);
-    jsonProps.put(MessageHelper.PROPERTIES_CORRELATION_ID, testCorrelationId);
-    jsonProps.put(MessageHelper.PROPERTIES_SUBJECT, testSubject);
-    jsonProps.put(MessageHelper.PROPERTIES_GROUP_ID, testGroupId);
-    jsonProps.put(MessageHelper.PROPERTIES_GROUP_SEQUENCE, testGroupSeq);
-    jsonProps.put(MessageHelper.PROPERTIES_REPLY_TO_GROUP_ID, testReplyToGroupId);
-    jsonProps.put(MessageHelper.PROPERTIES_CONTENT_TYPE, testContentType);
-    jsonProps.put(MessageHelper.PROPERTIES_CONTENT_ENCODING, testContentEncoding);
-    jsonProps.put(MessageHelper.PROPERTIES_CREATION_TIME, testCreationTime);
-    jsonProps.put(MessageHelper.PROPERTIES_ABSOLUTE_EXPIRY_TIME, testAbsExpiryTime);
-    jsonProps.put(MessageHelper.PROPERTIES_USER_ID, testUserId);
+    jsonProps.put(AmqpConstants.PROPERTIES_TO, testToAddress);
+    jsonProps.put(AmqpConstants.PROPERTIES_REPLY_TO, testReplyToAddress);
+    jsonProps.put(AmqpConstants.PROPERTIES_MESSAGE_ID, testMessageId);
+    jsonProps.put(AmqpConstants.PROPERTIES_CORRELATION_ID, testCorrelationId);
+    jsonProps.put(AmqpConstants.PROPERTIES_SUBJECT, testSubject);
+    jsonProps.put(AmqpConstants.PROPERTIES_GROUP_ID, testGroupId);
+    jsonProps.put(AmqpConstants.PROPERTIES_GROUP_SEQUENCE, testGroupSeq);
+    jsonProps.put(AmqpConstants.PROPERTIES_REPLY_TO_GROUP_ID, testReplyToGroupId);
+    jsonProps.put(AmqpConstants.PROPERTIES_CONTENT_TYPE, testContentType);
+    jsonProps.put(AmqpConstants.PROPERTIES_CONTENT_ENCODING, testContentEncoding);
+    jsonProps.put(AmqpConstants.PROPERTIES_CREATION_TIME, testCreationTime);
+    jsonProps.put(AmqpConstants.PROPERTIES_ABSOLUTE_EXPIRY_TIME, testAbsExpiryTime);
+    jsonProps.put(AmqpConstants.PROPERTIES_USER_ID, testUserId);
 
     JsonObject jsonObject = new JsonObject();
-    jsonObject.put(MessageHelper.PROPERTIES, jsonProps);
+    jsonObject.put(AmqpConstants.PROPERTIES, jsonProps);
 
     Message protonMsg = translator.convertToAmqpMessage(jsonObject);
     assertNotNull("Expected converted msg", protonMsg);
