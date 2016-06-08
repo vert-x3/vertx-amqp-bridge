@@ -27,13 +27,13 @@ import io.vertx.proton.ProtonHelper;
 public class AmqpMessageImpl implements Message<JsonObject> {
 
   private final JsonObject body;
-  private final BridgeImpl bridge;
+  private final AmqpBridgeImpl bridge;
   private final org.apache.qpid.proton.message.Message protonMessage;
   private final ProtonDelivery delivery;
   private final String amqpAddress;
   private final String amqpReplyAddress;
 
-  public AmqpMessageImpl(JsonObject body, BridgeImpl bridge, org.apache.qpid.proton.message.Message protonMessage,
+  public AmqpMessageImpl(JsonObject body, AmqpBridgeImpl bridge, org.apache.qpid.proton.message.Message protonMessage,
       ProtonDelivery delivery, String amqpAddress, String amqpReplyAddress) {
     this.body = body;
     this.bridge = bridge;

@@ -34,8 +34,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import io.vertx.amqp.bridge.Bridge;
-import io.vertx.amqp.bridge.impl.BridgeImpl;
+import io.vertx.amqp.bridge.AmqpBridge;
+import io.vertx.amqp.bridge.impl.AmqpBridgeImpl;
 import io.vertx.amqp.bridge.impl.BridgeMetaDataSupportImpl;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
@@ -57,9 +57,9 @@ import io.vertx.proton.ProtonSender;
 import io.vertx.proton.impl.ProtonSenderImpl;
 
 @RunWith(VertxUnitRunner.class)
-public class BridgeTest extends ActiveMQTestBase {
+public class AmqpBridgeTest extends ActiveMQTestBase {
 
-  private static Logger LOG = LoggerFactory.getLogger(BridgeTest.class);
+  private static Logger LOG = LoggerFactory.getLogger(AmqpBridgeTest.class);
 
   private Vertx vertx;
 
@@ -92,7 +92,7 @@ public class BridgeTest extends ActiveMQTestBase {
 
     Async async = context.async();
 
-    Bridge bridge = Bridge.bridge(vertx);
+    AmqpBridge bridge = AmqpBridge.create(vertx);
     bridge.start("localhost", getBrokerAmqpConnectorPort(), res -> {
       LOG.trace("Startup complete");
       context.assertTrue(res.succeeded());
@@ -162,8 +162,8 @@ public class BridgeTest extends ActiveMQTestBase {
       });
     });
 
-    Bridge bridge = Bridge.bridge(vertx);
-    ((BridgeImpl) bridge).setReplyHandlerSupported(false);
+    AmqpBridge bridge = AmqpBridge.create(vertx);
+    ((AmqpBridgeImpl) bridge).setReplyHandlerSupported(false);
     bridge.start("localhost", server.actualPort(), res -> {
       LOG.trace("Startup complete");
       asyncMetaData.awaitSuccess();
@@ -193,7 +193,7 @@ public class BridgeTest extends ActiveMQTestBase {
 
     int port = getBrokerAmqpConnectorPort();
 
-    Bridge bridge = Bridge.bridge(vertx);
+    AmqpBridge bridge = AmqpBridge.create(vertx);
     bridge.start("localhost", port, res -> {
       LOG.trace("Startup complete");
 
@@ -256,7 +256,7 @@ public class BridgeTest extends ActiveMQTestBase {
 
     int port = getBrokerAmqpConnectorPort();
 
-    Bridge bridge = Bridge.bridge(vertx);
+    AmqpBridge bridge = AmqpBridge.create(vertx);
     bridge.start("localhost", port, res -> {
       LOG.trace("Startup complete");
 
@@ -316,7 +316,7 @@ public class BridgeTest extends ActiveMQTestBase {
 
     int port = getBrokerAmqpConnectorPort();
 
-    Bridge bridge = Bridge.bridge(vertx);
+    AmqpBridge bridge = AmqpBridge.create(vertx);
     bridge.start("localhost", port, res -> {
       // Set up a sender using the bridge
       context.assertTrue(res.succeeded());
@@ -369,7 +369,7 @@ public class BridgeTest extends ActiveMQTestBase {
     String content = "myStringContent";
     String replyContent = "myStringReply";
 
-    Bridge bridge = Bridge.bridge(vertx);
+    AmqpBridge bridge = AmqpBridge.create(vertx);
     bridge.start("localhost", getBrokerAmqpConnectorPort(), startResult -> {
       context.assertTrue(startResult.succeeded());
 
@@ -427,7 +427,7 @@ public class BridgeTest extends ActiveMQTestBase {
     String replyContent = "myStringReply";
     String replyToReplyContent = "myStringReplyToReply";
 
-    Bridge bridge = Bridge.bridge(vertx);
+    AmqpBridge bridge = AmqpBridge.create(vertx);
     bridge.start("localhost", getBrokerAmqpConnectorPort(), startResult -> {
       context.assertTrue(startResult.succeeded());
 
@@ -529,7 +529,7 @@ public class BridgeTest extends ActiveMQTestBase {
       }
     });
 
-    Bridge bridge = Bridge.bridge(vertx);
+    AmqpBridge bridge = AmqpBridge.create(vertx);
     bridge.start("localhost", port, res -> {
       LOG.trace("Startup complete");
 
@@ -609,7 +609,7 @@ public class BridgeTest extends ActiveMQTestBase {
       }
     });
 
-    Bridge bridge = Bridge.bridge(vertx);
+    AmqpBridge bridge = AmqpBridge.create(vertx);
     bridge.start("localhost", port, res -> {
       LOG.trace("Startup complete");
 
@@ -739,8 +739,8 @@ public class BridgeTest extends ActiveMQTestBase {
 
     // === Bridge producer handling ====
 
-    Bridge bridge = Bridge.bridge(vertx);
-    ((BridgeImpl) bridge).setReplyHandlerSupported(false);
+    AmqpBridge bridge = AmqpBridge.create(vertx);
+    ((AmqpBridgeImpl) bridge).setReplyHandlerSupported(false);
     bridge.start("localhost", server.actualPort(), res -> {
       // Set up a producer using the bridge, use it, close it.
       context.assertTrue(res.succeeded());
@@ -793,8 +793,8 @@ public class BridgeTest extends ActiveMQTestBase {
     MockServer server = new MockServer(vertx,
         serverConnection -> handleReceiverOpenSendMessageThenClose(serverConnection, testName, sentContent, context));
 
-    Bridge bridge = Bridge.bridge(vertx);
-    ((BridgeImpl) bridge).setReplyHandlerSupported(false);
+    AmqpBridge bridge = AmqpBridge.create(vertx);
+    ((AmqpBridgeImpl) bridge).setReplyHandlerSupported(false);
     bridge.start("localhost", server.actualPort(), res -> {
       LOG.trace("Startup complete");
 
@@ -960,8 +960,8 @@ public class BridgeTest extends ActiveMQTestBase {
 
     // === Bridge producer handling ====
 
-    Bridge bridge = Bridge.bridge(vertx);
-    ((BridgeImpl) bridge).setReplyHandlerSupported(false);
+    AmqpBridge bridge = AmqpBridge.create(vertx);
+    ((AmqpBridgeImpl) bridge).setReplyHandlerSupported(false);
 
     bridge.start("localhost", server.actualPort(), res -> {
       context.assertTrue(res.succeeded());
@@ -1085,8 +1085,8 @@ public class BridgeTest extends ActiveMQTestBase {
 
     // === Bridge producer handling ====
 
-    Bridge bridge = Bridge.bridge(vertx);
-    ((BridgeImpl) bridge).setReplyHandlerSupported(false);
+    AmqpBridge bridge = AmqpBridge.create(vertx);
+    ((AmqpBridgeImpl) bridge).setReplyHandlerSupported(false);
 
     bridge.start("localhost", server.actualPort(), res -> {
       context.assertTrue(res.succeeded());
@@ -1197,8 +1197,8 @@ public class BridgeTest extends ActiveMQTestBase {
 
     // === Bridge consumer handling ====
 
-    Bridge bridge = Bridge.bridge(vertx);
-    ((BridgeImpl) bridge).setReplyHandlerSupported(false);
+    AmqpBridge bridge = AmqpBridge.create(vertx);
+    ((AmqpBridgeImpl) bridge).setReplyHandlerSupported(false);
     bridge.start("localhost", server.actualPort(), res -> {
       LOG.trace("Startup complete");
 
@@ -1302,8 +1302,8 @@ public class BridgeTest extends ActiveMQTestBase {
 
     // === Bridge consumer handling ====
 
-    Bridge bridge = Bridge.bridge(vertx);
-    ((BridgeImpl) bridge).setReplyHandlerSupported(false);
+    AmqpBridge bridge = AmqpBridge.create(vertx);
+    ((AmqpBridgeImpl) bridge).setReplyHandlerSupported(false);
     bridge.start("localhost", server.actualPort(), res -> {
       LOG.trace("Startup complete");
 
@@ -1395,8 +1395,8 @@ public class BridgeTest extends ActiveMQTestBase {
 
     // === Bridge consumer handling ====
 
-    Bridge bridge = Bridge.bridge(vertx);
-    ((BridgeImpl) bridge).setReplyHandlerSupported(false);
+    AmqpBridge bridge = AmqpBridge.create(vertx);
+    ((AmqpBridgeImpl) bridge).setReplyHandlerSupported(false);
     bridge.start("localhost", server.actualPort(), res -> {
       LOG.trace("Startup complete");
 
@@ -1505,8 +1505,8 @@ public class BridgeTest extends ActiveMQTestBase {
 
     // === Bridge consumer handling ====
 
-    Bridge bridge = Bridge.bridge(vertx);
-    ((BridgeImpl) bridge).setReplyHandlerSupported(false);
+    AmqpBridge bridge = AmqpBridge.create(vertx);
+    ((AmqpBridgeImpl) bridge).setReplyHandlerSupported(false);
     bridge.start("localhost", server.actualPort(), res -> {
       LOG.trace("Startup complete");
 

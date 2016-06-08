@@ -15,7 +15,7 @@
 */
 package io.vertx.amqp.bridge;
 
-import io.vertx.amqp.bridge.impl.BridgeImpl;
+import io.vertx.amqp.bridge.impl.AmqpBridgeImpl;
 import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
@@ -25,10 +25,10 @@ import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.eventbus.MessageProducer;
 
 /**
- * Vert.x AMQP Bridge. Facilitates sending and receiving AMQP messages.
+ * Vert.x AMQP Bridge. Facilitates sending and receiving AMQP 1.0 messages.
  */
 @VertxGen
-public interface Bridge {
+public interface AmqpBridge {
 
   /**
    * Creates a Bridge.
@@ -37,8 +37,8 @@ public interface Bridge {
    *          the vertx instance to use
    * @return the (not-yet-started) bridge.
    */
-  static Bridge bridge(Vertx vertx) {
-    return bridge(vertx, new BridgeOptions());
+  static AmqpBridge create(Vertx vertx) {
+    return create(vertx, new AmqpBridgeOptions());
   }
 
   /**
@@ -50,8 +50,8 @@ public interface Bridge {
    *          the options
    * @return the (not-yet-started) bridge.
    */
-  static Bridge bridge(Vertx vertx, BridgeOptions options) {
-    return new BridgeImpl(vertx, options);
+  static AmqpBridge create(Vertx vertx, AmqpBridgeOptions options) {
+    return new AmqpBridgeImpl(vertx, options);
   }
 
   /**
@@ -70,7 +70,7 @@ public interface Bridge {
    * @return the bridge
    */
   @Fluent
-  Bridge start(String hostname, int port, String username, String password, Handler<AsyncResult<Void>> resultHandler);
+  AmqpBridge start(String hostname, int port, String username, String password, Handler<AsyncResult<Void>> resultHandler);
 
   /**
    * Starts the bridge, establishing the underlying connection.
@@ -84,7 +84,7 @@ public interface Bridge {
    * @return the bridge
    */
   @Fluent
-  Bridge start(String hostname, int port, Handler<AsyncResult<Void>> resultHandler);
+  AmqpBridge start(String hostname, int port, Handler<AsyncResult<Void>> resultHandler);
 
   /**
    * Creates a consumer on the given AMQP address.
@@ -112,5 +112,5 @@ public interface Bridge {
    * @return the bridge
    */
   @Fluent
-  Bridge shutdown(Handler<AsyncResult<Void>> resultHandler);
+  AmqpBridge shutdown(Handler<AsyncResult<Void>> resultHandler);
 }

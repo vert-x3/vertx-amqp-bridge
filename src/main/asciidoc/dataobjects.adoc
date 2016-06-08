@@ -1,10 +1,10 @@
 = Cheatsheets
 
-[[BridgeOptions]]
-== BridgeOptions
+[[AmqpBridgeOptions]]
+== AmqpBridgeOptions
 
 ++++
- Options for configuring link.
+ Options for configuring .
 ++++
 '''
 

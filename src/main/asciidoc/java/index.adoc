@@ -35,7 +35,7 @@ message sent with it.
 
 [source,java]
 ----
-Bridge bridge = Bridge.bridge(vertx);
+AmqpBridge bridge = AmqpBridge.create(vertx);
 // Start the bridge, then use the event loop thread to process things thereafter.
 bridge.start("localhost", 5672, res -> {
   // Set up a producer using the bridge, send a message with it.
@@ -56,7 +56,7 @@ and a handler registered that prints the body of incoming AMQP messages.
 
 [source,java]
 ----
-Bridge bridge = Bridge.bridge(vertx);
+AmqpBridge bridge = AmqpBridge.create(vertx);
 // Start the bridge, then use the event loop thread to process things thereafter.
 bridge.start("localhost", 5672, res -> {
   // Set up a consumer using the bridge, register a handler for it.

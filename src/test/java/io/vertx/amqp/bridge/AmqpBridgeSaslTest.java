@@ -28,9 +28,9 @@ import io.vertx.ext.unit.TestContext;
 import io.vertx.ext.unit.junit.VertxUnitRunner;
 
 @RunWith(VertxUnitRunner.class)
-public class BridgeSaslTest extends ActiveMQTestBase {
+public class AmqpBridgeSaslTest extends ActiveMQTestBase {
 
-  private static Logger LOG = LoggerFactory.getLogger(BridgeSaslTest.class);
+  private static Logger LOG = LoggerFactory.getLogger(AmqpBridgeSaslTest.class);
 
   private Vertx vertx;
 
@@ -80,7 +80,7 @@ public class BridgeSaslTest extends ActiveMQTestBase {
 
   @Test(timeout = 20000)
   public void testRestrictSaslMechanisms(TestContext context) throws Exception {
-    BridgeOptions options = new BridgeOptions();
+    AmqpBridgeOptions options = new AmqpBridgeOptions();
 
     // Try with the wrong password, with anonymous access disabled, expect start to fail
     doStartWithGivenCredentialsTestImpl(context, options, USERNAME_GUEST, "wrongpassword", false);
@@ -98,15 +98,15 @@ public class BridgeSaslTest extends ActiveMQTestBase {
 
   private void doConnectWithGivenCredentialsTestImpl(TestContext context, String username, String password,
                                                      boolean expectConnectToSucceed) {
-    doStartWithGivenCredentialsTestImpl(context, new BridgeOptions(), username, password, expectConnectToSucceed);
+    doStartWithGivenCredentialsTestImpl(context, new AmqpBridgeOptions(), username, password, expectConnectToSucceed);
   }
 
-  private void doStartWithGivenCredentialsTestImpl(TestContext context, BridgeOptions options, String username,
+  private void doStartWithGivenCredentialsTestImpl(TestContext context, AmqpBridgeOptions options, String username,
                                                    String password, boolean expectStartToSucceed) {
     Async async = context.async();
 
     // Start the bridge and verify whether it succeeds
-    Bridge bridge = Bridge.bridge(vertx, options);
+    AmqpBridge bridge = AmqpBridge.create(vertx, options);
     bridge.start("localhost", getBrokerAmqpConnectorPort(), username, password, res -> {
       if (expectStartToSucceed) {
         // Expect connect to succeed

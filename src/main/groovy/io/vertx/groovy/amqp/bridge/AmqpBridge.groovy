@@ -18,20 +18,20 @@ package io.vertx.groovy.amqp.bridge;
 import groovy.transform.CompileStatic
 import io.vertx.lang.groovy.InternalHelper
 import io.vertx.core.json.JsonObject
+import io.vertx.amqp.bridge.AmqpBridgeOptions
 import io.vertx.groovy.core.Vertx
 import io.vertx.core.AsyncResult
 import io.vertx.core.Handler
 import io.vertx.groovy.core.eventbus.MessageConsumer
-import io.vertx.amqp.bridge.BridgeOptions
 import io.vertx.groovy.core.eventbus.MessageProducer
 /**
- * Vert.x AMQP Bridge. Facilitates sending and receiving AMQP messages.
+ * Vert.x AMQP Bridge. Facilitates sending and receiving AMQP 1.0 messages.
 */
 @CompileStatic
-public class Bridge {
-  private final def io.vertx.amqp.bridge.Bridge delegate;
-  public Bridge(Object delegate) {
-    this.delegate = (io.vertx.amqp.bridge.Bridge) delegate;
+public class AmqpBridge {
+  private final def io.vertx.amqp.bridge.AmqpBridge delegate;
+  public AmqpBridge(Object delegate) {
+    this.delegate = (io.vertx.amqp.bridge.AmqpBridge) delegate;
   }
   public Object getDelegate() {
     return delegate;
@@ -41,18 +41,18 @@ public class Bridge {
    * @param vertx the vertx instance to use
    * @return the (not-yet-started) bridge.
    */
-  public static Bridge bridge(Vertx vertx) {
-    def ret = InternalHelper.safeCreate(io.vertx.amqp.bridge.Bridge.bridge(vertx != null ? (io.vertx.core.Vertx)vertx.getDelegate() : null), io.vertx.groovy.amqp.bridge.Bridge.class);
+  public static AmqpBridge create(Vertx vertx) {
+    def ret = InternalHelper.safeCreate(io.vertx.amqp.bridge.AmqpBridge.create(vertx != null ? (io.vertx.core.Vertx)vertx.getDelegate() : null), io.vertx.groovy.amqp.bridge.AmqpBridge.class);
     return ret;
   }
   /**
    * Creates a Bridge with the given options.
    * @param vertx the vertx instance to use
-   * @param options the options (see <a href="../../../../../../../cheatsheet/BridgeOptions.html">BridgeOptions</a>)
+   * @param options the options (see <a href="../../../../../../../cheatsheet/AmqpBridgeOptions.html">AmqpBridgeOptions</a>)
    * @return the (not-yet-started) bridge.
    */
-  public static Bridge bridge(Vertx vertx, Map<String, Object> options) {
-    def ret = InternalHelper.safeCreate(io.vertx.amqp.bridge.Bridge.bridge(vertx != null ? (io.vertx.core.Vertx)vertx.getDelegate() : null, options != null ? new io.vertx.amqp.bridge.BridgeOptions(new io.vertx.core.json.JsonObject(options)) : null), io.vertx.groovy.amqp.bridge.Bridge.class);
+  public static AmqpBridge create(Vertx vertx, Map<String, Object> options) {
+    def ret = InternalHelper.safeCreate(io.vertx.amqp.bridge.AmqpBridge.create(vertx != null ? (io.vertx.core.Vertx)vertx.getDelegate() : null, options != null ? new io.vertx.amqp.bridge.AmqpBridgeOptions(new io.vertx.core.json.JsonObject(options)) : null), io.vertx.groovy.amqp.bridge.AmqpBridge.class);
     return ret;
   }
   /**
@@ -64,7 +64,7 @@ public class Bridge {
    * @param resultHandler the result handler
    * @return the bridge
    */
-  public Bridge start(String hostname, int port, String username, String password, Handler<AsyncResult<Void>> resultHandler) {
+  public AmqpBridge start(String hostname, int port, String username, String password, Handler<AsyncResult<Void>> resultHandler) {
     delegate.start(hostname, port, username, password, resultHandler);
     return this;
   }
@@ -75,7 +75,7 @@ public class Bridge {
    * @param resultHandler the result handler
    * @return the bridge
    */
-  public Bridge start(String hostname, int port, Handler<AsyncResult<Void>> resultHandler) {
+  public AmqpBridge start(String hostname, int port, Handler<AsyncResult<Void>> resultHandler) {
     delegate.start(hostname, port, resultHandler);
     return this;
   }
@@ -102,7 +102,7 @@ public class Bridge {
    * @param resultHandler the result handler
    * @return the bridge
    */
-  public Bridge shutdown(Handler<AsyncResult<Void>> resultHandler) {
+  public AmqpBridge shutdown(Handler<AsyncResult<Void>> resultHandler) {
     delegate.shutdown(resultHandler);
     return this;
   }

@@ -23,12 +23,12 @@ import java.util.UUID;
 import org.apache.qpid.proton.amqp.Symbol;
 import org.apache.qpid.proton.amqp.messaging.Source;
 
-import io.vertx.amqp.bridge.Bridge;
-import io.vertx.amqp.bridge.BridgeOptions;
+import io.vertx.amqp.bridge.AmqpBridge;
+import io.vertx.amqp.bridge.AmqpBridgeOptions;
 import io.vertx.amqp.bridge.MessageHelper;
 import io.vertx.amqp.bridge.impl.AmqpProducerImpl;
 import io.vertx.amqp.bridge.impl.AmqpMessageImpl;
-import io.vertx.amqp.bridge.impl.BridgeImpl;
+import io.vertx.amqp.bridge.impl.AmqpBridgeImpl;
 import io.vertx.amqp.bridge.impl.MessageTranslatorImpl;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
@@ -45,7 +45,7 @@ import io.vertx.proton.ProtonConnection;
 import io.vertx.proton.ProtonDelivery;
 import io.vertx.proton.ProtonReceiver;
 
-public class BridgeImpl implements Bridge {
+public class AmqpBridgeImpl implements AmqpBridge {
 
   private ProtonClient client;
   private ProtonConnection connection;
@@ -55,24 +55,24 @@ public class BridgeImpl implements Bridge {
   private Map<String, Handler<?>> replyToMapping = new HashMap<>();
   private MessageTranslatorImpl translator = new MessageTranslatorImpl();
   private boolean replyHandlerSupport = true;
-  private BridgeOptions options;
+  private AmqpBridgeOptions options;
   private Vertx vertx;
 
-  public BridgeImpl(Vertx vertx, BridgeOptions options) {
+  public AmqpBridgeImpl(Vertx vertx, AmqpBridgeOptions options) {
     this.vertx = vertx;
     client = ProtonClient.create(vertx);
     this.options = options;
   }
 
-  private static final Logger LOG = LoggerFactory.getLogger(BridgeImpl.class);
+  private static final Logger LOG = LoggerFactory.getLogger(AmqpBridgeImpl.class);
 
   @Override
-  public Bridge start(String hostname, int port, Handler<AsyncResult<Void>> resultHandler) {
+  public AmqpBridge start(String hostname, int port, Handler<AsyncResult<Void>> resultHandler) {
     return start(hostname, port, null, null, resultHandler);
   }
 
   @Override
-  public Bridge start(String hostname, int port, String username, String password,
+  public AmqpBridge start(String hostname, int port, String username, String password,
                       Handler<AsyncResult<Void>> resultHandler) {
     client.connect(options, hostname, port, username, password, connectResult -> {
       if (connectResult.succeeded()) {
@@ -139,7 +139,7 @@ public class BridgeImpl implements Bridge {
   }
 
   @Override
-  public Bridge shutdown(Handler<AsyncResult<Void>> resultHandler) {
+  public AmqpBridge shutdown(Handler<AsyncResult<Void>> resultHandler) {
     if (connection != null) {
       connection.closeHandler(res -> {
         try {
@@ -182,7 +182,7 @@ public class BridgeImpl implements Bridge {
         Handler<AsyncResult<Message<JsonObject>>> h = (Handler<AsyncResult<Message<JsonObject>>>) handler;
 
         JsonObject body = translator.convertToJsonObject(protonMessage);
-        Message<JsonObject> msg = new AmqpMessageImpl(body, BridgeImpl.this, protonMessage, delivery,
+        Message<JsonObject> msg = new AmqpMessageImpl(body, AmqpBridgeImpl.this, protonMessage, delivery,
             replyToConsumerAddress, protonMessage.getReplyTo());
 
         AsyncResult<Message<JsonObject>> result = Future.succeededFuture(msg);
@@ -220,7 +220,7 @@ public class BridgeImpl implements Bridge {
   /**
    * Internal test related method.
    */
-  public Bridge setReplyHandlerSupported(boolean replyHandlerSupport) {
+  public AmqpBridge setReplyHandlerSupported(boolean replyHandlerSupport) {
     this.replyHandlerSupport = replyHandlerSupport;
     return this;
   }

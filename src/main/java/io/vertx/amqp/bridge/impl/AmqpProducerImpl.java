@@ -29,13 +29,13 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
 
   private final ProtonSender sender;
   private final MessageTranslatorImpl translator = new MessageTranslatorImpl();
-  private final BridgeImpl bridge;
+  private final AmqpBridgeImpl bridge;
   private final String amqpAddress;
   private boolean closed;
   private Handler<Throwable> exceptionHandler;
   private Handler<Void> drainHandler;
 
-  public AmqpProducerImpl(BridgeImpl bridge, ProtonConnection connection, String amqpAddress) {
+  public AmqpProducerImpl(AmqpBridgeImpl bridge, ProtonConnection connection, String amqpAddress) {
     sender = connection.createSender(amqpAddress);
     sender.closeHandler(res -> {
       if (!closed && exceptionHandler != null) {

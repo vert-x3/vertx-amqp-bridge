@@ -20,13 +20,13 @@ import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
 
 /**
- * Converter for {@link io.vertx.amqp.bridge.BridgeOptions}.
+ * Converter for {@link io.vertx.amqp.bridge.AmqpBridgeOptions}.
  *
- * NOTE: This class has been automatically generated from the {@link io.vertx.amqp.bridge.BridgeOptions} original class using Vert.x codegen.
+ * NOTE: This class has been automatically generated from the {@link io.vertx.amqp.bridge.AmqpBridgeOptions} original class using Vert.x codegen.
  */
-public class BridgeOptionsConverter {
+public class AmqpBridgeOptionsConverter {
 
-  public static void fromJson(JsonObject json, BridgeOptions obj) {
+  public static void fromJson(JsonObject json, AmqpBridgeOptions obj) {
     if (json.getValue("connectTimeout") instanceof Number) {
       obj.setConnectTimeout(((Number)json.getValue("connectTimeout")).intValue());
     }
@@ -140,7 +140,7 @@ public class BridgeOptionsConverter {
     }
   }
 
-  public static void toJson(BridgeOptions obj, JsonObject json) {
+  public static void toJson(AmqpBridgeOptions obj, JsonObject json) {
     json.put("connectTimeout", obj.getConnectTimeout());
     if (obj.getCrlPaths() != null) {
       json.put("crlPaths", new JsonArray(

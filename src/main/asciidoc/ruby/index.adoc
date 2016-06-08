@@ -35,8 +35,8 @@ message sent with it.
 
 [source,ruby]
 ----
-require 'vertx-amqp-bridge/bridge'
-bridge = VertxAmqpBridge::Bridge.bridge(vertx)
+require 'vertx-amqp-bridge/amqp_bridge'
+bridge = VertxAmqpBridge::AmqpBridge.create(vertx)
 # Start the bridge, then use the event loop thread to process things thereafter.
 bridge.start("localhost", 5672) { |res_err,res|
   # Set up a producer using the bridge, send a message with it.
@@ -59,8 +59,8 @@ and a handler registered that prints the body of incoming AMQP messages.
 
 [source,ruby]
 ----
-require 'vertx-amqp-bridge/bridge'
-bridge = VertxAmqpBridge::Bridge.bridge(vertx)
+require 'vertx-amqp-bridge/amqp_bridge'
+bridge = VertxAmqpBridge::AmqpBridge.create(vertx)
 # Start the bridge, then use the event loop thread to process things thereafter.
 bridge.start("localhost", 5672) { |res_err,res|
   # Set up a consumer using the bridge, register a handler for it.

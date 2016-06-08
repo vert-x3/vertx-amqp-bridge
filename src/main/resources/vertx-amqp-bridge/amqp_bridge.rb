@@ -2,31 +2,31 @@ require 'vertx/vertx'
 require 'vertx/message_consumer'
 require 'vertx/message_producer'
 require 'vertx/util/utils.rb'
-# Generated from io.vertx.amqp.bridge.Bridge
+# Generated from io.vertx.amqp.bridge.AmqpBridge
 module VertxAmqpBridge
-  #  Vert.x AMQP Bridge. Facilitates sending and receiving AMQP messages.
-  class Bridge
+  #  Vert.x AMQP Bridge. Facilitates sending and receiving AMQP 1.0 messages.
+  class AmqpBridge
     # @private
-    # @param j_del [::VertxAmqpBridge::Bridge] the java delegate
+    # @param j_del [::VertxAmqpBridge::AmqpBridge] the java delegate
     def initialize(j_del)
       @j_del = j_del
     end
     # @private
-    # @return [::VertxAmqpBridge::Bridge] the underlying java delegate
+    # @return [::VertxAmqpBridge::AmqpBridge] the underlying java delegate
     def j_del
       @j_del
     end
     #  Creates a Bridge with the given options.
     # @param [::Vertx::Vertx] vertx the vertx instance to use
     # @param [Hash] options the options
-    # @return [::VertxAmqpBridge::Bridge] the (not-yet-started) bridge.
-    def self.bridge(vertx=nil,options=nil)
+    # @return [::VertxAmqpBridge::AmqpBridge] the (not-yet-started) bridge.
+    def self.create(vertx=nil,options=nil)
       if vertx.class.method_defined?(:j_del) && !block_given? && options == nil
-        return ::Vertx::Util::Utils.safe_create(Java::IoVertxAmqpBridge::Bridge.java_method(:bridge, [Java::IoVertxCore::Vertx.java_class]).call(vertx.j_del),::VertxAmqpBridge::Bridge)
+        return ::Vertx::Util::Utils.safe_create(Java::IoVertxAmqpBridge::AmqpBridge.java_method(:create, [Java::IoVertxCore::Vertx.java_class]).call(vertx.j_del),::VertxAmqpBridge::AmqpBridge)
       elsif vertx.class.method_defined?(:j_del) && options.class == Hash && !block_given?
-        return ::Vertx::Util::Utils.safe_create(Java::IoVertxAmqpBridge::Bridge.java_method(:bridge, [Java::IoVertxCore::Vertx.java_class,Java::IoVertxAmqpBridge::BridgeOptions.java_class]).call(vertx.j_del,Java::IoVertxAmqpBridge::BridgeOptions.new(::Vertx::Util::Utils.to_json_object(options))),::VertxAmqpBridge::Bridge)
+        return ::Vertx::Util::Utils.safe_create(Java::IoVertxAmqpBridge::AmqpBridge.java_method(:create, [Java::IoVertxCore::Vertx.java_class,Java::IoVertxAmqpBridge::AmqpBridgeOptions.java_class]).call(vertx.j_del,Java::IoVertxAmqpBridge::AmqpBridgeOptions.new(::Vertx::Util::Utils.to_json_object(options))),::VertxAmqpBridge::AmqpBridge)
       end
-      raise ArgumentError, "Invalid arguments when calling bridge(vertx,options)"
+      raise ArgumentError, "Invalid arguments when calling create(vertx,options)"
     end
     #  Starts the bridge, establishing the underlying connection.
     # @param [String] hostname the host name to connect to

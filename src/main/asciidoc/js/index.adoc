@@ -35,8 +35,8 @@ message sent with it.
 
 [source,js]
 ----
-var Bridge = require("vertx-amqp-bridge-js/bridge");
-var bridge = Bridge.bridge(vertx);
+var AmqpBridge = require("vertx-amqp-bridge-js/amqp_bridge");
+var bridge = AmqpBridge.create(vertx);
 // Start the bridge, then use the event loop thread to process things thereafter.
 bridge.start("localhost", 5672, function (res, res_err) {
   // Set up a producer using the bridge, send a message with it.
@@ -59,8 +59,8 @@ and a handler registered that prints the body of incoming AMQP messages.
 
 [source,js]
 ----
-var Bridge = require("vertx-amqp-bridge-js/bridge");
-var bridge = Bridge.bridge(vertx);
+var AmqpBridge = require("vertx-amqp-bridge-js/amqp_bridge");
+var bridge = AmqpBridge.create(vertx);
 // Start the bridge, then use the event loop thread to process things thereafter.
 bridge.start("localhost", 5672, function (res, res_err) {
   // Set up a consumer using the bridge, register a handler for it.

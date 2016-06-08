@@ -38,7 +38,7 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
   private static final Logger LOG = LoggerFactory.getLogger(AmqpConsumerImpl.class);
 
   private final Vertx vertx;
-  private final BridgeImpl bridge;
+  private final AmqpBridgeImpl bridge;
   private final ProtonReceiver receiver;
   private final String amqpAddress;
   private final MessageTranslatorImpl translator = new MessageTranslatorImpl();
@@ -51,7 +51,7 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
   private boolean initialCreditGiven;
   private int initialCredit = 1000;
 
-  public AmqpConsumerImpl(Vertx vertx, BridgeImpl bridge, ProtonConnection connection, String amqpAddress) {
+  public AmqpConsumerImpl(Vertx vertx, AmqpBridgeImpl bridge, ProtonConnection connection, String amqpAddress) {
     this.vertx = vertx;
     this.bridge = bridge;
     this.amqpAddress = amqpAddress;

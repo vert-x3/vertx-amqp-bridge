@@ -36,9 +36,9 @@ import io.vertx.proton.ProtonConnection;
 import io.vertx.proton.ProtonServerOptions;
 
 @RunWith(VertxUnitRunner.class)
-public class BridgeSslTest {
+public class AmqpBridgeSslTest {
 
-  private static Logger LOG = LoggerFactory.getLogger(BridgeSslTest.class);
+  private static Logger LOG = LoggerFactory.getLogger(AmqpBridgeSslTest.class);
 
   private static final String PASSWORD = "password";
   private static final String KEYSTORE = "src/test/resources/broker-pkcs12.keystore";
@@ -82,12 +82,12 @@ public class BridgeSslTest {
     }, serverOptions);
 
     // Start the bridge and verify is succeeds
-    BridgeOptions bridgeOptions = new BridgeOptions();
+    AmqpBridgeOptions bridgeOptions = new AmqpBridgeOptions();
     bridgeOptions.setSsl(true);
     PfxOptions clientPfxOptions = new PfxOptions().setPath(TRUSTSTORE).setPassword(PASSWORD);
     bridgeOptions.setPfxTrustOptions(clientPfxOptions);
 
-    Bridge bridge = Bridge.bridge(vertx, bridgeOptions);
+    AmqpBridge bridge = AmqpBridge.create(vertx, bridgeOptions);
     bridge.start("localhost", mockServer.actualPort(), res -> {
       // Expect start to succeed
       context.assertTrue(res.succeeded(), "expected start to suceed");
@@ -110,12 +110,12 @@ public class BridgeSslTest {
     }, serverOptions);
 
     // Try to start the bridge and expect it to fail
-    BridgeOptions bridgeOptions = new BridgeOptions();
+    AmqpBridgeOptions bridgeOptions = new AmqpBridgeOptions();
     bridgeOptions.setSsl(true);
     PfxOptions pfxOptions = new PfxOptions().setPath(TRUSTSTORE).setPassword(PASSWORD);
     bridgeOptions.setPfxTrustOptions(pfxOptions);
 
-    Bridge bridge = Bridge.bridge(vertx, bridgeOptions);
+    AmqpBridge bridge = AmqpBridge.create(vertx, bridgeOptions);
     bridge.start("localhost", mockServer.actualPort(), res -> {
       // Expect start to fail due to remote peer not doing SSL
       context.assertFalse(res.succeeded(), "expected start to fail due to server not using secure transport");
@@ -139,12 +139,12 @@ public class BridgeSslTest {
     }, serverOptions);
 
     // Try to start the bridge and expect it to fail due to not trusting the server
-    BridgeOptions bridgeOptions = new BridgeOptions();
+    AmqpBridgeOptions bridgeOptions = new AmqpBridgeOptions();
     bridgeOptions.setSsl(true);
     PfxOptions pfxOptions = new PfxOptions().setPath(OTHER_CA_TRUSTSTORE).setPassword(PASSWORD);
     bridgeOptions.setPfxTrustOptions(pfxOptions);
 
-    Bridge bridge = Bridge.bridge(vertx, bridgeOptions);
+    AmqpBridge bridge = AmqpBridge.create(vertx, bridgeOptions);
     bridge.start("localhost", mockServer.actualPort(), res -> {
       // Expect start to fail due to remote peer not being trusted
       context.assertFalse(res.succeeded(), "expected start to fail due to untrusted server");
@@ -168,11 +168,11 @@ public class BridgeSslTest {
     }, serverOptions);
 
     // Try to start the bridge and expect it to succeed due to trusting all certs
-    BridgeOptions bridgeOptions = new BridgeOptions();
+    AmqpBridgeOptions bridgeOptions = new AmqpBridgeOptions();
     bridgeOptions.setSsl(true);
     bridgeOptions.setTrustAll(true);
 
-    Bridge bridge = Bridge.bridge(vertx, bridgeOptions);
+    AmqpBridge bridge = AmqpBridge.create(vertx, bridgeOptions);
     bridge.start("localhost", mockServer.actualPort(), res -> {
       // Expect start to succeed
       context.assertTrue(res.succeeded(), "expected start to suceed due to trusting all certs");
@@ -210,7 +210,7 @@ public class BridgeSslTest {
     }, serverOptions);
 
     // Try to start the bridge
-    BridgeOptions bridgeOptions = new BridgeOptions();
+    AmqpBridgeOptions bridgeOptions = new AmqpBridgeOptions();
     bridgeOptions.setSsl(true);
     bridgeOptions.setPfxTrustOptions(pfxOptions);
 
@@ -219,7 +219,7 @@ public class BridgeSslTest {
       bridgeOptions.setPfxKeyCertOptions(clientKeyPfxOptions);
     }
 
-    Bridge bridge = Bridge.bridge(vertx, bridgeOptions);
+    AmqpBridge bridge = AmqpBridge.create(vertx, bridgeOptions);
     bridge.start("localhost", mockServer.actualPort(), res -> {
       if (supplyClientCert) {
         // Expect start to succeed
@@ -258,7 +258,7 @@ public class BridgeSslTest {
     }, serverOptions);
 
     // Start the bridge
-    BridgeOptions bridgeOptions = new BridgeOptions();
+    AmqpBridgeOptions bridgeOptions = new AmqpBridgeOptions();
     bridgeOptions.setSsl(true);
     PfxOptions clientPfxOptions = new PfxOptions().setPath(TRUSTSTORE).setPassword(PASSWORD);
     bridgeOptions.setPfxTrustOptions(clientPfxOptions);
@@ -270,7 +270,7 @@ public class BridgeSslTest {
       bridgeOptions.setHostnameVerificationAlgorithm(NO_VERIFY);
     }
 
-    Bridge bridge = Bridge.bridge(vertx, bridgeOptions);
+    AmqpBridge bridge = AmqpBridge.create(vertx, bridgeOptions);
     bridge.start("localhost", mockServer.actualPort(), res -> {
       if (verifyHost) {
         // Expect start to fail

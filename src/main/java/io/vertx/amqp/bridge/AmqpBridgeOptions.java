@@ -34,220 +34,220 @@ import io.vertx.proton.ProtonClientOptions;
  * Options for configuring {@link io.vertx.amqp.bridge.Bridge}.
  */
 @DataObject(generateConverter = true, inheritConverter = true)
-public class BridgeOptions extends ProtonClientOptions {
+public class AmqpBridgeOptions extends ProtonClientOptions {
 
-  public BridgeOptions() {
+  public AmqpBridgeOptions() {
   }
 
-  public BridgeOptions(JsonObject json) {
-    BridgeOptionsConverter.fromJson(json, this);
+  public AmqpBridgeOptions(JsonObject json) {
+    AmqpBridgeOptionsConverter.fromJson(json, this);
   }
 
   @Override
-  public BridgeOptions addEnabledSaslMechanism(String saslMechanism) {
+  public AmqpBridgeOptions addEnabledSaslMechanism(String saslMechanism) {
     super.addEnabledSaslMechanism(saslMechanism);
     return this;
   }
 
   @Override
-  public BridgeOptions setSendBufferSize(int sendBufferSize) {
+  public AmqpBridgeOptions setSendBufferSize(int sendBufferSize) {
     super.setSendBufferSize(sendBufferSize);
     return this;
   }
 
   @Override
-  public BridgeOptions setReceiveBufferSize(int receiveBufferSize) {
+  public AmqpBridgeOptions setReceiveBufferSize(int receiveBufferSize) {
     super.setReceiveBufferSize(receiveBufferSize);
     return this;
   }
 
   @Override
-  public BridgeOptions setReuseAddress(boolean reuseAddress) {
+  public AmqpBridgeOptions setReuseAddress(boolean reuseAddress) {
     super.setReuseAddress(reuseAddress);
     return this;
   }
 
   @Override
-  public BridgeOptions setTrafficClass(int trafficClass) {
+  public AmqpBridgeOptions setTrafficClass(int trafficClass) {
     super.setTrafficClass(trafficClass);
     return this;
   }
 
   @Override
-  public BridgeOptions setTcpNoDelay(boolean tcpNoDelay) {
+  public AmqpBridgeOptions setTcpNoDelay(boolean tcpNoDelay) {
     super.setTcpNoDelay(tcpNoDelay);
     return this;
   }
 
   @Override
-  public BridgeOptions setTcpKeepAlive(boolean tcpKeepAlive) {
+  public AmqpBridgeOptions setTcpKeepAlive(boolean tcpKeepAlive) {
     super.setTcpKeepAlive(tcpKeepAlive);
     return this;
   }
 
   @Override
-  public BridgeOptions setSoLinger(int soLinger) {
+  public AmqpBridgeOptions setSoLinger(int soLinger) {
     super.setSoLinger(soLinger);
     return this;
   }
 
   @Override
-  public BridgeOptions setUsePooledBuffers(boolean usePooledBuffers) {
+  public AmqpBridgeOptions setUsePooledBuffers(boolean usePooledBuffers) {
     super.setUsePooledBuffers(usePooledBuffers);
     return this;
   }
 
   @Override
-  public BridgeOptions setIdleTimeout(int idleTimeout) {
+  public AmqpBridgeOptions setIdleTimeout(int idleTimeout) {
     super.setIdleTimeout(idleTimeout);
     return this;
   }
 
   @Override
-  public BridgeOptions setSsl(boolean ssl) {
+  public AmqpBridgeOptions setSsl(boolean ssl) {
     super.setSsl(ssl);
     return this;
   }
 
   @Override
-  public BridgeOptions setKeyStoreOptions(JksOptions options) {
+  public AmqpBridgeOptions setKeyStoreOptions(JksOptions options) {
     super.setKeyStoreOptions(options);
     return this;
   }
 
   @Override
-  public BridgeOptions setPfxKeyCertOptions(PfxOptions options) {
+  public AmqpBridgeOptions setPfxKeyCertOptions(PfxOptions options) {
     super.setPfxKeyCertOptions(options);
     return this;
   }
 
   @Override
-  public BridgeOptions setPemKeyCertOptions(PemKeyCertOptions options) {
+  public AmqpBridgeOptions setPemKeyCertOptions(PemKeyCertOptions options) {
     super.setPemKeyCertOptions(options);
     return this;
   }
 
   @Override
-  public BridgeOptions setTrustStoreOptions(JksOptions options) {
+  public AmqpBridgeOptions setTrustStoreOptions(JksOptions options) {
     super.setTrustStoreOptions(options);
     return this;
   }
 
   @Override
-  public BridgeOptions setPemTrustOptions(PemTrustOptions options) {
+  public AmqpBridgeOptions setPemTrustOptions(PemTrustOptions options) {
     super.setPemTrustOptions(options);
     return this;
   }
 
   @Override
-  public BridgeOptions setPfxTrustOptions(PfxOptions options) {
+  public AmqpBridgeOptions setPfxTrustOptions(PfxOptions options) {
     super.setPfxTrustOptions(options);
     return this;
   }
 
   @Override
-  public BridgeOptions addEnabledCipherSuite(String suite) {
+  public AmqpBridgeOptions addEnabledCipherSuite(String suite) {
     super.addEnabledCipherSuite(suite);
     return this;
   }
 
   @Override
-  public BridgeOptions addCrlPath(String crlPath) throws NullPointerException {
+  public AmqpBridgeOptions addCrlPath(String crlPath) throws NullPointerException {
     super.addCrlPath(crlPath);
     return this;
   }
 
   @Override
-  public BridgeOptions addCrlValue(Buffer crlValue) throws NullPointerException {
+  public AmqpBridgeOptions addCrlValue(Buffer crlValue) throws NullPointerException {
     super.addCrlValue(crlValue);
     return this;
   }
 
   @Override
-  public BridgeOptions setTrustAll(boolean trustAll) {
+  public AmqpBridgeOptions setTrustAll(boolean trustAll) {
     super.setTrustAll(trustAll);
     return this;
   }
 
   @Override
-  public BridgeOptions setConnectTimeout(int connectTimeout) {
+  public AmqpBridgeOptions setConnectTimeout(int connectTimeout) {
     super.setConnectTimeout(connectTimeout);
     return this;
   }
 
   @Override
-  public BridgeOptions setReconnectAttempts(int attempts) {
+  public AmqpBridgeOptions setReconnectAttempts(int attempts) {
     super.setReconnectAttempts(attempts);
     return this;
   }
 
   @Override
-  public BridgeOptions setReconnectInterval(long interval) {
+  public AmqpBridgeOptions setReconnectInterval(long interval) {
     super.setReconnectInterval(interval);
     return this;
   }
 
   @Override
-  public BridgeOptions setUseAlpn(boolean useAlpn) {
+  public AmqpBridgeOptions setUseAlpn(boolean useAlpn) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public BridgeOptions addEnabledSecureTransportProtocol(String protocol) {
+  public AmqpBridgeOptions addEnabledSecureTransportProtocol(String protocol) {
     super.addEnabledSecureTransportProtocol(protocol);
     return this;
   }
 
   @Override
-  public BridgeOptions setHostnameVerificationAlgorithm(String hostnameVerificationAlgorithm) {
+  public AmqpBridgeOptions setHostnameVerificationAlgorithm(String hostnameVerificationAlgorithm) {
     super.setHostnameVerificationAlgorithm(hostnameVerificationAlgorithm);
     return this;
   }
 
   @Override
-  public BridgeOptions setKeyCertOptions(KeyCertOptions options) {
+  public AmqpBridgeOptions setKeyCertOptions(KeyCertOptions options) {
     super.setKeyCertOptions(options);
     return this;
   }
 
   @Override
-  public BridgeOptions setLogActivity(boolean logEnabled) {
+  public AmqpBridgeOptions setLogActivity(boolean logEnabled) {
     super.setLogActivity(logEnabled);
     return this;
   }
 
   @Override
-  public BridgeOptions setMetricsName(String metricsName) {
+  public AmqpBridgeOptions setMetricsName(String metricsName) {
     super.setMetricsName(metricsName);
     return this;
   }
 
   @Override
-  public BridgeOptions setProxyOptions(ProxyOptions proxyOptions) {
+  public AmqpBridgeOptions setProxyOptions(ProxyOptions proxyOptions) {
     super.setProxyOptions(proxyOptions);
     return this;
   }
 
   @Override
-  public BridgeOptions setTrustOptions(TrustOptions options) {
+  public AmqpBridgeOptions setTrustOptions(TrustOptions options) {
     super.setTrustOptions(options);
     return this;
   }
 
   @Override
-  public BridgeOptions setJdkSslEngineOptions(JdkSSLEngineOptions sslEngineOptions) {
+  public AmqpBridgeOptions setJdkSslEngineOptions(JdkSSLEngineOptions sslEngineOptions) {
     super.setJdkSslEngineOptions(sslEngineOptions);
     return this;
   }
 
   @Override
-  public BridgeOptions setOpenSslEngineOptions(OpenSSLEngineOptions sslEngineOptions) {
+  public AmqpBridgeOptions setOpenSslEngineOptions(OpenSSLEngineOptions sslEngineOptions) {
     super.setOpenSslEngineOptions(sslEngineOptions);
     return this;
   }
 
   @Override
-  public BridgeOptions setSslEngineOptions(SSLEngineOptions sslEngineOptions) {
+  public AmqpBridgeOptions setSslEngineOptions(SSLEngineOptions sslEngineOptions) {
     super.setSslEngineOptions(sslEngineOptions);
     return this;
   }

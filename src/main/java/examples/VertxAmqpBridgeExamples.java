@@ -15,7 +15,7 @@
 */
 package examples;
 
-import io.vertx.amqp.bridge.Bridge;
+import io.vertx.amqp.bridge.AmqpBridge;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.eventbus.MessageProducer;
@@ -29,7 +29,7 @@ public class VertxAmqpBridgeExamples {
    * Basic example of creating a producer and sending a message.
    */
   public void example1(Vertx vertx) {
-    Bridge bridge = Bridge.bridge(vertx);
+    AmqpBridge bridge = AmqpBridge.create(vertx);
     // Start the bridge, then use the event loop thread to process things thereafter.
     bridge.start("localhost", 5672, res -> {
       // Set up a producer using the bridge, send a message with it.
@@ -46,7 +46,7 @@ public class VertxAmqpBridgeExamples {
    * Basic example of creating a consumer, registering a handler, and printing out received message.
    */
   public void example2(Vertx vertx) {
-    Bridge bridge = Bridge.bridge(vertx);
+    AmqpBridge bridge = AmqpBridge.create(vertx);
     // Start the bridge, then use the event loop thread to process things thereafter.
     bridge.start("localhost", 5672, res -> {
       // Set up a consumer using the bridge, register a handler for it.
