@@ -16,14 +16,13 @@
 package examples;
 
 import io.vertx.amqp.bridge.Bridge;
-import io.vertx.amqp.bridge.MessageHelper;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.docgen.Source;
 
-@Source(translate = false)
+@Source
 public class VertxAmqpBridgeExamples {
 
   /*
@@ -36,10 +35,10 @@ public class VertxAmqpBridgeExamples {
       // Set up a producer using the bridge, send a message with it.
       MessageProducer<JsonObject> producer = bridge.createProducer("myAmqpAddress");
 
-      JsonObject body = new JsonObject();
-      body.put(MessageHelper.BODY, "myStringContent");
+      JsonObject amqpMsgPayload = new JsonObject();
+      amqpMsgPayload.put("body", "myStringContent");
 
-      producer.send(body);
+      producer.send(amqpMsgPayload);
     });
   }
 
@@ -53,10 +52,10 @@ public class VertxAmqpBridgeExamples {
       // Set up a consumer using the bridge, register a handler for it.
       MessageConsumer<JsonObject> consumer = bridge.createConsumer("myAmqpAddress");
       consumer.handler(vertxMsg -> {
-        JsonObject amqpPayload = vertxMsg.body();
-        Object amqpBody = amqpPayload.getValue(MessageHelper.BODY);
+        JsonObject amqpMsgPayload = vertxMsg.body();
+        Object amqpBody = amqpMsgPayload.getValue("body");
 
-        System.out.println("Got msg with content:" + amqpBody);
+        System.out.println("Received a message with body: " + amqpBody);
       });
     });
   }

@@ -33,19 +33,22 @@ Here is a simple example of creating a MessageProducer and sending a message wit
 started to establish the underlying AMQP connection, then when this is complete the MessageProducer is created and
 message sent with it.
 
-[source,java]
+[source,ruby]
 ----
-Bridge bridge = Bridge.bridge(vertx);
-// Start the bridge, then use the event loop thread to process things thereafter.
-bridge.start("localhost", 5672, res -> {
-  // Set up a producer using the bridge, send a message with it.
-  MessageProducer<JsonObject> producer = bridge.createProducer("myAmqpAddress");
+require 'vertx-amqp-bridge/bridge'
+bridge = VertxAmqpBridge::Bridge.bridge(vertx)
+# Start the bridge, then use the event loop thread to process things thereafter.
+bridge.start("localhost", 5672) { |res_err,res|
+  # Set up a producer using the bridge, send a message with it.
+  producer = bridge.create_producer("myAmqpAddress")
 
-  JsonObject amqpMsgPayload = new JsonObject();
-  amqpMsgPayload.put("body", "myStringContent");
+  amqpMsgPayload = {
+  }
+  amqpMsgPayload['body'] = "myStringContent"
 
-  producer.send(amqpMsgPayload);
-});
+  producer.send(amqpMsgPayload)
+}
+
 ----
 
 === Receiving a Message
@@ -54,18 +57,20 @@ Here is a simple example of creating a MessageConsumer and registering a handler
 and started to establish the underlying AMQP connection, then when this is complete the MessageConsumer is created
 and a handler registered that prints the body of incoming AMQP messages.
 
-[source,java]
+[source,ruby]
 ----
-Bridge bridge = Bridge.bridge(vertx);
-// Start the bridge, then use the event loop thread to process things thereafter.
-bridge.start("localhost", 5672, res -> {
-  // Set up a consumer using the bridge, register a handler for it.
-  MessageConsumer<JsonObject> consumer = bridge.createConsumer("myAmqpAddress");
-  consumer.handler(vertxMsg -> {
-    JsonObject amqpMsgPayload = vertxMsg.body();
-    Object amqpBody = amqpMsgPayload.getValue("body");
+require 'vertx-amqp-bridge/bridge'
+bridge = VertxAmqpBridge::Bridge.bridge(vertx)
+# Start the bridge, then use the event loop thread to process things thereafter.
+bridge.start("localhost", 5672) { |res_err,res|
+  # Set up a consumer using the bridge, register a handler for it.
+  consumer = bridge.create_consumer("myAmqpAddress")
+  consumer.handler() { |vertxMsg|
+    amqpMsgPayload = vertxMsg.body()
+    amqpBody = amqpMsgPayload['body']
 
-    System.out.println("Received a message with body: " + amqpBody);
-  });
-});
+    puts "Received a message with body: #{amqpBody}"
+  }
+}
+
 ----

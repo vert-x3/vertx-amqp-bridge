@@ -126,11 +126,13 @@ public class BridgeImpl implements Bridge {
     return this;
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public MessageConsumer<JsonObject> createConsumer(String amqpAddress) {
     return new AmqpConsumerImpl(vertx, this, connection, amqpAddress);
   }
 
+  @SuppressWarnings("unchecked")
   @Override
   public MessageProducer<JsonObject> createProducer(String amqpAddress) {
     return new AmqpProducerImpl(this, connection, amqpAddress);

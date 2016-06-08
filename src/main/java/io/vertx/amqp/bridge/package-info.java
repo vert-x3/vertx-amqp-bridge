@@ -44,24 +44,24 @@
  * compile ${maven.groupId}:${maven.artifactId}:${maven.version}
  * ----
  *
- * === Creating a MessageProducer
+ * === Sending a Message
  *
  * Here is a simple example of creating a MessageProducer and sending a message with it. First, a Bridge is created and
  * started to establish the underlying AMQP connection, then when this is complete the MessageProducer is created and
  * message sent with it.
  *
- * [source,java]
+ * [source,$lang]
  * ----
  * {@link examples.VertxAmqpBridgeExamples#example1}
  * ----
  *
- * === Creating a MessageConsumer
+ * === Receiving a Message
  *
  * Here is a simple example of creating a MessageConsumer and registering a handler with it. First, a Bridge is created
  * and started to establish the underlying AMQP connection, then when this is complete the MessageConsumer is created
  * and a handler registered that prints the body of incoming AMQP messages.
  *
- * [source,java]
+ * [source,$lang]
  * ----
  * {@link examples.VertxAmqpBridgeExamples#example2}
  * ----
