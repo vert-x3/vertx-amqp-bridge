@@ -119,7 +119,7 @@ public class AmqpBridge {
    * Shuts the bridge down, closing the underlying connection.
    * @param resultHandler the result handler
    */
-  public void shutdown(Handler<AsyncResult<Void>> resultHandler) {
-    delegate.shutdown(resultHandler);
+  public void close(Handler<AsyncResult<Void>> resultHandler) {
+    delegate.close(resultHandler);
   }
 }

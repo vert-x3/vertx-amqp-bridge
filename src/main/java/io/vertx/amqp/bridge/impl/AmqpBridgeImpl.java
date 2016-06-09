@@ -160,7 +160,7 @@ public class AmqpBridgeImpl implements AmqpBridge {
   }
 
   @Override
-  public void shutdown(Handler<AsyncResult<Void>> resultHandler) {
+  public void close(Handler<AsyncResult<Void>> resultHandler) {
     runOnContext(true, v -> {
       shutdownImpl(resultHandler);
     });

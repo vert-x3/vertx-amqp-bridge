@@ -102,7 +102,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
       context.assertEquals(1, getBrokerAdminView(context).getCurrentConnectionsCount(),
           "unexpected current connection count during");
 
-      bridge.shutdown(shutdownRes -> {
+      bridge.close(shutdownRes -> {
         LOG.trace("Shutdown complete");
         context.assertTrue(shutdownRes.succeeded());
 
@@ -169,7 +169,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
       asyncMetaData.awaitSuccess();
 
       LOG.trace("Shutting down");
-      bridge.shutdown(shutdownRes -> {
+      bridge.close(shutdownRes -> {
         LOG.trace("Shutdown complete");
         context.assertTrue(shutdownRes.succeeded());
         asyncShutdown.complete();
@@ -208,7 +208,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
         context.assertEquals(sentContent, amqpBodyContent, "amqp message body was not as expected");
 
         LOG.trace("Shutting down");
-        bridge.shutdown(shutdownRes -> {
+        bridge.close(shutdownRes -> {
           LOG.trace("Shutdown complete");
           context.assertTrue(shutdownRes.succeeded());
           asyncShutdown.complete();
@@ -271,7 +271,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
         context.assertEquals(sentContent, amqpBodyContent, "amqp message body was not as expected");
 
         LOG.trace("Shutting down");
-        bridge.shutdown(shutdownRes -> {
+        bridge.close(shutdownRes -> {
           LOG.trace("Shutdown complete");
           context.assertTrue(shutdownRes.succeeded());
           asyncShutdown.complete();
@@ -386,7 +386,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
         context.assertNull(reply.result().replyAddress(), "reply address was unexpectedly set on the reply");
 
         LOG.trace("Shutting down");
-        bridge.shutdown(shutdownRes -> {
+        bridge.close(shutdownRes -> {
           LOG.trace("Shutdown complete");
           context.assertTrue(shutdownRes.succeeded());
           asyncShutdown.complete();
@@ -473,7 +473,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
           context.assertNull(replyToReplyMessage.replyAddress(), "reply address was unexpectedly set on 2nd reply");
 
           LOG.trace("Shutting down");
-          bridge.shutdown(shutdownRes -> {
+          bridge.close(shutdownRes -> {
             LOG.trace("Shutdown complete");
             context.assertTrue(shutdownRes.succeeded());
             shutdownAsync.complete();
@@ -553,7 +553,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
 
           if (msgNum == msgCount) {
             LOG.trace("Shutting down");
-            bridge.shutdown(shutdownRes -> {
+            bridge.close(shutdownRes -> {
               LOG.trace("Shutdown complete");
               context.assertTrue(shutdownRes.succeeded());
               asyncShutdown.complete();
@@ -652,7 +652,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
 
         if (msgNum == totalMsgCount) {
           LOG.trace("Shutting down");
-          bridge.shutdown(shutdownRes -> {
+          bridge.close(shutdownRes -> {
             LOG.trace("Shutdown complete");
             context.assertTrue(shutdownRes.succeeded());
             asyncShutdown.complete();
@@ -761,7 +761,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
         producer.close();
       }
 
-      bridge.shutdown(shutdownRes -> {
+      bridge.close(shutdownRes -> {
         LOG.trace("Shutdown complete");
         context.assertTrue(shutdownRes.succeeded());
         asyncShutdown.complete();
@@ -819,7 +819,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
 
           // Shut down
           LOG.trace("Shutting down");
-          bridge.shutdown(shutdownRes -> {
+          bridge.close(shutdownRes -> {
             LOG.trace("Shutdown complete");
             context.assertTrue(shutdownRes.succeeded());
             asyncShutdown.complete();
@@ -987,7 +987,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
           context.assertFalse(producer.writeQueueFull(), "expected write queue not to be full, we just granted credit");
 
           LOG.trace("Shutting down");
-          bridge.shutdown(shutdownRes -> {
+          bridge.close(shutdownRes -> {
             LOG.trace("Shutdown complete");
             context.assertTrue(shutdownRes.succeeded());
             asyncShutdown.complete();
@@ -1106,7 +1106,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
         asyncExceptionHandlerCalled.complete();
 
         LOG.trace("Shutting down");
-        bridge.shutdown(shutdownRes -> {
+        bridge.close(shutdownRes -> {
           LOG.trace("Shutdown complete");
           context.assertTrue(shutdownRes.succeeded());
           asyncShutdown.complete();
@@ -1217,7 +1217,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
         asyncExceptionHandlerCalled.complete();
 
         LOG.trace("Shutting down");
-        bridge.shutdown(shutdownRes -> {
+        bridge.close(shutdownRes -> {
           LOG.trace("Shutdown complete");
           context.assertTrue(shutdownRes.succeeded());
           asyncShutdown.complete();
@@ -1313,7 +1313,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
         asyncEndHandlerCalled.complete();
 
         LOG.trace("Shutting down");
-        bridge.shutdown(shutdownRes -> {
+        bridge.close(shutdownRes -> {
           LOG.trace("Shutdown complete");
           context.assertTrue(shutdownRes.succeeded());
           asyncShutdown.complete();
@@ -1416,7 +1416,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
           // Unregister complete, schedule shutdown, give chance for end handler to run, so we can verify it didn't.
           vertx.setTimer(50, y -> {
             LOG.trace("Shutting down");
-            bridge.shutdown(shutdownRes -> {
+            bridge.close(shutdownRes -> {
               LOG.trace("Shutdown complete");
               context.assertTrue(shutdownRes.succeeded());
               asyncShutdown.complete();
@@ -1523,7 +1523,7 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
         context.assertEquals(sentContent, amqpBodyContent, "amqp message body not as expected");
 
         LOG.trace("Shutting down");
-        bridge.shutdown(shutdownRes -> {
+        bridge.close(shutdownRes -> {
           LOG.trace("Shutdown complete");
           context.assertTrue(shutdownRes.succeeded());
           asyncShutdown.complete();

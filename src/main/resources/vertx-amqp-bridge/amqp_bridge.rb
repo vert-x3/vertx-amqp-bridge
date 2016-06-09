@@ -70,11 +70,11 @@ module VertxAmqpBridge
     #  Shuts the bridge down, closing the underlying connection.
     # @yield the result handler
     # @return [void]
-    def shutdown
+    def close
       if block_given?
-        return @j_del.java_method(:shutdown, [Java::IoVertxCore::Handler.java_class]).call((Proc.new { |ar| yield(ar.failed ? ar.cause : nil) }))
+        return @j_del.java_method(:close, [Java::IoVertxCore::Handler.java_class]).call((Proc.new { |ar| yield(ar.failed ? ar.cause : nil) }))
       end
-      raise ArgumentError, "Invalid arguments when calling shutdown()"
+      raise ArgumentError, "Invalid arguments when calling close()"
     end
   end
 end

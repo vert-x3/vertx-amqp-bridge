@@ -106,10 +106,10 @@ var AmqpBridge = function(j_val) {
    @public
    @param resultHandler {function} the result handler 
    */
-  this.shutdown = function(resultHandler) {
+  this.close = function(resultHandler) {
     var __args = arguments;
     if (__args.length === 1 && typeof __args[0] === 'function') {
-      j_amqpBridge["shutdown(io.vertx.core.Handler)"](function(ar) {
+      j_amqpBridge["close(io.vertx.core.Handler)"](function(ar) {
       if (ar.succeeded()) {
         resultHandler(null, null);
       } else {

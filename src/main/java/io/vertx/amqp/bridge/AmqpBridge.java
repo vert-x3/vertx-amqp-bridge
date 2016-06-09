@@ -117,5 +117,5 @@ public interface AmqpBridge {
    * @param resultHandler
    *          the result handler
    */
-  void shutdown(Handler<AsyncResult<Void>> resultHandler);
+  void close(Handler<AsyncResult<Void>> resultHandler);
 }
