@@ -46,9 +46,11 @@
  *
  * === Sending a Message
  *
- * Here is a simple example of creating a MessageProducer and sending a message with it. First, a Bridge is created and
- * started to establish the underlying AMQP connection, then when this is complete the MessageProducer is created and
- * message sent with it.
+ * Here is a simple example of creating a {@link io.vertx.core.eventbus.MessageProducer} and sending a message with it.
+ * First, an {@link io.vertx.amqp.bridge.AmqpBridge} is created and started to establish the underlying AMQP connection,
+ * then when this is complete the producer is created and a message sent using it. You can also optionally supply
+ * {@link io.vertx.amqp.bridge.AmqpBridgeOptions} when creating the bridge in order to configure various options, such
+ * as SSL connections.
  *
  * [source,$lang]
  * ----
@@ -57,9 +59,10 @@
  *
  * === Receiving a Message
  *
- * Here is a simple example of creating a MessageConsumer and registering a handler with it. First, a Bridge is created
- * and started to establish the underlying AMQP connection, then when this is complete the MessageConsumer is created
- * and a handler registered that prints the body of incoming AMQP messages.
+ * Here is a simple example of creating a {@link io.vertx.core.eventbus.MessageConsumer} and registering a handler with it.
+ * First, an {@link io.vertx.amqp.bridge.AmqpBridge} is created and started to establish the underlying AMQP connection,
+ * then when this is complete the consumer is created and a handler registered that prints the body of incoming AMQP
+ * messages.
  *
  * [source,$lang]
  * ----
