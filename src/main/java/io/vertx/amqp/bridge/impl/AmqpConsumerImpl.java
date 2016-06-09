@@ -21,7 +21,6 @@ import java.util.Queue;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
@@ -37,7 +36,6 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
 
   private static final Logger LOG = LoggerFactory.getLogger(AmqpConsumerImpl.class);
 
-  private final Vertx vertx;
   private final AmqpBridgeImpl bridge;
   private final ProtonReceiver receiver;
   private final String amqpAddress;
@@ -51,26 +49,41 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
   private boolean initialCreditGiven;
   private int initialCredit = 1000;
 
-  public AmqpConsumerImpl(Vertx vertx, AmqpBridgeImpl bridge, ProtonConnection connection, String amqpAddress) {
-    this.vertx = vertx;
+  public AmqpConsumerImpl(AmqpBridgeImpl bridge, ProtonConnection connection, String amqpAddress) {
+    if(!bridge.onContextEventLoop()) {
+      throw new IllegalStateException("Consumer creation was not executed on the bridge context thread");
+    }
+
     this.bridge = bridge;
     this.amqpAddress = amqpAddress;
     receiver = connection.createReceiver(amqpAddress);
     receiver.closeHandler(res -> {
-      boolean handled = false;
-      if (!closed && endHandler != null) {
-        handled = true;
-        endHandler.handle(null);
-      } else if (!closed && exceptionHandler != null) {
-        handled = true;
-        if (res.succeeded()) {
-          exceptionHandler.handle(new VertxException("Consumer closed remotely"));
-        } else {
-          exceptionHandler.handle(new VertxException("Consumer closed remotely with error", res.cause()));
+      Handler<Void> endh = null;
+      Handler<Throwable> exh = null;
+      boolean closeReceiver = false;
+
+      synchronized (AmqpConsumerImpl.this) {
+        if (!closed && endHandler != null) {
+          endh = endHandler;
+        } else if (!closed && exceptionHandler != null) {
+          exh = exceptionHandler;
+        }
+
+        if(!closed) {
+          closed = true;
+          closeReceiver = true;
         }
       }
 
-      if(!handled) {
+      if (endh != null) {
+        endh.handle(null);
+      } else if (exh != null) {
+        if (res.succeeded()) {
+          exh.handle(new VertxException("Consumer closed remotely"));
+        } else {
+          exh.handle(new VertxException("Consumer closed remotely with error", res.cause()));
+        }
+      } else {
         if (res.succeeded()) {
           LOG.warn("Consumer for address " + amqpAddress + " unexpectedly closed remotely");
         } else {
@@ -78,8 +91,7 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
         }
       }
 
-      if(!closed) {
-        closed = true;
+      if(closeReceiver) {
         receiver.close();
       }
     });
@@ -100,23 +112,33 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
 
   private void handleMessage(AmqpMessageImpl vertxMessage) {
     Handler<Message<JsonObject>> h = null;
-    if (handler != null && !paused && buffered.isEmpty()) {
-      h = handler;
-    } else if (handler != null && !paused) {
-      // Buffered messages present, deliver the oldest of those instead
-      buffered.add(vertxMessage);
-      vertxMessage = buffered.poll();
-      h = handler;
+    boolean schedule = false;
 
-      // Schedule a delivery for the next buffered message
-      scheduleBufferedMessageDelivery();
-    } else {
-      // Buffer message until we have a handler or aren't paused
-      buffered.add(vertxMessage);
+    synchronized (AmqpConsumerImpl.this) {
+      if (handler != null && !paused && buffered.isEmpty()) {
+        h = handler;
+      } else if (handler != null && !paused) {
+        // Buffered messages present, deliver the oldest of those instead
+        buffered.add(vertxMessage);
+        vertxMessage = buffered.poll();
+        h = handler;
+
+        // Schedule a delivery for the next buffered message
+        schedule = true;
+      } else {
+        // Buffer message until we have a handler or aren't paused
+        buffered.add(vertxMessage);
+      }
     }
 
+    // Delivering outside the synchronized block
     if (h != null) {
       deliverMessageToHandler(vertxMessage, h);
+    }
+
+    // schedule next delivery if appropriate, after earlier delivery to allow chance to pause etc.
+    if(schedule) {
+      scheduleBufferedMessageDelivery();
     }
   }
 
@@ -127,37 +149,67 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
   }
 
   private void scheduleBufferedMessageDelivery() {
-    if (!buffered.isEmpty()) {
-      vertx.runOnContext(v -> {
-        if (handler != null && !paused) {
-          AmqpMessageImpl message = buffered.poll();
-          if (message != null) {
-            deliverMessageToHandler(message, handler);
+    boolean schedule = false;
 
-            // Schedule a delivery for a further buffered message if any
-            scheduleBufferedMessageDelivery();
+    synchronized (AmqpConsumerImpl.this) {
+      schedule = !buffered.isEmpty() && !paused;
+    }
+
+    if (schedule) {
+      bridge.runOnContext(false, v -> {
+        Handler<Message<JsonObject>> h = null;
+        AmqpMessageImpl message = null;
+
+        synchronized (AmqpConsumerImpl.this) {
+          h = handler;
+          if (h != null && !paused) {
+            message = buffered.poll();
           }
+        }
+
+        if (message != null) {
+          // Delivering outside the synchronized block
+          deliverMessageToHandler(message, h);
+
+          // Schedule a delivery for a further buffered message if any
+          scheduleBufferedMessageDelivery();
         }
       });
     }
   }
 
   @Override
-  public MessageConsumer<JsonObject> exceptionHandler(Handler<Throwable> handler) {
+  public synchronized MessageConsumer<JsonObject> exceptionHandler(Handler<Throwable> handler) {
     exceptionHandler = handler;
     return this;
   }
 
   @Override
   public MessageConsumer<JsonObject> handler(final Handler<Message<JsonObject>> handler) {
-    this.handler = handler;
+    int creditToFlow = 0;
+    boolean schedule = false;
 
-    if (handler != null) {
-      // Flow initial credit if needed
-      if (!initialCreditGiven) {
-        initialCreditGiven = true;
-        receiver.flow(initialCredit);
+    synchronized (AmqpConsumerImpl.this) {
+      this.handler = handler;
+      if (handler != null) {
+        schedule = true;
+
+        // Flow initial credit if needed
+        if (!initialCreditGiven) {
+          initialCreditGiven = true;
+          creditToFlow = initialCredit;
+        }
       }
+    }
+
+    if(creditToFlow > 0) {
+      final int c = creditToFlow;
+      bridge.runOnContext(true, v -> {
+        receiver.flow(c);
+      });
+    }
+
+    if(schedule) {
       scheduleBufferedMessageDelivery();
     }
 
@@ -165,20 +217,20 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
   }
 
   @Override
-  public MessageConsumer<JsonObject> pause() {
+  public synchronized MessageConsumer<JsonObject> pause() {
     paused = true;
     return this;
   }
 
   @Override
-  public MessageConsumer<JsonObject> resume() {
+  public synchronized MessageConsumer<JsonObject> resume() {
     paused = false;
     scheduleBufferedMessageDelivery();
     return this;
   }
 
   @Override
-  public MessageConsumer<JsonObject> endHandler(Handler<Void> endHandler) {
+  public synchronized MessageConsumer<JsonObject> endHandler(Handler<Void> endHandler) {
     this.endHandler = endHandler;
     return this;
   }
@@ -189,7 +241,7 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
   }
 
   @Override
-  public boolean isRegistered() {
+  public synchronized boolean isRegistered() {
     return handler != null;
   }
 
@@ -199,7 +251,7 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
   }
 
   @Override
-  public MessageConsumer<JsonObject> setMaxBufferedMessages(int maxBufferedMessages) {
+  public synchronized MessageConsumer<JsonObject> setMaxBufferedMessages(int maxBufferedMessages) {
     if(!initialCreditGiven) {
       initialCredit = maxBufferedMessages;
     }
@@ -208,7 +260,7 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
   }
 
   @Override
-  public int getMaxBufferedMessages() {
+  public synchronized int getMaxBufferedMessages() {
     return initialCredit;
   }
 
@@ -218,26 +270,28 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
   }
 
   @Override
-  public void unregister() {
+  public synchronized void unregister() {
     unregister(null);
   }
 
   @Override
-  public void unregister(Handler<AsyncResult<Void>> completionHandler) {
+  public synchronized void unregister(Handler<AsyncResult<Void>> completionHandler) {
     handler = null;
     closed = true;
 
-    if (completionHandler != null) {
-      receiver.closeHandler((result) -> {
-        if (result.succeeded()) {
-          completionHandler.handle(Future.succeededFuture());
-        } else {
-          completionHandler.handle(Future.failedFuture(result.cause()));
-        }
-      });
-    } else {
-      receiver.closeHandler(null);
-    }
-    receiver.close();
+    bridge.runOnContext(true, v -> {
+      if (completionHandler != null) {
+        receiver.closeHandler((result) -> {
+          if (result.succeeded()) {
+            completionHandler.handle(Future.succeededFuture());
+          } else {
+            completionHandler.handle(Future.failedFuture(result.cause()));
+          }
+        });
+      } else {
+        receiver.closeHandler(null);
+      }
+      receiver.close();
+    });
   }
 }

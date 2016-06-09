@@ -31,7 +31,7 @@ import io.vertx.core.net.TrustOptions;
 import io.vertx.proton.ProtonClientOptions;
 
 /**
- * Options for configuring {@link io.vertx.amqp.bridge.Bridge}.
+ * Options for configuring the AmqpBridge.
  */
 @DataObject(generateConverter = true, inheritConverter = true)
 public class AmqpBridgeOptions extends ProtonClientOptions {

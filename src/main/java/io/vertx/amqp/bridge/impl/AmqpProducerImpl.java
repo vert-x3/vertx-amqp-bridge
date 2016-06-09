@@ -24,6 +24,7 @@ import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.proton.ProtonConnection;
 import io.vertx.proton.ProtonSender;
+import io.vertx.proton.impl.ProtonSenderImpl;
 
 public class AmqpProducerImpl implements MessageProducer<JsonObject> {
 
@@ -34,36 +35,67 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
   private boolean closed;
   private Handler<Throwable> exceptionHandler;
   private Handler<Void> drainHandler;
+  private long remoteCredit = 0;
 
   public AmqpProducerImpl(AmqpBridgeImpl bridge, ProtonConnection connection, String amqpAddress) {
+    if(!bridge.onContextEventLoop()) {
+      throw new IllegalStateException("Should be executing on the bridge context thread");
+    }
+
+    this.bridge = bridge;
+    this.amqpAddress= amqpAddress;
+
     sender = connection.createSender(amqpAddress);
     sender.closeHandler(res -> {
-      if (!closed && exceptionHandler != null) {
-        if (res.succeeded()) {
-          exceptionHandler.handle(new VertxException("Producer closed remotely"));
-        } else {
-          exceptionHandler.handle(new VertxException("Producer closed remotely with error", res.cause()));
+      Handler<Throwable> eh = null;
+      boolean closeSender = false;
+
+      synchronized (AmqpProducerImpl.this) {
+        if (!closed && exceptionHandler != null) {
+          eh = exceptionHandler;
+        }
+
+        if(!closed) {
+          closed = true;
+          closeSender = true;
         }
       }
 
-      if(!closed) {
-        closed = true;
+      if (eh != null) {
+        if (res.succeeded()) {
+          eh.handle(new VertxException("Producer closed remotely"));
+        } else {
+          eh.handle(new VertxException("Producer closed remotely with error", res.cause()));
+        }
+      }
+
+      if(closeSender) {
         sender.close();
       }
     });
     sender.sendQueueDrainHandler(s -> {
-      if(drainHandler != null) {
-        drainHandler.handle(null);
+      Handler<Void> dh = null;
+      synchronized (AmqpProducerImpl.this) {
+        // Update current state of remote credit
+        remoteCredit = ((ProtonSenderImpl) sender).getRemoteCredit();
+
+        // check the user drain handler, fire it outside synchronized block if not null
+        if (drainHandler != null) {
+          dh = drainHandler;
+        }
+      }
+
+      if(dh != null) {
+        dh.handle(null);
       }
     });
+
     sender.open();
-    this.bridge = bridge;
-    this.amqpAddress= amqpAddress;
   }
 
   @Override
-  public boolean writeQueueFull() {
-    return sender.sendQueueFull();
+  public synchronized boolean writeQueueFull() {
+    return remoteCredit <= 0;
   }
 
   @Override
@@ -84,17 +116,34 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
       msg.setAddress(toAddress);
     }
 
-    if (replyHandler != null) {
-      bridge.registerReplyToHandler(msg, replyHandler);
+    synchronized (AmqpProducerImpl.this) {
+      // Update the credit tracking. We only need to adjust this here because the sends etc may not be on the context
+      // thread and if that is the case we can't use the ProtonSender sendQueueFull method to check that credit has been
+      // exhausted following this doSend call since we will have only scheduled the actual send for later.
+      remoteCredit--;
     }
 
-    sender.send(msg);
+    bridge.runOnContext(true, v -> {
+      if (replyHandler != null) {
+        bridge.registerReplyToHandler(msg, replyHandler);
+      }
+
+      sender.send(msg);
+
+      synchronized (AmqpProducerImpl.this) {
+        // Update the credit tracking *again*. We need to reinitialise it here in case the doSend call was performed on
+        // a thread other than the bridge context, to ensure we didn't fall foul of a race between the above pre-send
+        // update on that thread, the above send on the context thread, and the sendQueueDrainHandler based updates on
+        // the context thread.
+        remoteCredit = ((ProtonSenderImpl) sender).getRemoteCredit();
+      }
+    });
 
     return this;
   }
 
   @Override
-  public MessageProducer<JsonObject> exceptionHandler(Handler<Throwable> handler) {
+  public synchronized MessageProducer<JsonObject> exceptionHandler(Handler<Throwable> handler) {
     exceptionHandler = handler;
 
     return this;
@@ -112,9 +161,8 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
   }
 
   @Override
-  public MessageProducer<JsonObject> drainHandler(Handler<Void> handler) {
+  public synchronized MessageProducer<JsonObject> drainHandler(Handler<Void> handler) {
     drainHandler = handler;
-
     return this;
   }
 
@@ -135,7 +183,12 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
 
   @Override
   public void close() {
-    closed = true;
-    sender.close();
+    synchronized (this) {
+      closed = true;
+    }
+
+    bridge.runOnContext(true, v -> {
+      sender.close();
+    });
   }
 }

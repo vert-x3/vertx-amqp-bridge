@@ -31,12 +31,14 @@ import io.vertx.amqp.bridge.impl.AmqpMessageImpl;
 import io.vertx.amqp.bridge.impl.AmqpBridgeImpl;
 import io.vertx.amqp.bridge.impl.MessageTranslatorImpl;
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Context;
 import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.eventbus.MessageProducer;
+import io.vertx.core.impl.ContextInternal;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -47,6 +49,9 @@ import io.vertx.proton.ProtonReceiver;
 
 public class AmqpBridgeImpl implements AmqpBridge {
 
+  private final Vertx vertx;
+  private final Context bridgeContext;
+  private final AmqpBridgeOptions options;
   private ProtonClient client;
   private ProtonConnection connection;
   private ProtonReceiver replyToConsumer;
@@ -55,13 +60,11 @@ public class AmqpBridgeImpl implements AmqpBridge {
   private Map<String, Handler<?>> replyToMapping = new HashMap<>();
   private MessageTranslatorImpl translator = new MessageTranslatorImpl();
   private boolean replyHandlerSupport = true;
-  private AmqpBridgeOptions options;
-  private Vertx vertx;
 
   public AmqpBridgeImpl(Vertx vertx, AmqpBridgeOptions options) {
     this.vertx = vertx;
-    client = ProtonClient.create(vertx);
     this.options = options;
+    bridgeContext = vertx.getOrCreateContext();
   }
 
   private static final Logger LOG = LoggerFactory.getLogger(AmqpBridgeImpl.class);
@@ -74,6 +77,16 @@ public class AmqpBridgeImpl implements AmqpBridge {
   @Override
   public AmqpBridge start(String hostname, int port, String username, String password,
                       Handler<AsyncResult<Void>> resultHandler) {
+    runOnContext(true, v -> {
+      startImpl(hostname, port, username, password, resultHandler);
+    });
+
+    return this;
+  }
+
+  private void startImpl(String hostname, int port, String username, String password,
+                         Handler<AsyncResult<Void>> resultHandler) {
+    client = ProtonClient.create(vertx);
     client.connect(options, hostname, port, username, password, connectResult -> {
       if (connectResult.succeeded()) {
         connection = connectResult.result();
@@ -122,24 +135,31 @@ public class AmqpBridgeImpl implements AmqpBridge {
         resultHandler.handle(Future.failedFuture(connectResult.cause()));
       }
     });
-
-    return this;
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public MessageConsumer<JsonObject> createConsumer(String amqpAddress) {
-    return new AmqpConsumerImpl(vertx, this, connection, amqpAddress);
+    // TODO: how to run this on context? Change it to take a completion handler?
+    return new AmqpConsumerImpl(this, connection, amqpAddress);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public MessageProducer<JsonObject> createProducer(String amqpAddress) {
+    // TODO: how to run this on context? Change it to take a completion handler?
     return new AmqpProducerImpl(this, connection, amqpAddress);
   }
 
   @Override
   public AmqpBridge shutdown(Handler<AsyncResult<Void>> resultHandler) {
+    runOnContext(true, v -> {
+      shutdownImpl(resultHandler);
+    });
+    return this;
+  }
+
+  private void shutdownImpl(Handler<AsyncResult<Void>> resultHandler) {
     if (connection != null) {
       connection.closeHandler(res -> {
         try {
@@ -154,7 +174,6 @@ public class AmqpBridgeImpl implements AmqpBridge {
         }
       }).close();
     }
-    return this;
   }
 
   <R> void registerReplyToHandler(org.apache.qpid.proton.message.Message msg,
@@ -223,5 +242,17 @@ public class AmqpBridgeImpl implements AmqpBridge {
   public AmqpBridge setReplyHandlerSupported(boolean replyHandlerSupport) {
     this.replyHandlerSupport = replyHandlerSupport;
     return this;
+  }
+
+  boolean onContextEventLoop() {
+    return ((ContextInternal) bridgeContext).nettyEventLoop().inEventLoop();
+  }
+
+  void runOnContext(boolean immediateIfOnContext, Handler<Void> action) {
+    if (immediateIfOnContext && onContextEventLoop()) {
+      action.handle(null);
+    } else {
+      bridgeContext.runOnContext(action);
+    }
   }
 }
