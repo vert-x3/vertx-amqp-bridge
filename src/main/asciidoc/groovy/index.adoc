@@ -1,0 +1,78 @@
+= Vert.x AMQP Bridge
+
+This component provides AMQP 1.0 producer and consumer support via a bridging layer implementing the Vert.x event bus
+MessageProducer and MessageConsumer APIs over the top of link:https://github.com/vert-x3/vertx-proton/[vertx-proton].
+
+WARNING: this module has the tech preview status, this means the API can change between versions.
+
+== Using Vert.x AMQP Bridge
+
+To use Vert.x AMQP Bridge, add the following dependency to the _dependencies_ section of your build descriptor:
+
+* Maven (in your `pom.xml`):
+
+[source,xml,subs="+attributes"]
+----
+<dependency>
+  <groupId>io.vertx</groupId>
+  <artifactId>vertx-amqp-bridge</artifactId>
+  <version>3.3.0-SNAPSHOT</version>
+</dependency>
+----
+
+* Gradle (in your `build.gradle` file):
+
+[source,groovy,subs="+attributes"]
+----
+compile io.vertx:vertx-amqp-bridge:3.3.0-SNAPSHOT
+----
+
+=== Sending a Message
+
+Here is a simple example of creating a `link:../../groovydoc/io/vertx/groovy/core/eventbus/MessageProducer.html[MessageProducer]` and sending a message with it.
+First, an `link:../../groovydoc/io/vertx/groovy/amqp/bridge/AmqpBridge.html[AmqpBridge]` is created and started to establish the underlying AMQP connection,
+then when this is complete the producer is created and a message sent using it. You can also optionally supply
+`link:../dataobjects.html#AmqpBridgeOptions[AmqpBridgeOptions]` when creating the bridge in order to configure various options, such
+as SSL connections.
+
+[source,groovy]
+----
+import io.vertx.groovy.amqp.bridge.AmqpBridge
+def bridge = AmqpBridge.create(vertx)
+// Start the bridge, then use the event loop thread to process things thereafter.
+bridge.start("localhost", 5672, { res ->
+  // Set up a producer using the bridge, send a message with it.
+  def producer = bridge.createProducer("myAmqpAddress")
+
+  def amqpMsgPayload = [:]
+  amqpMsgPayload.body = "myStringContent"
+
+  producer.send(amqpMsgPayload)
+})
+
+----
+
+=== Receiving a Message
+
+Here is a simple example of creating a `link:../../groovydoc/io/vertx/groovy/core/eventbus/MessageConsumer.html[MessageConsumer]` and registering a handler with it.
+First, an `link:../../groovydoc/io/vertx/groovy/amqp/bridge/AmqpBridge.html[AmqpBridge]` is created and started to establish the underlying AMQP connection,
+then when this is complete the consumer is created and a handler registered that prints the body of incoming AMQP
+messages.
+
+[source,groovy]
+----
+import io.vertx.groovy.amqp.bridge.AmqpBridge
+def bridge = AmqpBridge.create(vertx)
+// Start the bridge, then use the event loop thread to process things thereafter.
+bridge.start("localhost", 5672, { res ->
+  // Set up a consumer using the bridge, register a handler for it.
+  def consumer = bridge.createConsumer("myAmqpAddress")
+  consumer.handler({ vertxMsg ->
+    def amqpMsgPayload = vertxMsg.body()
+    def amqpBody = amqpMsgPayload.body
+
+    println("Received a message with body: ${amqpBody}")
+  })
+})
+
+----
