@@ -34,18 +34,19 @@ module VertxAmqpBridge
     # @param [String] username the username
     # @param [String] password the password
     # @yield the result handler
-    # @return [self]
+    # @return [void]
     def start(hostname=nil,port=nil,username=nil,password=nil)
       if hostname.class == String && port.class == Fixnum && block_given? && username == nil && password == nil
-        @j_del.java_method(:start, [Java::java.lang.String.java_class,Java::int.java_class,Java::IoVertxCore::Handler.java_class]).call(hostname,port,(Proc.new { |ar| yield(ar.failed ? ar.cause : nil) }))
-        return self
+        return @j_del.java_method(:start, [Java::java.lang.String.java_class,Java::int.java_class,Java::IoVertxCore::Handler.java_class]).call(hostname,port,(Proc.new { |ar| yield(ar.failed ? ar.cause : nil, ar.succeeded ? ::Vertx::Util::Utils.safe_create(ar.result,::VertxAmqpBridge::AmqpBridge) : nil) }))
       elsif hostname.class == String && port.class == Fixnum && username.class == String && password.class == String && block_given?
-        @j_del.java_method(:start, [Java::java.lang.String.java_class,Java::int.java_class,Java::java.lang.String.java_class,Java::java.lang.String.java_class,Java::IoVertxCore::Handler.java_class]).call(hostname,port,username,password,(Proc.new { |ar| yield(ar.failed ? ar.cause : nil) }))
-        return self
+        return @j_del.java_method(:start, [Java::java.lang.String.java_class,Java::int.java_class,Java::java.lang.String.java_class,Java::java.lang.String.java_class,Java::IoVertxCore::Handler.java_class]).call(hostname,port,username,password,(Proc.new { |ar| yield(ar.failed ? ar.cause : nil, ar.succeeded ? ::Vertx::Util::Utils.safe_create(ar.result,::VertxAmqpBridge::AmqpBridge) : nil) }))
       end
       raise ArgumentError, "Invalid arguments when calling start(hostname,port,username,password)"
     end
     #  Creates a consumer on the given AMQP address.
+    # 
+    #  This method MUST be called from the bridge Context thread, as used in the result handler callback from the start
+    #  methods. The bridge MUST be successfully started before the method is called.
     # @param [String] amqpAddress the address to consume from
     # @return [::Vertx::MessageConsumer] the consumer
     def create_consumer(amqpAddress=nil)
@@ -55,6 +56,9 @@ module VertxAmqpBridge
       raise ArgumentError, "Invalid arguments when calling create_consumer(amqpAddress)"
     end
     #  Creates a producer to the given AMQP address.
+    # 
+    #  This method MUST be called from the bridge Context thread, as used in the result handler callback from the start
+    #  methods. The bridge MUST be successfully started before the method is called.
     # @param [String] amqpAddress the address to produce to
     # @return [::Vertx::MessageProducer] the producer
     def create_producer(amqpAddress=nil)
@@ -65,11 +69,10 @@ module VertxAmqpBridge
     end
     #  Shuts the bridge down, closing the underlying connection.
     # @yield the result handler
-    # @return [self]
+    # @return [void]
     def shutdown
       if block_given?
-        @j_del.java_method(:shutdown, [Java::IoVertxCore::Handler.java_class]).call((Proc.new { |ar| yield(ar.failed ? ar.cause : nil) }))
-        return self
+        return @j_del.java_method(:shutdown, [Java::IoVertxCore::Handler.java_class]).call((Proc.new { |ar| yield(ar.failed ? ar.cause : nil) }))
       end
       raise ArgumentError, "Invalid arguments when calling shutdown()"
     end

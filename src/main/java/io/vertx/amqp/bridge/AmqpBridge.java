@@ -16,7 +16,6 @@
 package io.vertx.amqp.bridge;
 
 import io.vertx.amqp.bridge.impl.AmqpBridgeImpl;
-import io.vertx.codegen.annotations.Fluent;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
@@ -67,10 +66,8 @@ public interface AmqpBridge {
    *          the password
    * @param resultHandler
    *          the result handler
-   * @return the bridge
    */
-  @Fluent
-  AmqpBridge start(String hostname, int port, String username, String password, Handler<AsyncResult<Void>> resultHandler);
+  void start(String hostname, int port, String username, String password, Handler<AsyncResult<AmqpBridge>> resultHandler) ;
 
   /**
    * Starts the bridge, establishing the underlying connection.
@@ -81,36 +78,44 @@ public interface AmqpBridge {
    *          the port to connect to
    * @param resultHandler
    *          the result handler
-   * @return the bridge
    */
-  @Fluent
-  AmqpBridge start(String hostname, int port, Handler<AsyncResult<Void>> resultHandler);
+  void start(String hostname, int port, Handler<AsyncResult<AmqpBridge>> resultHandler);
 
   /**
    * Creates a consumer on the given AMQP address.
    *
+   * This method MUST be called from the bridge Context thread, as used in the result handler callback from the start
+   * methods. The bridge MUST be successfully started before the method is called.
+   *
    * @param amqpAddress
    *          the address to consume from
    * @return the consumer
+   * @throws IllegalStateException
+   *           if the bridge was not started or the method is invoked on a thread other than the bridge Context thread,
+   *           as used in the result handler callback from the start methods.
    */
-  <T> MessageConsumer<T> createConsumer(String amqpAddress);
+  <T> MessageConsumer<T> createConsumer(String amqpAddress) throws IllegalStateException;
 
   /**
    * Creates a producer to the given AMQP address.
    *
+   * This method MUST be called from the bridge Context thread, as used in the result handler callback from the start
+   * methods. The bridge MUST be successfully started before the method is called.
+   *
    * @param amqpAddress
    *          the address to produce to
    * @return the producer
+   * @throws IllegalStateException
+   *           if the bridge was not started or the method is invoked on a thread other than the bridge Context thread,
+   *           as used in the result handler callback from the start methods.
    */
-  <T> MessageProducer<T> createProducer(String amqpAddress);
+  <T> MessageProducer<T> createProducer(String amqpAddress) throws IllegalStateException;
 
   /**
    * Shuts the bridge down, closing the underlying connection.
    *
    * @param resultHandler
    *          the result handler
-   * @return the bridge
    */
-  @Fluent
-  AmqpBridge shutdown(Handler<AsyncResult<Void>> resultHandler);
+  void shutdown(Handler<AsyncResult<Void>> resultHandler);
 }

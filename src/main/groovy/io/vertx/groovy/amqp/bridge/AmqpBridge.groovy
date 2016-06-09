@@ -62,25 +62,40 @@ public class AmqpBridge {
    * @param username the username
    * @param password the password
    * @param resultHandler the result handler
-   * @return the bridge
    */
-  public AmqpBridge start(String hostname, int port, String username, String password, Handler<AsyncResult<Void>> resultHandler) {
-    delegate.start(hostname, port, username, password, resultHandler);
-    return this;
+  public void start(String hostname, int port, String username, String password, Handler<AsyncResult<AmqpBridge>> resultHandler) {
+    delegate.start(hostname, port, username, password, resultHandler != null ? new Handler<AsyncResult<io.vertx.amqp.bridge.AmqpBridge>>() {
+      public void handle(AsyncResult<io.vertx.amqp.bridge.AmqpBridge> ar) {
+        if (ar.succeeded()) {
+          resultHandler.handle(io.vertx.core.Future.succeededFuture(InternalHelper.safeCreate(ar.result(), io.vertx.groovy.amqp.bridge.AmqpBridge.class)));
+        } else {
+          resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
+        }
+      }
+    } : null);
   }
   /**
    * Starts the bridge, establishing the underlying connection.
    * @param hostname the host name to connect to
    * @param port the port to connect to
    * @param resultHandler the result handler
-   * @return the bridge
    */
-  public AmqpBridge start(String hostname, int port, Handler<AsyncResult<Void>> resultHandler) {
-    delegate.start(hostname, port, resultHandler);
-    return this;
+  public void start(String hostname, int port, Handler<AsyncResult<AmqpBridge>> resultHandler) {
+    delegate.start(hostname, port, resultHandler != null ? new Handler<AsyncResult<io.vertx.amqp.bridge.AmqpBridge>>() {
+      public void handle(AsyncResult<io.vertx.amqp.bridge.AmqpBridge> ar) {
+        if (ar.succeeded()) {
+          resultHandler.handle(io.vertx.core.Future.succeededFuture(InternalHelper.safeCreate(ar.result(), io.vertx.groovy.amqp.bridge.AmqpBridge.class)));
+        } else {
+          resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
+        }
+      }
+    } : null);
   }
   /**
    * Creates a consumer on the given AMQP address.
+   *
+   * This method MUST be called from the bridge Context thread, as used in the result handler callback from the start
+   * methods. The bridge MUST be successfully started before the method is called.
    * @param amqpAddress the address to consume from
    * @return the consumer
    */
@@ -90,6 +105,9 @@ public class AmqpBridge {
   }
   /**
    * Creates a producer to the given AMQP address.
+   *
+   * This method MUST be called from the bridge Context thread, as used in the result handler callback from the start
+   * methods. The bridge MUST be successfully started before the method is called.
    * @param amqpAddress the address to produce to
    * @return the producer
    */
@@ -100,10 +118,8 @@ public class AmqpBridge {
   /**
    * Shuts the bridge down, closing the underlying connection.
    * @param resultHandler the result handler
-   * @return the bridge
    */
-  public AmqpBridge shutdown(Handler<AsyncResult<Void>> resultHandler) {
+  public void shutdown(Handler<AsyncResult<Void>> resultHandler) {
     delegate.shutdown(resultHandler);
-    return this;
   }
 }

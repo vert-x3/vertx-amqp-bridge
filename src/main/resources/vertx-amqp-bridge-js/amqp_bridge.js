@@ -44,33 +44,33 @@ var AmqpBridge = function(j_val) {
    @param username {string} the username 
    @param password {string} the password 
    @param resultHandler {function} the result handler 
-   @return {AmqpBridge} the bridge
    */
   this.start = function() {
     var __args = arguments;
     if (__args.length === 3 && typeof __args[0] === 'string' && typeof __args[1] ==='number' && typeof __args[2] === 'function') {
       j_amqpBridge["start(java.lang.String,int,io.vertx.core.Handler)"](__args[0], __args[1], function(ar) {
       if (ar.succeeded()) {
-        __args[2](null, null);
+        __args[2](utils.convReturnVertxGen(ar.result(), AmqpBridge), null);
       } else {
         __args[2](null, ar.cause());
       }
     });
-      return that;
     }  else if (__args.length === 5 && typeof __args[0] === 'string' && typeof __args[1] ==='number' && typeof __args[2] === 'string' && typeof __args[3] === 'string' && typeof __args[4] === 'function') {
       j_amqpBridge["start(java.lang.String,int,java.lang.String,java.lang.String,io.vertx.core.Handler)"](__args[0], __args[1], __args[2], __args[3], function(ar) {
       if (ar.succeeded()) {
-        __args[4](null, null);
+        __args[4](utils.convReturnVertxGen(ar.result(), AmqpBridge), null);
       } else {
         __args[4](null, ar.cause());
       }
     });
-      return that;
     } else throw new TypeError('function invoked with invalid arguments');
   };
 
   /**
    Creates a consumer on the given AMQP address.
+  
+   This method MUST be called from the bridge Context thread, as used in the result handler callback from the start
+   methods. The bridge MUST be successfully started before the method is called.
 
    @public
    @param amqpAddress {string} the address to consume from 
@@ -85,6 +85,9 @@ var AmqpBridge = function(j_val) {
 
   /**
    Creates a producer to the given AMQP address.
+  
+   This method MUST be called from the bridge Context thread, as used in the result handler callback from the start
+   methods. The bridge MUST be successfully started before the method is called.
 
    @public
    @param amqpAddress {string} the address to produce to 
@@ -102,7 +105,6 @@ var AmqpBridge = function(j_val) {
 
    @public
    @param resultHandler {function} the result handler 
-   @return {AmqpBridge} the bridge
    */
   this.shutdown = function(resultHandler) {
     var __args = arguments;
@@ -114,7 +116,6 @@ var AmqpBridge = function(j_val) {
         resultHandler(null, ar.cause());
       }
     });
-      return that;
     } else throw new TypeError('function invoked with invalid arguments');
   };
 

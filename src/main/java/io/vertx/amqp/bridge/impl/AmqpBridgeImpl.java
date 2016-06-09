@@ -15,10 +15,11 @@
 */
 package io.vertx.amqp.bridge.impl;
 
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import org.apache.qpid.proton.amqp.Symbol;
 import org.apache.qpid.proton.amqp.messaging.Source;
@@ -57,9 +58,10 @@ public class AmqpBridgeImpl implements AmqpBridge {
   private ProtonReceiver replyToConsumer;
   private String replyToConsumerAddress;
   private AmqpProducerImpl replySender;
-  private Map<String, Handler<?>> replyToMapping = new HashMap<>();
+  private Map<String, Handler<?>> replyToMapping = new ConcurrentHashMap<>();
   private MessageTranslatorImpl translator = new MessageTranslatorImpl();
   private boolean replyHandlerSupport = true;
+  private AtomicBoolean started = new AtomicBoolean();
 
   public AmqpBridgeImpl(Vertx vertx, AmqpBridgeOptions options) {
     this.vertx = vertx;
@@ -70,22 +72,20 @@ public class AmqpBridgeImpl implements AmqpBridge {
   private static final Logger LOG = LoggerFactory.getLogger(AmqpBridgeImpl.class);
 
   @Override
-  public AmqpBridge start(String hostname, int port, Handler<AsyncResult<Void>> resultHandler) {
-    return start(hostname, port, null, null, resultHandler);
+  public void start(String hostname, int port, Handler<AsyncResult<AmqpBridge>> resultHandler) {
+    start(hostname, port, null, null, resultHandler);
   }
 
   @Override
-  public AmqpBridge start(String hostname, int port, String username, String password,
-                      Handler<AsyncResult<Void>> resultHandler) {
+  public void start(String hostname, int port, String username, String password,
+                      Handler<AsyncResult<AmqpBridge>> resultHandler) {
     runOnContext(true, v -> {
       startImpl(hostname, port, username, password, resultHandler);
     });
-
-    return this;
   }
 
   private void startImpl(String hostname, int port, String username, String password,
-                         Handler<AsyncResult<Void>> resultHandler) {
+                         Handler<AsyncResult<AmqpBridge>> resultHandler) {
     client = ProtonClient.create(vertx);
     client.connect(options, hostname, port, username, password, connectResult -> {
       if (connectResult.succeeded()) {
@@ -100,7 +100,8 @@ public class AmqpBridgeImpl implements AmqpBridge {
           LOG.trace("Bridge connection open complete");
           if (openResult.succeeded()) {
             if (!replyHandlerSupport) {
-              resultHandler.handle(Future.succeededFuture());
+              started.set(true);
+              resultHandler.handle(Future.succeededFuture(AmqpBridgeImpl.this));
               return;
             }
 
@@ -121,7 +122,8 @@ public class AmqpBridgeImpl implements AmqpBridge {
                   replyToConsumerAddress = remoteSource.getAddress();
                 }
 
-                resultHandler.handle(Future.succeededFuture());
+                started.set(true);
+                resultHandler.handle(Future.succeededFuture(AmqpBridgeImpl.this));
               } else {
                 resultHandler.handle(Future.failedFuture(replyToConsumerResult.cause()));
               }
@@ -140,23 +142,28 @@ public class AmqpBridgeImpl implements AmqpBridge {
   @SuppressWarnings("unchecked")
   @Override
   public MessageConsumer<JsonObject> createConsumer(String amqpAddress) {
-    // TODO: how to run this on context? Change it to take a completion handler?
+    if (!started.get()) {
+      throw new IllegalStateException("Bridge was not successfully started");
+    }
+
     return new AmqpConsumerImpl(this, connection, amqpAddress);
   }
 
   @SuppressWarnings("unchecked")
   @Override
   public MessageProducer<JsonObject> createProducer(String amqpAddress) {
-    // TODO: how to run this on context? Change it to take a completion handler?
+    if (!started.get()) {
+      throw new IllegalStateException("Bridge was not successfully started");
+    }
+
     return new AmqpProducerImpl(this, connection, amqpAddress);
   }
 
   @Override
-  public AmqpBridge shutdown(Handler<AsyncResult<Void>> resultHandler) {
+  public void shutdown(Handler<AsyncResult<Void>> resultHandler) {
     runOnContext(true, v -> {
       shutdownImpl(resultHandler);
     });
-    return this;
   }
 
   private void shutdownImpl(Handler<AsyncResult<Void>> resultHandler) {
@@ -236,7 +243,7 @@ public class AmqpBridgeImpl implements AmqpBridge {
     replySender.doSend(replyBody, replyHandler, replyAddress);
   }
 
-  /**
+  /*
    * Internal test related method.
    */
   public AmqpBridge setReplyHandlerSupported(boolean replyHandlerSupport) {
