@@ -36,18 +36,19 @@ public class BridgeMetaDataSupportImpl {
   static {
     String version = "unknown";
     try {
-      InputStream in = null;
       String path = BridgeMetaDataSupportImpl.class.getPackage().getName().replace(".", "/");
-      if ((in = BridgeMetaDataSupportImpl.class.getResourceAsStream("/" + path + "/version.txt")) != null) {
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));) {
-          String line = reader.readLine();
-          if (line != null && !line.isEmpty()) {
-            version = line;
+      try (InputStream in = BridgeMetaDataSupportImpl.class.getResourceAsStream("/" + path + "/version.txt")) {
+        if (in != null) {
+          try (BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));) {
+            String line = reader.readLine();
+            if (line != null && !line.isEmpty()) {
+              version = line;
+            }
           }
         }
       }
     } catch (Throwable err) {
-      LOG.error("Problem determining version details", err);
+      LOG.warn("Problem determining version details", err);
     }
 
     VERSION = version;
