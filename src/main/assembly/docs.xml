@@ -8,8 +8,17 @@
   <includeBaseDirectory>false</includeBaseDirectory>
   <fileSets>
     <fileSet>
+      <directory>${asciidoc.dir}</directory>
+      <outputDirectory>/</outputDirectory>
+    </fileSet>
+    <fileSet>
       <directory>${project.build.directory}/docs</directory>
       <outputDirectory>/</outputDirectory>
+      <includes>
+        <include>groovy/groovydoc/**</include>
+        <include>java/apidocs/**</include>
+        <include>js/jsdoc/**</include>
+      </includes>
     </fileSet>
   </fileSets>
 </assembly>

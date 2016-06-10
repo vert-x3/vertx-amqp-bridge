@@ -52,7 +52,7 @@ public class AmqpBridge {
    * @return the (not-yet-started) bridge.
    */
   public static AmqpBridge create(Vertx vertx, Map<String, Object> options) {
-    def ret = InternalHelper.safeCreate(io.vertx.amqp.bridge.AmqpBridge.create(vertx != null ? (io.vertx.core.Vertx)vertx.getDelegate() : null, options != null ? new io.vertx.amqp.bridge.AmqpBridgeOptions(new io.vertx.core.json.JsonObject(options)) : null), io.vertx.groovy.amqp.bridge.AmqpBridge.class);
+    def ret = InternalHelper.safeCreate(io.vertx.amqp.bridge.AmqpBridge.create(vertx != null ? (io.vertx.core.Vertx)vertx.getDelegate() : null, options != null ? new io.vertx.amqp.bridge.AmqpBridgeOptions(io.vertx.lang.groovy.InternalHelper.toJsonObject(options)) : null), io.vertx.groovy.amqp.bridge.AmqpBridge.class);
     return ret;
   }
   /**
