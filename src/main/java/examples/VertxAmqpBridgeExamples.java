@@ -15,7 +15,7 @@
 */
 package examples;
 
-import io.vertx.amqp.bridge.AmqpBridge;
+import io.vertx.amqpbridge.AmqpBridge;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.eventbus.MessageProducer;

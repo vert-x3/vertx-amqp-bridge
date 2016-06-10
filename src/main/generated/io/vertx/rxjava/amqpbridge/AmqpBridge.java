@@ -14,29 +14,29 @@
  * under the License.
  */
 
-package io.vertx.rxjava.amqp.bridge;
+package io.vertx.rxjava.amqpbridge;
 
 import java.util.Map;
 import rx.Observable;
-import io.vertx.amqp.bridge.AmqpBridgeOptions;
 import io.vertx.rxjava.core.Vertx;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.rxjava.core.eventbus.MessageConsumer;
 import io.vertx.rxjava.core.eventbus.MessageProducer;
+import io.vertx.amqpbridge.AmqpBridgeOptions;
 
 /**
  * Vert.x AMQP Bridge. Facilitates sending and receiving AMQP 1.0 messages.
  *
  * <p/>
- * NOTE: This class has been automatically generated from the {@link io.vertx.amqp.bridge.AmqpBridge original} non RX-ified interface using Vert.x codegen.
+ * NOTE: This class has been automatically generated from the {@link io.vertx.amqpbridge.AmqpBridge original} non RX-ified interface using Vert.x codegen.
  */
 
 public class AmqpBridge {
 
-  final io.vertx.amqp.bridge.AmqpBridge delegate;
+  final io.vertx.amqpbridge.AmqpBridge delegate;
 
-  public AmqpBridge(io.vertx.amqp.bridge.AmqpBridge delegate) {
+  public AmqpBridge(io.vertx.amqpbridge.AmqpBridge delegate) {
     this.delegate = delegate;
   }
 
@@ -50,7 +50,7 @@ public class AmqpBridge {
    * @return the (not-yet-started) bridge.
    */
   public static AmqpBridge create(Vertx vertx) { 
-    AmqpBridge ret = AmqpBridge.newInstance(io.vertx.amqp.bridge.AmqpBridge.create((io.vertx.core.Vertx)vertx.getDelegate()));
+    AmqpBridge ret = AmqpBridge.newInstance(io.vertx.amqpbridge.AmqpBridge.create((io.vertx.core.Vertx)vertx.getDelegate()));
     return ret;
   }
 
@@ -61,7 +61,7 @@ public class AmqpBridge {
    * @return the (not-yet-started) bridge.
    */
   public static AmqpBridge create(Vertx vertx, AmqpBridgeOptions options) { 
-    AmqpBridge ret = AmqpBridge.newInstance(io.vertx.amqp.bridge.AmqpBridge.create((io.vertx.core.Vertx)vertx.getDelegate(), options));
+    AmqpBridge ret = AmqpBridge.newInstance(io.vertx.amqpbridge.AmqpBridge.create((io.vertx.core.Vertx)vertx.getDelegate(), options));
     return ret;
   }
 
@@ -74,8 +74,8 @@ public class AmqpBridge {
    * @param resultHandler the result handler
    */
   public void start(String hostname, int port, String username, String password, Handler<AsyncResult<AmqpBridge>> resultHandler) { 
-    delegate.start(hostname, port, username, password, new Handler<AsyncResult<io.vertx.amqp.bridge.AmqpBridge>>() {
-      public void handle(AsyncResult<io.vertx.amqp.bridge.AmqpBridge> ar) {
+    delegate.start(hostname, port, username, password, new Handler<AsyncResult<io.vertx.amqpbridge.AmqpBridge>>() {
+      public void handle(AsyncResult<io.vertx.amqpbridge.AmqpBridge> ar) {
         if (ar.succeeded()) {
           resultHandler.handle(io.vertx.core.Future.succeededFuture(AmqpBridge.newInstance(ar.result())));
         } else {
@@ -106,8 +106,8 @@ public class AmqpBridge {
    * @param resultHandler the result handler
    */
   public void start(String hostname, int port, Handler<AsyncResult<AmqpBridge>> resultHandler) { 
-    delegate.start(hostname, port, new Handler<AsyncResult<io.vertx.amqp.bridge.AmqpBridge>>() {
-      public void handle(AsyncResult<io.vertx.amqp.bridge.AmqpBridge> ar) {
+    delegate.start(hostname, port, new Handler<AsyncResult<io.vertx.amqpbridge.AmqpBridge>>() {
+      public void handle(AsyncResult<io.vertx.amqpbridge.AmqpBridge> ar) {
         if (ar.succeeded()) {
           resultHandler.handle(io.vertx.core.Future.succeededFuture(AmqpBridge.newInstance(ar.result())));
         } else {
@@ -182,7 +182,7 @@ public class AmqpBridge {
   }
 
 
-  public static AmqpBridge newInstance(io.vertx.amqp.bridge.AmqpBridge arg) {
+  public static AmqpBridge newInstance(io.vertx.amqpbridge.AmqpBridge arg) {
     return arg != null ? new AmqpBridge(arg) : null;
   }
 }

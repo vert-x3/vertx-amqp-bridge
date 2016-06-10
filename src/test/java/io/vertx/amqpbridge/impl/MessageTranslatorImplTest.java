@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package io.vertx.amqp.bridge.impl;
+package io.vertx.amqpbridge.impl;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -30,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.vertx.amqpbridge.AmqpConstants;
 import org.apache.qpid.proton.Proton;
 import org.apache.qpid.proton.amqp.Binary;
 import org.apache.qpid.proton.amqp.Symbol;
@@ -47,7 +48,6 @@ import org.apache.qpid.proton.message.Message;
 import org.junit.Before;
 import org.junit.Test;
 
-import io.vertx.amqp.bridge.AmqpConstants;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 

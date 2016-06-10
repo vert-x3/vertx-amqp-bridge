@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package io.vertx.amqp.bridge.impl;
+package io.vertx.amqpbridge.impl;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;

@@ -2,7 +2,7 @@ require 'vertx/vertx'
 require 'vertx/message_consumer'
 require 'vertx/message_producer'
 require 'vertx/util/utils.rb'
-# Generated from io.vertx.amqp.bridge.AmqpBridge
+# Generated from io.vertx.amqpbridge.AmqpBridge
 module VertxAmqpBridge
   #  Vert.x AMQP Bridge. Facilitates sending and receiving AMQP 1.0 messages.
   class AmqpBridge
@@ -22,9 +22,9 @@ module VertxAmqpBridge
     # @return [::VertxAmqpBridge::AmqpBridge] the (not-yet-started) bridge.
     def self.create(vertx=nil,options=nil)
       if vertx.class.method_defined?(:j_del) && !block_given? && options == nil
-        return ::Vertx::Util::Utils.safe_create(Java::IoVertxAmqpBridge::AmqpBridge.java_method(:create, [Java::IoVertxCore::Vertx.java_class]).call(vertx.j_del),::VertxAmqpBridge::AmqpBridge)
+        return ::Vertx::Util::Utils.safe_create(Java::IoVertxAmqpbridge::AmqpBridge.java_method(:create, [Java::IoVertxCore::Vertx.java_class]).call(vertx.j_del),::VertxAmqpBridge::AmqpBridge)
       elsif vertx.class.method_defined?(:j_del) && options.class == Hash && !block_given?
-        return ::Vertx::Util::Utils.safe_create(Java::IoVertxAmqpBridge::AmqpBridge.java_method(:create, [Java::IoVertxCore::Vertx.java_class,Java::IoVertxAmqpBridge::AmqpBridgeOptions.java_class]).call(vertx.j_del,Java::IoVertxAmqpBridge::AmqpBridgeOptions.new(::Vertx::Util::Utils.to_json_object(options))),::VertxAmqpBridge::AmqpBridge)
+        return ::Vertx::Util::Utils.safe_create(Java::IoVertxAmqpbridge::AmqpBridge.java_method(:create, [Java::IoVertxCore::Vertx.java_class,Java::IoVertxAmqpbridge::AmqpBridgeOptions.java_class]).call(vertx.j_del,Java::IoVertxAmqpbridge::AmqpBridgeOptions.new(::Vertx::Util::Utils.to_json_object(options))),::VertxAmqpBridge::AmqpBridge)
       end
       raise ArgumentError, "Invalid arguments when calling create(vertx,options)"
     end

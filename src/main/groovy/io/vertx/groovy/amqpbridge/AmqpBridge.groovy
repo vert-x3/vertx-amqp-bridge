@@ -14,24 +14,24 @@
  * under the License.
  */
 
-package io.vertx.groovy.amqp.bridge;
+package io.vertx.groovy.amqpbridge;
 import groovy.transform.CompileStatic
 import io.vertx.lang.groovy.InternalHelper
 import io.vertx.core.json.JsonObject
-import io.vertx.amqp.bridge.AmqpBridgeOptions
 import io.vertx.groovy.core.Vertx
 import io.vertx.core.AsyncResult
 import io.vertx.core.Handler
 import io.vertx.groovy.core.eventbus.MessageConsumer
 import io.vertx.groovy.core.eventbus.MessageProducer
+import io.vertx.amqpbridge.AmqpBridgeOptions
 /**
  * Vert.x AMQP Bridge. Facilitates sending and receiving AMQP 1.0 messages.
 */
 @CompileStatic
 public class AmqpBridge {
-  private final def io.vertx.amqp.bridge.AmqpBridge delegate;
+  private final def io.vertx.amqpbridge.AmqpBridge delegate;
   public AmqpBridge(Object delegate) {
-    this.delegate = (io.vertx.amqp.bridge.AmqpBridge) delegate;
+    this.delegate = (io.vertx.amqpbridge.AmqpBridge) delegate;
   }
   public Object getDelegate() {
     return delegate;
@@ -42,17 +42,17 @@ public class AmqpBridge {
    * @return the (not-yet-started) bridge.
    */
   public static AmqpBridge create(Vertx vertx) {
-    def ret = InternalHelper.safeCreate(io.vertx.amqp.bridge.AmqpBridge.create(vertx != null ? (io.vertx.core.Vertx)vertx.getDelegate() : null), io.vertx.groovy.amqp.bridge.AmqpBridge.class);
+    def ret = InternalHelper.safeCreate(io.vertx.amqpbridge.AmqpBridge.create(vertx != null ? (io.vertx.core.Vertx)vertx.getDelegate() : null), io.vertx.groovy.amqpbridge.AmqpBridge.class);
     return ret;
   }
   /**
    * Creates a Bridge with the given options.
    * @param vertx the vertx instance to use
-   * @param options the options (see <a href="../../../../../../../cheatsheet/AmqpBridgeOptions.html">AmqpBridgeOptions</a>)
+   * @param options the options (see <a href="../../../../../../cheatsheet/AmqpBridgeOptions.html">AmqpBridgeOptions</a>)
    * @return the (not-yet-started) bridge.
    */
   public static AmqpBridge create(Vertx vertx, Map<String, Object> options) {
-    def ret = InternalHelper.safeCreate(io.vertx.amqp.bridge.AmqpBridge.create(vertx != null ? (io.vertx.core.Vertx)vertx.getDelegate() : null, options != null ? new io.vertx.amqp.bridge.AmqpBridgeOptions(io.vertx.lang.groovy.InternalHelper.toJsonObject(options)) : null), io.vertx.groovy.amqp.bridge.AmqpBridge.class);
+    def ret = InternalHelper.safeCreate(io.vertx.amqpbridge.AmqpBridge.create(vertx != null ? (io.vertx.core.Vertx)vertx.getDelegate() : null, options != null ? new io.vertx.amqpbridge.AmqpBridgeOptions(io.vertx.lang.groovy.InternalHelper.toJsonObject(options)) : null), io.vertx.groovy.amqpbridge.AmqpBridge.class);
     return ret;
   }
   /**
@@ -64,10 +64,10 @@ public class AmqpBridge {
    * @param resultHandler the result handler
    */
   public void start(String hostname, int port, String username, String password, Handler<AsyncResult<AmqpBridge>> resultHandler) {
-    delegate.start(hostname, port, username, password, resultHandler != null ? new Handler<AsyncResult<io.vertx.amqp.bridge.AmqpBridge>>() {
-      public void handle(AsyncResult<io.vertx.amqp.bridge.AmqpBridge> ar) {
+    delegate.start(hostname, port, username, password, resultHandler != null ? new Handler<AsyncResult<io.vertx.amqpbridge.AmqpBridge>>() {
+      public void handle(AsyncResult<io.vertx.amqpbridge.AmqpBridge> ar) {
         if (ar.succeeded()) {
-          resultHandler.handle(io.vertx.core.Future.succeededFuture(InternalHelper.safeCreate(ar.result(), io.vertx.groovy.amqp.bridge.AmqpBridge.class)));
+          resultHandler.handle(io.vertx.core.Future.succeededFuture(InternalHelper.safeCreate(ar.result(), io.vertx.groovy.amqpbridge.AmqpBridge.class)));
         } else {
           resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
         }
@@ -81,10 +81,10 @@ public class AmqpBridge {
    * @param resultHandler the result handler
    */
   public void start(String hostname, int port, Handler<AsyncResult<AmqpBridge>> resultHandler) {
-    delegate.start(hostname, port, resultHandler != null ? new Handler<AsyncResult<io.vertx.amqp.bridge.AmqpBridge>>() {
-      public void handle(AsyncResult<io.vertx.amqp.bridge.AmqpBridge> ar) {
+    delegate.start(hostname, port, resultHandler != null ? new Handler<AsyncResult<io.vertx.amqpbridge.AmqpBridge>>() {
+      public void handle(AsyncResult<io.vertx.amqpbridge.AmqpBridge> ar) {
         if (ar.succeeded()) {
-          resultHandler.handle(io.vertx.core.Future.succeededFuture(InternalHelper.safeCreate(ar.result(), io.vertx.groovy.amqp.bridge.AmqpBridge.class)));
+          resultHandler.handle(io.vertx.core.Future.succeededFuture(InternalHelper.safeCreate(ar.result(), io.vertx.groovy.amqpbridge.AmqpBridge.class)));
         } else {
           resultHandler.handle(io.vertx.core.Future.failedFuture(ar.cause()));
         }

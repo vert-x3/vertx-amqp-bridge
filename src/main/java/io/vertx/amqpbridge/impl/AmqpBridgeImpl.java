@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package io.vertx.amqp.bridge.impl;
+package io.vertx.amqpbridge.impl;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -21,16 +21,12 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.vertx.amqpbridge.AmqpBridge;
+import io.vertx.amqpbridge.AmqpBridgeOptions;
+import io.vertx.amqpbridge.AmqpConstants;
 import org.apache.qpid.proton.amqp.Symbol;
 import org.apache.qpid.proton.amqp.messaging.Source;
 
-import io.vertx.amqp.bridge.AmqpBridge;
-import io.vertx.amqp.bridge.AmqpBridgeOptions;
-import io.vertx.amqp.bridge.AmqpConstants;
-import io.vertx.amqp.bridge.impl.AmqpProducerImpl;
-import io.vertx.amqp.bridge.impl.AmqpMessageImpl;
-import io.vertx.amqp.bridge.impl.AmqpBridgeImpl;
-import io.vertx.amqp.bridge.impl.MessageTranslatorImpl;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
 import io.vertx.core.Future;

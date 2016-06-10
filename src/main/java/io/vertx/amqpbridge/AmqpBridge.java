@@ -13,9 +13,9 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package io.vertx.amqp.bridge;
+package io.vertx.amqpbridge;
 
-import io.vertx.amqp.bridge.impl.AmqpBridgeImpl;
+import io.vertx.amqpbridge.impl.AmqpBridgeImpl;
 import io.vertx.codegen.annotations.VertxGen;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;

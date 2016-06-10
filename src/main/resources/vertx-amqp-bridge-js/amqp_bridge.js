@@ -22,8 +22,8 @@ var MessageProducer = require('vertx-js/message_producer');
 
 var io = Packages.io;
 var JsonObject = io.vertx.core.json.JsonObject;
-var JAmqpBridge = io.vertx.amqp.bridge.AmqpBridge;
-var AmqpBridgeOptions = io.vertx.amqp.bridge.AmqpBridgeOptions;
+var JAmqpBridge = io.vertx.amqpbridge.AmqpBridge;
+var AmqpBridgeOptions = io.vertx.amqpbridge.AmqpBridgeOptions;
 
 /**
  Vert.x AMQP Bridge. Facilitates sending and receiving AMQP 1.0 messages.
@@ -138,7 +138,7 @@ AmqpBridge.create = function() {
   if (__args.length === 1 && typeof __args[0] === 'object' && __args[0]._jdel) {
     return utils.convReturnVertxGen(JAmqpBridge["create(io.vertx.core.Vertx)"](__args[0]._jdel), AmqpBridge);
   }else if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && (typeof __args[1] === 'object' && __args[1] != null)) {
-    return utils.convReturnVertxGen(JAmqpBridge["create(io.vertx.core.Vertx,io.vertx.amqp.bridge.AmqpBridgeOptions)"](__args[0]._jdel, __args[1] != null ? new AmqpBridgeOptions(new JsonObject(JSON.stringify(__args[1]))) : null), AmqpBridge);
+    return utils.convReturnVertxGen(JAmqpBridge["create(io.vertx.core.Vertx,io.vertx.amqpbridge.AmqpBridgeOptions)"](__args[0]._jdel, __args[1] != null ? new AmqpBridgeOptions(new JsonObject(JSON.stringify(__args[1]))) : null), AmqpBridge);
   } else throw new TypeError('function invoked with invalid arguments');
 };
 

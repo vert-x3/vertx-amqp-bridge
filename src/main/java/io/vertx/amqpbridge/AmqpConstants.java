@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package io.vertx.amqp.bridge;
+package io.vertx.amqpbridge;
 
 /**
  * Helpful constants for dealing with the various sections/elements forming the JsonObject representation of the

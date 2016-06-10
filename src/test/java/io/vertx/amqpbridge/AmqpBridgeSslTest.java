@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package io.vertx.amqp.bridge;
+package io.vertx.amqpbridge;
 
 import java.util.concurrent.ExecutionException;
 

@@ -13,7 +13,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package io.vertx.amqp.bridge;
+package io.vertx.amqpbridge;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -34,9 +34,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import io.vertx.amqp.bridge.AmqpBridge;
-import io.vertx.amqp.bridge.impl.AmqpBridgeImpl;
-import io.vertx.amqp.bridge.impl.BridgeMetaDataSupportImpl;
+import io.vertx.amqpbridge.impl.AmqpBridgeImpl;
+import io.vertx.amqpbridge.impl.BridgeMetaDataSupportImpl;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
 import io.vertx.core.eventbus.Message;
