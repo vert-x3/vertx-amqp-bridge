@@ -16,7 +16,7 @@ To use Vert.x AMQP Bridge, add the following dependency to the _dependencies_ se
 <dependency>
   <groupId>io.vertx</groupId>
   <artifactId>vertx-amqp-bridge</artifactId>
-  <version>3.3.0-SNAPSHOT</version>
+  <version>3.3.0.CR2</version>
 </dependency>
 ----
 
@@ -24,13 +24,13 @@ To use Vert.x AMQP Bridge, add the following dependency to the _dependencies_ se
 
 [source,groovy,subs="+attributes"]
 ----
-compile io.vertx:vertx-amqp-bridge:3.3.0-SNAPSHOT
+compile io.vertx:vertx-amqp-bridge:3.3.0.CR2
 ----
 
 === Sending a Message
 
-Here is a simple example of creating a `link:../../jsdoc/message_producer-MessageProducer.html[MessageProducer]` and sending a message with it.
-First, an `link:../../jsdoc/amqp_bridge-AmqpBridge.html[AmqpBridge]` is created and started to establish the underlying AMQP connection,
+Here is a simple example of creating a `link:../../jsdoc/module-vertx-js_message_producer-MessageProducer.html[MessageProducer]` and sending a message with it.
+First, an `link:../../jsdoc/module-vertx-amqp-bridge-js_amqp_bridge-AmqpBridge.html[AmqpBridge]` is created and started to establish the underlying AMQP connection,
 then when this is complete the producer is created and a message sent using it. You can also optionally supply
 `link:../dataobjects.html#AmqpBridgeOptions[AmqpBridgeOptions]` when creating the bridge in order to configure various options, such
 as SSL connections.
@@ -55,8 +55,8 @@ bridge.start("localhost", 5672, function (res, res_err) {
 
 === Receiving a Message
 
-Here is a simple example of creating a `link:../../jsdoc/message_consumer-MessageConsumer.html[MessageConsumer]` and registering a handler with it.
-First, an `link:../../jsdoc/amqp_bridge-AmqpBridge.html[AmqpBridge]` is created and started to establish the underlying AMQP connection,
+Here is a simple example of creating a `link:../../jsdoc/module-vertx-js_message_consumer-MessageConsumer.html[MessageConsumer]` and registering a handler with it.
+First, an `link:../../jsdoc/module-vertx-amqp-bridge-js_amqp_bridge-AmqpBridge.html[AmqpBridge]` is created and started to establish the underlying AMQP connection,
 then when this is complete the consumer is created and a handler registered that prints the body of incoming AMQP
 messages.
 
