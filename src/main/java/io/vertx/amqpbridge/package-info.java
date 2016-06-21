@@ -77,36 +77,36 @@
  *
  * The top-level elements supported are:
  *
- * * "body": The content for the body section of the AMQP message.
- * * "body_type": An optional String used to indicate whether the "body" element represents an AmqpValue (default), Data, or AmqpSequence section. The values used are "value", "data", and "sequence" respectively.
- * * "header": An optional  JsonObject representing the elements of the message Header section. Expanded below.
- * * "properties": An optional JsonObject representing the elements of the message Properties section. Expanded below.
- * * "application_properties": An optional JsonObject containing any application defined properties(/headers).
- * * "message_annotations": An optional JsonObject representing any message annotations.
+ * * **body**: The content for the body section of the AMQP message.
+ * * **body_type**: An optional String used to indicate whether the "body" element represents an AmqpValue (default), Data, or AmqpSequence section. The values used are "value", "data", and "sequence" respectively.
+ * * **header**: An optional  JsonObject representing the elements of the message Header section. Expanded below.
+ * * **properties**: An optional JsonObject representing the elements of the message Properties section. Expanded below.
+ * * **application_properties**: An optional JsonObject containing any application defined properties(/headers).
+ * * **message_annotations**: An optional JsonObject representing any message annotations.
  *
  * The elements of the optional "header" sub-element are:
  *
- * * "durable": optional boolean indicating whether the message is durable (default false).
- * * "priority": optional short indicating the message priority (default 4).
- * * "ttl": optional long indicating ttl in milliseconds (no default). See also 'properties' absolute expiry time.
- * * "first_acquirer": boolean indicating if this is the first acquirer of the message (default false)
- * * "delivery_count": long indicating the number of previous _failed_ delivery attempts for message.
+ * * **durable**: optional boolean indicating whether the message is durable (default false).
+ * * **priority**: optional short indicating the message priority (default 4).
+ * * **ttl**: optional long indicating ttl in milliseconds (no default). See also 'properties' absolute expiry time.
+ * * **first_acquirer**: boolean indicating if this is the first acquirer of the message (default false)
+ * * **delivery_count**: long indicating the number of previous _failed_ delivery attempts for message.
  *
  * The elements of the optional "properties" sub-element are:
  *
- * * "to": optional string with address message is being sent to (no default).
- * * "reply_to": optional string with address for replies (no default). Set automatically when sent with reply handler.
- * * "message_id": optional string with message id (no default). Set automatically when sending with reply handler.
- * * "correlation_id": optional string with correlation id (no default). Set automatically when implicit reply is sent.
- * * "subject": optional string with message subject (no default).
- * * "group_id": optional string with message group id (no default).
- * * "group_sequence": optional long with message group sequence (no default).
- * * "reply_to_group_id": optional string with message reply to group id (no default).
- * * "content_type": optional string with message content type (no default). Only for use with Data body sections.
- * * "content_encoding": optional string with message content encoding (no default).
- * * "creation_time": optional long with message creation time in milliseconds since the unix epoch (no default).
- * * "absolute_expiry_time": optional long with absolute expiry time as milliseconds since the unix epoch (no default).
- * * "user_id": optional string with the id of the user sending the message (no default).
+ * * **to**: optional string with address message is being sent to (no default).
+ * * **reply_to**: optional string with address for replies (no default). Set automatically when sent with reply handler.
+ * * **message_id**: optional string with message id (no default). Set automatically when sending with reply handler.
+ * * **correlation_id**: optional string with correlation id (no default). Set automatically when implicit reply is sent.
+ * * **subject**: optional string with message subject (no default).
+ * * **group_id**: optional string with message group id (no default).
+ * * **group_sequence**: optional long with message group sequence (no default).
+ * * **reply_to_group_id**: optional string with message reply to group id (no default).
+ * * **content_type**: optional string with message content type (no default). Only for use with Data body sections.
+ * * **content_encoding**: optional string with message content encoding (no default).
+ * * **creation_time**: optional long with message creation time in milliseconds since the unix epoch (no default).
+ * * **absolute_expiry_time**: optional long with absolute expiry time as milliseconds since the unix epoch (no default).
+ * * **user_id**: optional string with the id of the user sending the message (no default).
  */
 @Document(fileName = "index.adoc")
 @ModuleGen(name = "vertx-amqp-bridge", groupPackage = "io.vertx")
