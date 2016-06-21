@@ -81,10 +81,11 @@ bridge.start("localhost", 5672, function (res, res_err) {
 === Message payload
 
 The message payload is passed as a JsonObject with elements representing various sections of the
-<a href="http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-messaging-v1.0-os.html#section-message-format">AMQP
-message</a>.
+link:http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-messaging-v1.0-os.html#section-message-format[AMQP
+message].
 
 The top-level elements supported are:
+
 * "body": The content for the body section of the AMQP message.
 * "body_type": An optional String used to indicate whether the "body" element represents an AmqpValue (default), Data, or AmqpSequence section. The values used are "value", "data", and "sequence" respectively.
 * "header": An optional  JsonObject representing the elements of the message Header section. Expanded below.
@@ -93,13 +94,15 @@ The top-level elements supported are:
 * "message_annotations": An optional JsonObject representing any message annotations.
 
 The elements of the optional "header" sub-element are:
+
 * "durable": optional boolean indicating whether the message is durable (default false).
 * "priority": optional short indicating the message priority (default 4).
 * "ttl": optional long indicating ttl in milliseconds (no default). See also 'properties' absolute expiry time.
 * "first_acquirer": boolean indicating if this is the first acquirer of the message (default false)
-* "delivery_count": long indicating the number of previous *failed* delivery attempts for message.
+* "delivery_count": long indicating the number of previous _failed_ delivery attempts for message.
 
 The elements of the optional "properties" sub-element are:
+
 * "to": optional string with address message is being sent to (no default).
 * "reply_to": optional string with address for replies (no default). Set automatically when sent with reply handler.
 * "message_id": optional string with message id (no default). Set automatically when sending with reply handler.
