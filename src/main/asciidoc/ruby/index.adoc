@@ -5,7 +5,7 @@ MessageProducer and MessageConsumer APIs over the top of link:https://github.com
 
 WARNING: this module has the tech preview status, this means the API can change between versions.
 
-== Using Vert.x AMQP Bridge
+== Getting Started
 
 To use Vert.x AMQP Bridge, add the following dependency to the _dependencies_ section of your build descriptor:
 
@@ -16,7 +16,7 @@ To use Vert.x AMQP Bridge, add the following dependency to the _dependencies_ se
 <dependency>
   <groupId>io.vertx</groupId>
   <artifactId>vertx-amqp-bridge</artifactId>
-  <version>3.3.0</version>
+  <version>3.3.1-SNAPSHOT</version>
 </dependency>
 ----
 
@@ -24,7 +24,7 @@ To use Vert.x AMQP Bridge, add the following dependency to the _dependencies_ se
 
 [source,groovy,subs="+attributes"]
 ----
-compile io.vertx:vertx-amqp-bridge:3.3.0
+compile io.vertx:vertx-amqp-bridge:3.3.1-SNAPSHOT
 ----
 
 === Sending a Message
@@ -78,7 +78,9 @@ bridge.start("localhost", 5672) { |res_err,res|
 
 ----
 
-=== Message payload
+== Message Payload
+
+=== Overview
 
 The message payload is passed as a JsonObject with elements representing various sections of the
 link:http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-messaging-v1.0-os.html#section-message-format[AMQP
@@ -116,3 +118,38 @@ The elements of the optional "properties" sub-element are:
 * **creation_time**: optional long with message creation time in milliseconds since the unix epoch (no default).
 * **absolute_expiry_time**: optional long with absolute expiry time as milliseconds since the unix epoch (no default).
 * **user_id**: optional string with the id of the user sending the message (no default).
+
+=== Application Properties
+
+To send a message with application properties, the "application_properties" element is added to the payload,
+containing a JsonObject whose contents represent the application property entries, which have string keys and a
+object representing a simple value such as String, Boolean, Integer, etc. For example, adding a property to a sent
+message could look something like:
+
+[source,ruby]
+----
+applicationProperties = {
+}
+applicationProperties['name'] = "value"
+
+amqpMsgPayload = {
+}
+amqpMsgPayload['application_properties'] = applicationProperties
+
+producer.send(amqpMsgPayload)
+
+----
+
+When receiving a message with application properties, the "application_properties" element is added to the JsonObject
+payload returned, containing a JsonObject whose contents represent the application property entries. For example,
+retrieving an application-property from a received message might look like:
+
+[source,ruby]
+----
+# Check the application properties section was present before use, it may not be
+appProps = amqpMsgPayload['application_properties']
+if (appProps != nil)
+  propValue = appProps['propertyName']
+end
+
+----

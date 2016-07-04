@@ -22,7 +22,7 @@
  *
  * WARNING: this module has the tech preview status, this means the API can change between versions.
  *
- * == Using Vert.x AMQP Bridge
+ * == Getting Started
  *
  * To use Vert.x AMQP Bridge, add the following dependency to the _dependencies_ section of your build descriptor:
  *
@@ -69,7 +69,9 @@
  * {@link examples.VertxAmqpBridgeExamples#example2}
  * ----
  *
- * === Message payload
+ * == Message Payload
+ *
+ * === Overview
  *
  * The message payload is passed as a JsonObject with elements representing various sections of the
  * link:http://docs.oasis-open.org/amqp/core/v1.0/os/amqp-core-messaging-v1.0-os.html#section-message-format[AMQP
@@ -107,6 +109,28 @@
  * * **creation_time**: optional long with message creation time in milliseconds since the unix epoch (no default).
  * * **absolute_expiry_time**: optional long with absolute expiry time as milliseconds since the unix epoch (no default).
  * * **user_id**: optional string with the id of the user sending the message (no default).
+ *
+ * === Application Properties
+ *
+ * To send a message with application properties, the "application_properties" element is added to the payload,
+ * containing a JsonObject whose contents represent the application property entries, which have string keys and a
+ * object representing a simple value such as String, Boolean, Integer, etc. For example, adding a property to a sent
+ * message could look something like:
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxAmqpBridgeExamples#example3}
+ * ----
+ *
+ * When receiving a message with application properties, the "application_properties" element is added to the JsonObject
+ * payload returned, containing a JsonObject whose contents represent the application property entries. For example,
+ * retrieving an application-property from a received message might look like:
+ *
+ * [source,$lang]
+ * ----
+ * {@link examples.VertxAmqpBridgeExamples#example4}
+ * ----
+ *
  */
 @Document(fileName = "index.adoc")
 @ModuleGen(name = "vertx-amqp-bridge", groupPackage = "io.vertx")

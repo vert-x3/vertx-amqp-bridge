@@ -16,7 +16,9 @@
 package examples;
 
 import io.vertx.amqpbridge.AmqpBridge;
+import io.vertx.amqpbridge.AmqpConstants;
 import io.vertx.core.Vertx;
+import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.json.JsonObject;
@@ -58,5 +60,30 @@ public class VertxAmqpBridgeExamples {
         System.out.println("Received a message with body: " + amqpBody);
       });
     });
+  }
+
+  /*
+   * Basic example of sending a message with application properties.
+   */
+  public void example3(MessageProducer<JsonObject> producer) {
+    JsonObject applicationProperties = new JsonObject();
+    applicationProperties.put("name", "value");
+
+    JsonObject amqpMsgPayload = new JsonObject();
+    amqpMsgPayload.put("application_properties", applicationProperties);
+
+    producer.send(amqpMsgPayload);
+  }
+
+  /*
+   * Basic example of receiving a message with application properties.
+   */
+  @SuppressWarnings("unused")
+  public void example4(JsonObject amqpMsgPayload) {
+    // Check the application properties section was present before use, it may not be
+    JsonObject appProps = amqpMsgPayload.getJsonObject("application_properties");
+    if(appProps != null) {
+      Object propValue = appProps.getValue("propertyName");
+    }
   }
 }

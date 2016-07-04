@@ -15,6 +15,7 @@
 */
 package io.vertx.amqpbridge;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -25,6 +26,7 @@ import org.apache.qpid.proton.Proton;
 import org.apache.qpid.proton.amqp.Symbol;
 import org.apache.qpid.proton.amqp.messaging.Accepted;
 import org.apache.qpid.proton.amqp.messaging.AmqpValue;
+import org.apache.qpid.proton.amqp.messaging.ApplicationProperties;
 import org.apache.qpid.proton.amqp.messaging.Section;
 import org.apache.qpid.proton.amqp.messaging.Source;
 import org.apache.qpid.proton.amqp.messaging.Target;
@@ -186,6 +188,8 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
   public void testReceiveBasicMessage(TestContext context) throws Exception {
     String testName = getTestName();
     String sentContent = "myMessageContent-" + testName;
+    String propKey = "appPropKey";
+    String propValue = "appPropValue";
 
     Async asyncShutdown = context.async();
     Async asyncSendMsg = context.async();
@@ -206,6 +210,14 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
 
         context.assertEquals(sentContent, amqpBodyContent, "amqp message body was not as expected");
 
+        // Check the application property was present
+        context.assertTrue(jsonObject.containsKey(AmqpConstants.APPLICATION_PROPERTIES),
+            "application properties element not present");
+        JsonObject appProps = jsonObject.getJsonObject(AmqpConstants.APPLICATION_PROPERTIES);
+        context.assertTrue(appProps.containsKey(propKey),
+            "expected property key element not present");
+        context.assertEquals(propValue, appProps.getValue(propKey), "app property valuenot as expected");
+
         LOG.trace("Shutting down");
         bridge.close(shutdownRes -> {
           LOG.trace("Shutdown complete");
@@ -224,6 +236,11 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
 
       org.apache.qpid.proton.message.Message protonMsg = Proton.message();
       protonMsg.setBody(new AmqpValue(sentContent));
+
+      Map<String, Object> props = new HashMap<>();
+      props.put(propKey, propValue);
+      ApplicationProperties appProps = new ApplicationProperties(props);
+      protonMsg.setApplicationProperties(appProps);
 
       ProtonConnection conn = res.result().open();
 
@@ -310,6 +327,8 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
   public void testSendBasicMessage(TestContext context) throws Exception {
     String testName = getTestName();
     String sentContent = "myMessageContent-" + testName;
+    String propKey = "appPropKey";
+    String propValue = "appPropValue";
 
     Async asyncRecvMsg = context.async();
 
@@ -322,10 +341,14 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
 
       MessageProducer<JsonObject> producer = bridge.createProducer(testName);
 
-      JsonObject body = new JsonObject();
-      body.put("body", sentContent);
+      JsonObject applicationProperties = new JsonObject();
+      applicationProperties.put(propKey, propValue);
 
-      producer.send(body);
+      JsonObject amqpMsgPayload = new JsonObject();
+      amqpMsgPayload.put("body", sentContent);
+      amqpMsgPayload.put("application_properties", applicationProperties);
+
+      producer.send(amqpMsgPayload);
 
       context.assertEquals(testName, producer.address(), "address was not as expected");
     });
@@ -348,6 +371,12 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
         Object actual = ((AmqpValue) body).getValue();
 
         context.assertEquals(sentContent, actual, "Unexpected message body");
+
+        ApplicationProperties applicationProperties = m.getApplicationProperties();
+        context.assertNotNull(applicationProperties, "application properties section not present");
+        context.assertTrue(applicationProperties.getValue().containsKey(propKey), "property key not present");
+        context.assertEquals(propValue, applicationProperties.getValue().get(propKey), "Unexpected property value");
+
         asyncRecvMsg.complete();
 
         conn.closeHandler(closeResult -> {
