@@ -22,7 +22,7 @@
  *
  * WARNING: this module has the tech preview status, this means the API can change between versions.
  *
- * == Getting Started
+ * == Using Vert.x AMQP Bridge
  *
  * To use Vert.x AMQP Bridge, add the following dependency to the _dependencies_ section of your build descriptor:
  *
@@ -44,13 +44,15 @@
  * compile ${maven.groupId}:${maven.artifactId}:${maven.version}
  * ----
  *
+ * == Getting Started
+ *
  * === Sending a Message
  *
  * Here is a simple example of creating a {@link io.vertx.core.eventbus.MessageProducer} and sending a message with it.
  * First, an {@link io.vertx.amqpbridge.AmqpBridge} is created and started to establish the underlying AMQP connection,
- * then when this is complete the producer is created and a message sent using it. You can also optionally supply
- * {@link io.vertx.amqpbridge.AmqpBridgeOptions} when creating the bridge in order to configure various options, such
- * as SSL connections.
+ * then when this is complete the producer is created and a message sent using it. You can optionally supply a username
+ * and password when starting the bridge, as well as supplying {@link io.vertx.amqpbridge.AmqpBridgeOptions} in order
+ * to configure various options such as for using SSL connections.
  *
  * [source,$lang]
  * ----
@@ -68,6 +70,8 @@
  * ----
  * {@link examples.VertxAmqpBridgeExamples#example2}
  * ----
+ * Receipt of the AMQP message is accepted automatically as soon as the consumer's handler returns upon delivering the
+ * message to the application.
  *
  * == Message Payload
  *
@@ -131,6 +135,26 @@
  * {@link examples.VertxAmqpBridgeExamples#example4}
  * ----
  *
+ *== Connecting using SSL
+ *
+ * You can also optionally supply {@link io.vertx.amqpbridge.AmqpBridgeOptions} when creating the bridge in order to
+ * configure various options, the most typically used of which are around behaviour for SSL connections.
+ *
+ * The following is an example of using configuration to create a bridge connecting to a server using SSL,
+ * authenticating with a username and password, and supplying a PKCS12 based trust store to verify trust of the server
+ * certificate:
+ *
+ * ----
+ * {@link examples.VertxAmqpBridgeExamples#example5}
+ * ----
+ *
+ * The following is an example of using configuration to create a bridge connecting to a server requiring SSL Client
+ * Certificate Authentication, supplying both a PKCS12 based trust store to verify trust of the server certificate and
+ * also a PKCS12 based key store containing an SSL key and certificate the server can use to verify the client:
+ *
+ * ----
+ * {@link examples.VertxAmqpBridgeExamples#example6}
+ * ----
  */
 @Document(fileName = "index.adoc")
 @ModuleGen(name = "vertx-amqp-bridge", groupPackage = "io.vertx")

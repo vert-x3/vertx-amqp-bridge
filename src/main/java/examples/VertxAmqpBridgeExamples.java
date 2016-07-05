@@ -16,12 +16,12 @@
 package examples;
 
 import io.vertx.amqpbridge.AmqpBridge;
-import io.vertx.amqpbridge.AmqpConstants;
+import io.vertx.amqpbridge.AmqpBridgeOptions;
 import io.vertx.core.Vertx;
-import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.net.PfxOptions;
 import io.vertx.docgen.Source;
 
 @Source
@@ -85,5 +85,41 @@ public class VertxAmqpBridgeExamples {
     if(appProps != null) {
       Object propValue = appProps.getValue("propertyName");
     }
+  }
+
+  /*
+   * Basic example of connecting the bridge to a server using SSL with a PKCS12 based trust store.
+   */
+  public void example5(Vertx vertx) {
+    AmqpBridgeOptions bridgeOptions = new AmqpBridgeOptions();
+    bridgeOptions.setSsl(true);
+
+    PfxOptions clientPfxOptions = new PfxOptions().setPath("path/to/pkcs12.truststore").setPassword("store-password");
+    bridgeOptions.setPfxTrustOptions(clientPfxOptions);
+
+    AmqpBridge bridge = AmqpBridge.create(vertx, bridgeOptions);
+    bridge.start("localhost", 5672, "username", "password", res -> {
+      // ..do things with the bridge..
+    });
+  }
+
+  /*
+   * Basic example of connecting the bridge to a server using SSL Client Certificate Authentication with
+   * PKCS12 based key and trust stores.
+   */
+  public void example6(Vertx vertx) {
+    AmqpBridgeOptions bridgeOptions = new AmqpBridgeOptions();
+    bridgeOptions.setSsl(true);
+
+    PfxOptions trustOptions = new PfxOptions().setPath("path/to/pkcs12.truststore").setPassword("store-password");
+    bridgeOptions.setPfxTrustOptions(trustOptions);
+
+    PfxOptions keyCertOptions = new PfxOptions().setPath("path/to/pkcs12.keystore").setPassword("store-password");
+    bridgeOptions.setPfxKeyCertOptions(keyCertOptions);
+
+    AmqpBridge bridge = AmqpBridge.create(vertx, bridgeOptions);
+    bridge.start("localhost", 5672, res -> {
+      // ..do things with the bridge..
+    });
   }
 }

@@ -5,7 +5,7 @@ MessageProducer and MessageConsumer APIs over the top of link:https://github.com
 
 WARNING: this module has the tech preview status, this means the API can change between versions.
 
-== Getting Started
+== Using Vert.x AMQP Bridge
 
 To use Vert.x AMQP Bridge, add the following dependency to the _dependencies_ section of your build descriptor:
 
@@ -27,13 +27,15 @@ To use Vert.x AMQP Bridge, add the following dependency to the _dependencies_ se
 compile io.vertx:vertx-amqp-bridge:3.3.1-SNAPSHOT
 ----
 
+== Getting Started
+
 === Sending a Message
 
 Here is a simple example of creating a `link:../../groovydoc/io/vertx/groovy/core/eventbus/MessageProducer.html[MessageProducer]` and sending a message with it.
 First, an `link:../../groovydoc/io/vertx/groovy/amqpbridge/AmqpBridge.html[AmqpBridge]` is created and started to establish the underlying AMQP connection,
-then when this is complete the producer is created and a message sent using it. You can also optionally supply
-`link:../dataobjects.html#AmqpBridgeOptions[AmqpBridgeOptions]` when creating the bridge in order to configure various options, such
-as SSL connections.
+then when this is complete the producer is created and a message sent using it. You can optionally supply a username
+and password when starting the bridge, as well as supplying `link:../dataobjects.html#AmqpBridgeOptions[AmqpBridgeOptions]` in order
+to configure various options such as for using SSL connections.
 
 [source,groovy]
 ----
@@ -76,6 +78,8 @@ bridge.start("localhost", 5672, { res ->
 })
 
 ----
+Receipt of the AMQP message is accepted automatically as soon as the consumer's handler returns upon delivering the
+message to the application.
 
 == Message Payload
 
@@ -148,5 +152,60 @@ def appProps = amqpMsgPayload.application_properties
 if (appProps != null) {
   def propValue = appProps.propertyName
 }
+
+----
+
+== Connecting using SSL
+
+You can also optionally supply `link:../dataobjects.html#AmqpBridgeOptions[AmqpBridgeOptions]` when creating the bridge in order to
+configure various options, the most typically used of which are around behaviour for SSL connections.
+
+The following is an example of using configuration to create a bridge connecting to a server using SSL,
+authenticating with a username and password, and supplying a PKCS12 based trust store to verify trust of the server
+certificate:
+
+----
+import io.vertx.groovy.amqpbridge.AmqpBridge
+def bridgeOptions = [:]
+bridgeOptions.ssl = true
+
+def clientPfxOptions = [
+  path:"path/to/pkcs12.truststore",
+  password:"store-password"
+]
+bridgeOptions.pfxTrustOptions = clientPfxOptions
+
+def bridge = AmqpBridge.create(vertx, bridgeOptions)
+bridge.start("localhost", 5672, "username", "password", { res ->
+  // ..do things with the bridge..
+})
+
+----
+
+The following is an example of using configuration to create a bridge connecting to a server requiring SSL Client
+Certificate Authentication, supplying both a PKCS12 based trust store to verify trust of the server certificate and
+also a PKCS12 based key store containing an SSL key and certificate the server can use to verify the client:
+
+----
+import io.vertx.groovy.amqpbridge.AmqpBridge
+def bridgeOptions = [:]
+bridgeOptions.ssl = true
+
+def trustOptions = [
+  path:"path/to/pkcs12.truststore",
+  password:"store-password"
+]
+bridgeOptions.pfxTrustOptions = trustOptions
+
+def keyCertOptions = [
+  path:"path/to/pkcs12.keystore",
+  password:"store-password"
+]
+bridgeOptions.pfxKeyCertOptions = keyCertOptions
+
+def bridge = AmqpBridge.create(vertx, bridgeOptions)
+bridge.start("localhost", 5672, { res ->
+  // ..do things with the bridge..
+})
 
 ----
