@@ -169,11 +169,11 @@ import io.vertx.groovy.amqpbridge.AmqpBridge
 def bridgeOptions = [:]
 bridgeOptions.ssl = true
 
-def clientPfxOptions = [
+def trustOptions = [
   path:"path/to/pkcs12.truststore",
-  password:"store-password"
+  password:"password"
 ]
-bridgeOptions.pfxTrustOptions = clientPfxOptions
+bridgeOptions.pfxTrustOptions = trustOptions
 
 def bridge = AmqpBridge.create(vertx, bridgeOptions)
 bridge.start("localhost", 5672, "username", "password", { res ->
@@ -193,13 +193,13 @@ bridgeOptions.ssl = true
 
 def trustOptions = [
   path:"path/to/pkcs12.truststore",
-  password:"store-password"
+  password:"password"
 ]
 bridgeOptions.pfxTrustOptions = trustOptions
 
 def keyCertOptions = [
   path:"path/to/pkcs12.keystore",
-  password:"store-password"
+  password:"password"
 ]
 bridgeOptions.pfxKeyCertOptions = keyCertOptions
 

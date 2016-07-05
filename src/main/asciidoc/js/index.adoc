@@ -173,11 +173,11 @@ var bridgeOptions = {
 };
 bridgeOptions.ssl = true;
 
-var clientPfxOptions = {
+var trustOptions = {
   "path" : "path/to/pkcs12.truststore",
-  "password" : "store-password"
+  "password" : "password"
 };
-bridgeOptions.pfxTrustOptions = clientPfxOptions;
+bridgeOptions.pfxTrustOptions = trustOptions;
 
 var bridge = AmqpBridge.create(vertx, bridgeOptions);
 bridge.start("localhost", 5672, "username", "password", function (res, res_err) {
@@ -198,13 +198,13 @@ bridgeOptions.ssl = true;
 
 var trustOptions = {
   "path" : "path/to/pkcs12.truststore",
-  "password" : "store-password"
+  "password" : "password"
 };
 bridgeOptions.pfxTrustOptions = trustOptions;
 
 var keyCertOptions = {
   "path" : "path/to/pkcs12.keystore",
-  "password" : "store-password"
+  "password" : "password"
 };
 bridgeOptions.pfxKeyCertOptions = keyCertOptions;
 

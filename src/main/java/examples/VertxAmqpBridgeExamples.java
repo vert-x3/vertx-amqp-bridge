@@ -94,8 +94,8 @@ public class VertxAmqpBridgeExamples {
     AmqpBridgeOptions bridgeOptions = new AmqpBridgeOptions();
     bridgeOptions.setSsl(true);
 
-    PfxOptions clientPfxOptions = new PfxOptions().setPath("path/to/pkcs12.truststore").setPassword("store-password");
-    bridgeOptions.setPfxTrustOptions(clientPfxOptions);
+    PfxOptions trustOptions = new PfxOptions().setPath("path/to/pkcs12.truststore").setPassword("password");
+    bridgeOptions.setPfxTrustOptions(trustOptions);
 
     AmqpBridge bridge = AmqpBridge.create(vertx, bridgeOptions);
     bridge.start("localhost", 5672, "username", "password", res -> {
@@ -111,10 +111,10 @@ public class VertxAmqpBridgeExamples {
     AmqpBridgeOptions bridgeOptions = new AmqpBridgeOptions();
     bridgeOptions.setSsl(true);
 
-    PfxOptions trustOptions = new PfxOptions().setPath("path/to/pkcs12.truststore").setPassword("store-password");
+    PfxOptions trustOptions = new PfxOptions().setPath("path/to/pkcs12.truststore").setPassword("password");
     bridgeOptions.setPfxTrustOptions(trustOptions);
 
-    PfxOptions keyCertOptions = new PfxOptions().setPath("path/to/pkcs12.keystore").setPassword("store-password");
+    PfxOptions keyCertOptions = new PfxOptions().setPath("path/to/pkcs12.keystore").setPassword("password");
     bridgeOptions.setPfxKeyCertOptions(keyCertOptions);
 
     AmqpBridge bridge = AmqpBridge.create(vertx, bridgeOptions);

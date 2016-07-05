@@ -173,11 +173,11 @@ bridgeOptions = {
 }
 bridgeOptions['ssl'] = true
 
-clientPfxOptions = {
+trustOptions = {
   'path' => "path/to/pkcs12.truststore",
-  'password' => "store-password"
+  'password' => "password"
 }
-bridgeOptions['pfxTrustOptions'] = clientPfxOptions
+bridgeOptions['pfxTrustOptions'] = trustOptions
 
 bridge = VertxAmqpBridge::AmqpBridge.create(vertx, bridgeOptions)
 bridge.start("localhost", 5672, "username", "password") { |res_err,res|
@@ -198,13 +198,13 @@ bridgeOptions['ssl'] = true
 
 trustOptions = {
   'path' => "path/to/pkcs12.truststore",
-  'password' => "store-password"
+  'password' => "password"
 }
 bridgeOptions['pfxTrustOptions'] = trustOptions
 
 keyCertOptions = {
   'path' => "path/to/pkcs12.keystore",
-  'password' => "store-password"
+  'password' => "password"
 }
 bridgeOptions['pfxKeyCertOptions'] = keyCertOptions
 
