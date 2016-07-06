@@ -17,7 +17,6 @@ package examples;
 
 import io.vertx.amqpbridge.AmqpBridge;
 import io.vertx.amqpbridge.AmqpBridgeOptions;
-import io.vertx.amqpbridge.AmqpConstants;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.eventbus.MessageProducer;
@@ -89,9 +88,35 @@ public class VertxAmqpBridgeExamples {
   }
 
   /*
+   * Basic example of checking if the producer has any credit to send
+   */
+  public void example5(MessageProducer<JsonObject> producer) {
+    producer.writeQueueFull();
+  }
+
+  /*
+   * Basic example of setting the producer drain handler
+   */
+  public void example6(MessageProducer<JsonObject> producer) {
+    producer.drainHandler(v -> {
+      // ...do stuff and send...
+    });
+  }
+
+  /*
+   * Basic example of using maxBufferedMessages to influence the amount of credit granted by the receiver.
+   */
+  public void example7(MessageConsumer<JsonObject> consumer) {
+    consumer.setMaxBufferedMessages(5);
+    consumer.handler(msg -> {
+      // ...handle received messages...
+    });
+  }
+
+  /*
    * Basic example of connecting the bridge to a server using SSL with a PKCS12 based trust store.
    */
-  public void example5(Vertx vertx) {
+  public void example8(Vertx vertx) {
     AmqpBridgeOptions bridgeOptions = new AmqpBridgeOptions();
     bridgeOptions.setSsl(true);
 
@@ -108,7 +133,7 @@ public class VertxAmqpBridgeExamples {
    * Basic example of connecting the bridge to a server using SSL Client Certificate Authentication with
    * PKCS12 based key and trust stores.
    */
-  public void example6(Vertx vertx) {
+  public void example9(Vertx vertx) {
     AmqpBridgeOptions bridgeOptions = new AmqpBridgeOptions();
     bridgeOptions.setSsl(true);
 
@@ -128,7 +153,7 @@ public class VertxAmqpBridgeExamples {
    * Basic example of sending a message with a reply handler.
    */
   @SuppressWarnings("unused")
-  public void example7(MessageProducer<JsonObject> producer) {
+  public void example10(MessageProducer<JsonObject> producer) {
     JsonObject amqpMsgPayload = new JsonObject();
     amqpMsgPayload.put("body", "myRequest");
 
@@ -141,7 +166,7 @@ public class VertxAmqpBridgeExamples {
   /*
    * Basic example of sending a reply to received message.
    */
-  public void example8(MessageConsumer<JsonObject> consumer) {
+  public void example11(MessageConsumer<JsonObject> consumer) {
     consumer.handler(msg -> {
       // ...do something with received message...then reply...
       String replyAddress = msg.replyAddress();

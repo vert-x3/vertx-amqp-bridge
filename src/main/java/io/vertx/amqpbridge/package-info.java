@@ -136,6 +136,44 @@
  * {@link examples.VertxAmqpBridgeExamples#example4}
  * ----
  *
+ * == Flow Control
+ *
+ * Message transfer between peers, such as clients and servers, is governed by credit in AMQP 1.0, with receiving peers
+ * granting sending peers a number of credits to allow them to send messages. As each message is sent a unit of credit
+ * is used up, with the receiving peer needing to replenish the senders credit over time in order for message delivery
+ * to progress. This allows for recipients to flow control senders by governing the amount of outstanding credit
+ * available.
+ *
+ * === Producers
+ *
+ * While a MessageProducer will buffer outgoing messages if there are insufficient credits to send them all
+ * immediately, and then send them once credit is granted, it is typically more desirable for the application to work
+ * in tandem with the producer and attempt to send only what it knows can actually currently be sent.
+ *
+ * This is possible by inspecting whether the producer write queue is full, i.e it currently has no credit to send:
+ *
+ * ----
+ * {@link examples.VertxAmqpBridgeExamples#example5}
+ * ----
+ *
+ * This check can be used in concert with a handler that can be registered to receive callbacks whenever the producer
+ * receives more credit and is able to send messages immediately rather than buffer them:
+ *
+ * ----
+ * {@link examples.VertxAmqpBridgeExamples#example6}
+ * ----
+ *
+ * === Consumers
+ *
+ * In the case of a MessageConsumer, the bridge automatically gives 1000 credits to the sending peer when the consumer
+ * handler is registered, and replenishes this credit automatically as messages are delivered to the handler. It is
+ * possible to adjust the amount of credit given initially (the value must be at least 1) by adjusting the maximum
+ * buffered message value before registering a handler, for example:
+ *
+ * ----
+ * {@link examples.VertxAmqpBridgeExamples#example7}
+ * ----
+ *
  * == Connecting using SSL
  *
  * You can also optionally supply {@link io.vertx.amqpbridge.AmqpBridgeOptions} when creating the bridge in order to
@@ -146,7 +184,7 @@
  * certificate:
  *
  * ----
- * {@link examples.VertxAmqpBridgeExamples#example5}
+ * {@link examples.VertxAmqpBridgeExamples#example8}
  * ----
  *
  * The following is an example of using configuration to create a bridge connecting to a server requiring SSL Client
@@ -154,7 +192,7 @@
  * also a PKCS12 based key store containing an SSL key and certificate the server can use to verify the client:
  *
  * ----
- * {@link examples.VertxAmqpBridgeExamples#example6}
+ * {@link examples.VertxAmqpBridgeExamples#example9}
  * ----
  *
  * == Sending and Receiving replies.
@@ -206,7 +244,7 @@
  * The following is a basic example of sending a message and providing a reply-handler to process the response:
  *
  * ----
- * {@link examples.VertxAmqpBridgeExamples#example7}
+ * {@link examples.VertxAmqpBridgeExamples#example10}
  * ----
  *
  * === Received messages seeking a reply.
@@ -247,7 +285,7 @@
  * The following is a basic example of sending a reply using the message reply method:
  *
  * ----
- * {@link examples.VertxAmqpBridgeExamples#example8}
+ * {@link examples.VertxAmqpBridgeExamples#example11}
  * ----
  */
 @Document(fileName = "index.adoc")
