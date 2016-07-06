@@ -17,6 +17,7 @@ package examples;
 
 import io.vertx.amqpbridge.AmqpBridge;
 import io.vertx.amqpbridge.AmqpBridgeOptions;
+import io.vertx.amqpbridge.AmqpConstants;
 import io.vertx.core.Vertx;
 import io.vertx.core.eventbus.MessageConsumer;
 import io.vertx.core.eventbus.MessageProducer;
@@ -120,6 +121,36 @@ public class VertxAmqpBridgeExamples {
     AmqpBridge bridge = AmqpBridge.create(vertx, bridgeOptions);
     bridge.start("localhost", 5672, res -> {
       // ..do things with the bridge..
+    });
+  }
+
+  /*
+   * Basic example of sending a message with a reply handler.
+   */
+  @SuppressWarnings("unused")
+  public void example7(MessageProducer<JsonObject> producer) {
+    JsonObject amqpMsgPayload = new JsonObject();
+    amqpMsgPayload.put("body", "myRequest");
+
+    producer.<JsonObject> send(amqpMsgPayload, res -> {
+      JsonObject amqpReplyMessagePayload = res.result().body();
+      // ...do something with reply message...
+    });
+  }
+
+  /*
+   * Basic example of sending a reply to received message.
+   */
+  public void example8(MessageConsumer<JsonObject> consumer) {
+    consumer.handler(msg -> {
+      // ...do something with received message...then reply...
+      String replyAddress = msg.replyAddress();
+      if(replyAddress != null) {
+        JsonObject amqpReplyMessagePayload = new JsonObject();
+        amqpReplyMessagePayload.put("body", "myResponse");
+
+        msg.reply(amqpReplyMessagePayload);
+      }
     });
   }
 }

@@ -82,6 +82,7 @@ bridge.start("localhost", 5672, function (res, res_err) {
 Receipt of the AMQP message is accepted automatically as soon as the consumer's handler returns upon delivering the
 message to the application.
 
+[[message_payload]]
 == Message Payload
 
 === Overview
@@ -211,6 +212,118 @@ bridgeOptions.pfxKeyCertOptions = keyCertOptions;
 var bridge = AmqpBridge.create(vertx, bridgeOptions);
 bridge.start("localhost", 5672, function (res, res_err) {
   // ..do things with the bridge..
+});
+
+----
+
+== Sending and Receiving replies.
+
+Like many messaging protocols, AMQP includes support for a reply-to address to be set on each message sent so that
+recipients can be told where to send any responses required. The vert.x `link:../../jsdoc/module-vertx-js_message-Message.html[Message]`
+objects also support the concept of a reply address, though when using the Event Bus the sender doesn't set it
+explicitly, and it is instead populated implicitly if a message is sent with a reply `Handler`.
+This section describes how the bridge handles sending and receiving AMQP messages with reply-to while using the
+Vert.x producer, consumer, and message APIs implemented by the bridge.
+
+=== Sent messages seeking a reply.
+
+There are two options when sending messages to which responses are required:
+
+* Populate the AMQP reply-to address of the outgoing message explicitly.
+* Provide a reply handler when sending to populate it implicitly.
+
+With the first option, you may explicitly populate the "reply_to" element of the message "properties" section, as
+outlined in the <<message_payload, message payload overview>>. Here you would provide a string containing the name
+of the AMQP address on the server to which recipients should direct their responses, typically a named queue to which
+you have already established a consumer to receive the replies. This route may be necessary if you need to receive
+multiple replies to a given sent AMQP message.
+
+With the second option a reply `Handler` may also be given in addition to the message payload
+when sending a message, to be registered such that it is invoked when a [single] response message is received for the
+message being sent.
+
+To facilitate this, upon startup the bridge internally creates a consumer from a server-named dynamic address, the
+name of which it then uses as the reply-to address on any AMQP messages sent when a replyHandler was given. The
+bridge also populates the _message-id_ of the outgoing AMQP message, and uses this value to keep track of the reply
+handler. Incoming messages on the internal 'reply consumer' have their _correlation-id_ values inspected in order to
+match them to the reply handler originally given, requiring that reply senders populate the _correlation-id_ field
+with the _message-id_ of the original message.
+
+The following shows the process for the second option:
+
+image::../../images/producer-reply-handler.png[align="center"]
+
+. The producer is used to send a message to an AMQP address, providing a reply handler.
+. The bridge send implementation populates the _reply-to_ and _message-id_ fields of the outgoing AMQP message,
+  records the handler, and sends the message to the server.
+. The receiving application (perhaps also a Vert.x AMQP bridge) consumes the message and sends
+  a reply to its _reply-to_ address, setting its _correlation-id_ field as the original messages _message-id_.
+. The server dispatches the reply message to the internal 'reply consumer' of the bridge.
+. The bridge processes the AMQP message, creating the Vert.x Message with JsonObject body, uses the _correlation-id_
+  value to match it with the reply handler, and then invokes the handler with the reply message.
+
+The following is a basic example of sending a message and providing a reply-handler to process the response:
+
+----
+var amqpMsgPayload = {
+};
+amqpMsgPayload.body = "myRequest";
+
+producer.send(amqpMsgPayload, function (res, res_err) {
+  var amqpReplyMessagePayload = res.body();
+  // ...do something with reply message...
+});
+
+----
+
+=== Received messages seeking a reply.
+
+When a message arrives, its replyAddress may be inspected. If the AMQP message had its _reply-to_ field populated,
+then the address given will be returned from the Vert.x message replyAddress method. If no _reply-to_ value was
+present on the message, the value returned will be null.
+
+There are two options when receiving messages to which responses are required:
+
+* Populate the AMQP reply-to address of an outgoing message sent explicitly using a producer.
+* Send a reply using the Message reply method.
+
+With the first option, you may explicitly populate the "reply_to" element of the message "properties" section, as
+outlined in the <<message_payload, message payload overview>>, and send it explicitly using a producer established
+to the address using the bridge.
+
+With the second option, a reply message may be sent by calling the reply method on the Vert.x message
+object. The reply method implementation ensures that the outgoing message _correlation-id_ is populated appropriately
+using the _message-id_ of the original message, such that the response can be matched in the case the original
+message was sent from a Vert.x AMQP bridge producer with a reply handler provided.
+
+The following outlines the process for both routes, of receiving a message sent by an application (not shown), and
+sending a reply:
+
+image::../../images/consumer-reply.png[align="center"]
+
+. The server sends an AMQP message to the consumer, with a reply-to value set to another address.
+. The bridge processes the AMQP message, creating the Vert.x Message with JsonObject body. The Message replyAddress
+  is set to the reply-to value from the AMQP message.
+. The Message is passed to the consumer Handler, which processes it, inspecting the replyAddress and preparing to
+  send a response.
+. The handler chooses to either send a reply using an explicit producer, or call the reply method on the message
+  object.
+. The reply message arrives at the response address on the server, ready to be sent to a reply consumer for the
+  original sending application .
+
+The following is a basic example of sending a reply using the message reply method:
+
+----
+consumer.handler(function (msg) {
+  // ...do something with received message...then reply...
+  var replyAddress = msg.replyAddress();
+  if (replyAddress !== null) {
+    var amqpReplyMessagePayload = {
+    };
+    amqpReplyMessagePayload.body = "myResponse";
+
+    msg.reply(amqpReplyMessagePayload);
+  }
 });
 
 ----
