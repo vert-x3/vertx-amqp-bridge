@@ -165,6 +165,7 @@ in tandem with the producer and attempt to send only what it knows can actually 
 
 This is possible by inspecting whether the producer write queue is full, i.e it currently has no credit to send:
 
+[source,java]
 ----
 producer.writeQueueFull();
 ----
@@ -172,6 +173,7 @@ producer.writeQueueFull();
 This check can be used in concert with a handler that can be registered to receive callbacks whenever the producer
 receives more credit and is able to send messages immediately rather than buffer them:
 
+[source,java]
 ----
 producer.drainHandler(v -> {
   // ...do stuff and send...
@@ -185,6 +187,7 @@ handler is registered, and replenishes this credit automatically as messages are
 possible to adjust the amount of credit given initially (the value must be at least 1) by adjusting the maximum
 buffered message value before registering a handler, for example:
 
+[source,java]
 ----
 consumer.setMaxBufferedMessages(5);
 consumer.handler(msg -> {
@@ -201,11 +204,13 @@ The following is an example of using configuration to create a bridge connecting
 authenticating with a username and password, and supplying a PKCS12 based trust store to verify trust of the server
 certificate:
 
+[source,java]
 ----
 AmqpBridgeOptions bridgeOptions = new AmqpBridgeOptions();
 bridgeOptions.setSsl(true);
 
-PfxOptions trustOptions = new PfxOptions().setPath("path/to/pkcs12.truststore").setPassword("password");
+PfxOptions trustOptions = new PfxOptions().setPath("path/to/pkcs12.truststore")
+                                          .setPassword("password");
 bridgeOptions.setPfxTrustOptions(trustOptions);
 
 AmqpBridge bridge = AmqpBridge.create(vertx, bridgeOptions);
@@ -218,14 +223,17 @@ The following is an example of using configuration to create a bridge connecting
 Certificate Authentication, supplying both a PKCS12 based trust store to verify trust of the server certificate and
 also a PKCS12 based key store containing an SSL key and certificate the server can use to verify the client:
 
+[source,java]
 ----
 AmqpBridgeOptions bridgeOptions = new AmqpBridgeOptions();
 bridgeOptions.setSsl(true);
 
-PfxOptions trustOptions = new PfxOptions().setPath("path/to/pkcs12.truststore").setPassword("password");
+PfxOptions trustOptions = new PfxOptions().setPath("path/to/pkcs12.truststore")
+                                          .setPassword("password");
 bridgeOptions.setPfxTrustOptions(trustOptions);
 
-PfxOptions keyCertOptions = new PfxOptions().setPath("path/to/pkcs12.keystore").setPassword("password");
+PfxOptions keyCertOptions = new PfxOptions().setPath("path/to/pkcs12.keystore")
+                                            .setPassword("password");
 bridgeOptions.setPfxKeyCertOptions(keyCertOptions);
 
 AmqpBridge bridge = AmqpBridge.create(vertx, bridgeOptions);
@@ -282,6 +290,7 @@ image::../../images/producer-reply-handler.png[align="center"]
 
 The following is a basic example of sending a message and providing a reply-handler to process the response:
 
+[source,java]
 ----
 JsonObject amqpMsgPayload = new JsonObject();
 amqpMsgPayload.put("body", "myRequest");
@@ -329,6 +338,7 @@ image::../../images/consumer-reply.png[align="center"]
 
 The following is a basic example of sending a reply using the message reply method:
 
+[source,java]
 ----
 consumer.handler(msg -> {
   // ...do something with received message...then reply...

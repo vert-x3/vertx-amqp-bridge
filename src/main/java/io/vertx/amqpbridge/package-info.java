@@ -152,6 +152,7 @@
  *
  * This is possible by inspecting whether the producer write queue is full, i.e it currently has no credit to send:
  *
+ * [source,$lang]
  * ----
  * {@link examples.VertxAmqpBridgeExamples#example5}
  * ----
@@ -159,6 +160,7 @@
  * This check can be used in concert with a handler that can be registered to receive callbacks whenever the producer
  * receives more credit and is able to send messages immediately rather than buffer them:
  *
+ * [source,$lang]
  * ----
  * {@link examples.VertxAmqpBridgeExamples#example6}
  * ----
@@ -170,6 +172,7 @@
  * possible to adjust the amount of credit given initially (the value must be at least 1) by adjusting the maximum
  * buffered message value before registering a handler, for example:
  *
+ * [source,$lang]
  * ----
  * {@link examples.VertxAmqpBridgeExamples#example7}
  * ----
@@ -183,6 +186,7 @@
  * authenticating with a username and password, and supplying a PKCS12 based trust store to verify trust of the server
  * certificate:
  *
+ * [source,$lang]
  * ----
  * {@link examples.VertxAmqpBridgeExamples#example8}
  * ----
@@ -191,6 +195,7 @@
  * Certificate Authentication, supplying both a PKCS12 based trust store to verify trust of the server certificate and
  * also a PKCS12 based key store containing an SSL key and certificate the server can use to verify the client:
  *
+ * [source,$lang]
  * ----
  * {@link examples.VertxAmqpBridgeExamples#example9}
  * ----
@@ -243,6 +248,7 @@
  *
  * The following is a basic example of sending a message and providing a reply-handler to process the response:
  *
+ * [source,$lang]
  * ----
  * {@link examples.VertxAmqpBridgeExamples#example10}
  * ----
@@ -284,6 +290,7 @@
  *
  * The following is a basic example of sending a reply using the message reply method:
  *
+ * [source,$lang]
  * ----
  * {@link examples.VertxAmqpBridgeExamples#example11}
  * ----
