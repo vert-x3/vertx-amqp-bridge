@@ -30,10 +30,18 @@ public class AmqpBridgeOptionsTest {
 
   @Test
   public void testDifferentObjectsEqual() {
+    boolean replyHandlingSupport = true;
+    String vhost = "vhost";
+    String containerId = "container";
+
     AmqpBridgeOptions options1 = new AmqpBridgeOptions();
-    options1.setReplyHandlingSupport(true);
+    options1.setReplyHandlingSupport(replyHandlingSupport);
+    options1.setVhost(vhost);
+    options1.setContainerId(containerId);
     AmqpBridgeOptions options2 = new AmqpBridgeOptions();
-    options2.setReplyHandlingSupport(true);
+    options2.setReplyHandlingSupport(replyHandlingSupport);
+    options2.setVhost(vhost);
+    options2.setContainerId(containerId);
 
     assertNotSame("Options should be different objects", options1, options2);
     assertEquals("Options should be equal", options1, options2);
@@ -45,6 +53,22 @@ public class AmqpBridgeOptionsTest {
     options1.setReplyHandlingSupport(true);
     AmqpBridgeOptions options2 = new AmqpBridgeOptions();
     options2.setReplyHandlingSupport(false);
+
+    assertNotSame("Options should be different objects", options1, options2);
+    assertNotEquals("Options should not be equal", options1, options2);
+
+    options1 = new AmqpBridgeOptions();
+    options1.setVhost("vhost1");
+    options2 = new AmqpBridgeOptions();
+    options2.setVhost("vhost2");
+
+    assertNotSame("Options should be different objects", options1, options2);
+    assertNotEquals("Options should not be equal", options1, options2);
+
+    options1 = new AmqpBridgeOptions();
+    options1.setContainerId("containerId1");
+    options2 = new AmqpBridgeOptions();
+    options2.setContainerId("containerId2");
 
     assertNotSame("Options should be different objects", options1, options2);
     assertNotEquals("Options should not be equal", options1, options2);
@@ -60,9 +84,30 @@ public class AmqpBridgeOptionsTest {
   @Test
   public void testEqualObjectsReturnSameHashCode() {
     AmqpBridgeOptions options1 = new AmqpBridgeOptions();
-    options1.setReplyHandlingSupport(true);
+    boolean replyHandlingSupport = true;
+    options1.setReplyHandlingSupport(replyHandlingSupport);
     AmqpBridgeOptions options2 = new AmqpBridgeOptions();
-    options2.setReplyHandlingSupport(true);
+    options2.setReplyHandlingSupport(replyHandlingSupport);
+
+    assertNotSame("Options should be different objects", options1, options2);
+    assertEquals("Options should be equal", options1, options2);
+    assertEquals("Options should have same hash code", options1.hashCode(), options2.hashCode());
+
+    String vhost = "vhost";
+    options1 = new AmqpBridgeOptions();
+    options1.setVhost(vhost);
+    options2 = new AmqpBridgeOptions();
+    options2.setVhost(vhost);
+
+    assertNotSame("Options should be different objects", options1, options2);
+    assertEquals("Options should be equal", options1, options2);
+    assertEquals("Options should have same hash code", options1.hashCode(), options2.hashCode());
+
+    String containerId = "containerId";
+    options1 = new AmqpBridgeOptions();
+    options1.setContainerId(containerId);
+    options2 = new AmqpBridgeOptions();
+    options2.setContainerId(containerId);
 
     assertNotSame("Options should be different objects", options1, options2);
     assertEquals("Options should be equal", options1, options2);
@@ -85,5 +130,27 @@ public class AmqpBridgeOptionsTest {
 
     options.setReplyHandlingSupport(false);
     assertFalse("Reply Handler Support should not be enabled", options.isReplyHandlingSupport());
+  }
+
+  @Test
+  public void testContainerId() {
+    AmqpBridgeOptions options = new AmqpBridgeOptions();
+
+    assertNull("No default should be present", options.getContainerId());
+
+    String containerId = "container";
+    options.setContainerId(containerId);
+    assertEquals("ContainerId option was not as expected", containerId, options.getContainerId());
+  }
+
+  @Test
+  public void testVhost() {
+    AmqpBridgeOptions options = new AmqpBridgeOptions();
+
+    assertNull("No default should be present", options.getVhost());
+
+    String vhost = "vhost";
+    options.setVhost(vhost);
+    assertEquals("Vhost option was not as expected", vhost, options.getVhost());
   }
 }

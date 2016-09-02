@@ -185,6 +185,68 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
   }
 
   @Test(timeout = 20000)
+  public void testConnectionHostnameAndContainerID(TestContext context) throws Exception {
+    doConnectionHostnameAndContainerIDTestImpl(context, true);
+    doConnectionHostnameAndContainerIDTestImpl(context, false);
+  }
+
+  private void doConnectionHostnameAndContainerIDTestImpl(TestContext context, boolean customValues) throws Exception {
+    stopBroker();
+
+    String tcpConnectionHostname = "localhost";
+    String containerId = "myCustomContainer";
+    String vhost = "myCustomVhost";
+
+    Async asyncShutdown = context.async();
+    AtomicBoolean linkOpened = new AtomicBoolean();
+
+    MockServer server = new MockServer(vertx, serverConnection -> {
+      serverConnection.openHandler(x -> {
+        if(customValues){
+          context.assertEquals(vhost, serverConnection.getRemoteHostname());
+          context.assertFalse(tcpConnectionHostname.equals(serverConnection.getRemoteHostname()));
+
+          context.assertEquals(containerId, serverConnection.getRemoteContainer());
+        } else{
+          context.assertEquals(tcpConnectionHostname, serverConnection.getRemoteHostname());
+          context.assertNotNull(containerId, serverConnection.getRemoteContainer());
+        }
+        serverConnection.open();
+      });
+      serverConnection.closeHandler(x -> {
+        serverConnection.close();
+      });
+    });
+
+    AmqpBridgeOptions options = new AmqpBridgeOptions();
+    options.setReplyHandlingSupport(false);
+    if(customValues) {
+      options.setContainerId(containerId);
+      options.setVhost(vhost);
+    }
+
+    AmqpBridge bridge = AmqpBridge.create(vertx, options);
+    bridge.start(tcpConnectionHostname, server.actualPort(), res -> {
+      context.assertTrue(res.succeeded(), "Expected start to succeed");
+
+      LOG.trace("Startup complete, shutting down");
+      bridge.close(shutdownRes -> {
+        LOG.trace("Shutdown complete");
+        context.assertTrue(shutdownRes.succeeded());
+        asyncShutdown.complete();
+      });
+    });
+
+    try {
+      asyncShutdown.awaitSuccess();
+    } finally {
+      server.close();
+    }
+
+    context.assertFalse(linkOpened.get());
+  }
+
+  @Test(timeout = 20000)
   public void testReceiveBasicMessage(TestContext context) throws Exception {
     String testName = getTestName();
     String sentContent = "myMessageContent-" + testName;

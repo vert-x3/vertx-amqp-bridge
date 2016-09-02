@@ -91,6 +91,14 @@ public class AmqpBridgeImpl implements AmqpBridge {
         props.put(BridgeMetaDataSupportImpl.VERSION_KEY, BridgeMetaDataSupportImpl.VERSION);
         connection.setProperties(props);
 
+        if(options.getVhost() != null) {
+          connection.setHostname(options.getVhost());
+        }
+
+        if(options.getContainerId() != null) {
+          connection.setContainer(options.getContainerId());
+        }
+
         connection.openHandler(openResult -> {
           LOG.trace("Bridge connection open complete");
           if (openResult.succeeded()) {

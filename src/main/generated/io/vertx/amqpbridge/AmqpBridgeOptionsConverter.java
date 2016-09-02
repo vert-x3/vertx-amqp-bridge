@@ -30,6 +30,9 @@ public class AmqpBridgeOptionsConverter {
     if (json.getValue("connectTimeout") instanceof Number) {
       obj.setConnectTimeout(((Number)json.getValue("connectTimeout")).intValue());
     }
+    if (json.getValue("containerId") instanceof String) {
+      obj.setContainerId((String)json.getValue("containerId"));
+    }
     if (json.getValue("crlPaths") instanceof JsonArray) {
       json.getJsonArray("crlPaths").forEach(item -> {
         if (item instanceof String)
@@ -141,10 +144,16 @@ public class AmqpBridgeOptionsConverter {
     if (json.getValue("usePooledBuffers") instanceof Boolean) {
       obj.setUsePooledBuffers((Boolean)json.getValue("usePooledBuffers"));
     }
+    if (json.getValue("vhost") instanceof String) {
+      obj.setVhost((String)json.getValue("vhost"));
+    }
   }
 
   public static void toJson(AmqpBridgeOptions obj, JsonObject json) {
     json.put("connectTimeout", obj.getConnectTimeout());
+    if (obj.getContainerId() != null) {
+      json.put("containerId", obj.getContainerId());
+    }
     if (obj.getCrlPaths() != null) {
       json.put("crlPaths", new JsonArray(
           obj.getCrlPaths().
@@ -202,5 +211,8 @@ public class AmqpBridgeOptionsConverter {
     json.put("trustAll", obj.isTrustAll());
     json.put("useAlpn", obj.isUseAlpn());
     json.put("usePooledBuffers", obj.isUsePooledBuffers());
+    if (obj.getVhost() != null) {
+      json.put("vhost", obj.getVhost());
+    }
   }
 }
