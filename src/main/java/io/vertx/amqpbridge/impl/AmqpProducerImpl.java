@@ -110,6 +110,10 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
 
   protected <R> MessageProducer<JsonObject> doSend(JsonObject messageBody,
                                                    Handler<AsyncResult<Message<R>>> replyHandler, String toAddress) {
+    if (replyHandler != null) {
+      bridge.verifyReplyToAddressAvailable();
+    }
+
     org.apache.qpid.proton.message.Message msg = translator.convertToAmqpMessage(messageBody);
 
     if (toAddress != null) {

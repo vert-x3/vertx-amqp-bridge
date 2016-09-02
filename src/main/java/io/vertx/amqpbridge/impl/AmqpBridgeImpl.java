@@ -56,7 +56,6 @@ public class AmqpBridgeImpl implements AmqpBridge {
   private AmqpProducerImpl replySender;
   private Map<String, Handler<?>> replyToMapping = new ConcurrentHashMap<>();
   private MessageTranslatorImpl translator = new MessageTranslatorImpl();
-  private boolean replyHandlerSupport = true;
   private AtomicBoolean started = new AtomicBoolean();
 
   public AmqpBridgeImpl(Vertx vertx, AmqpBridgeOptions options) {
@@ -95,7 +94,7 @@ public class AmqpBridgeImpl implements AmqpBridge {
         connection.openHandler(openResult -> {
           LOG.trace("Bridge connection open complete");
           if (openResult.succeeded()) {
-            if (!replyHandlerSupport) {
+            if (!options.isReplyHandlingSupport() || !connection.isAnonymousRelaySupported()) {
               started.set(true);
               resultHandler.handle(Future.succeededFuture(AmqpBridgeImpl.this));
               return;
@@ -181,15 +180,20 @@ public class AmqpBridgeImpl implements AmqpBridge {
 
   <R> void registerReplyToHandler(org.apache.qpid.proton.message.Message msg,
                                   Handler<AsyncResult<Message<R>>> replyHandler) {
-    if (replyToConsumerAddress == null) {
-      throw new IllegalStateException("No reply-to address available, unable register reply handler");
-    }
+    verifyReplyToAddressAvailable();
     msg.setReplyTo(replyToConsumerAddress);
 
     String generatedMessageId = UUID.randomUUID().toString();
     msg.setMessageId(generatedMessageId);
 
     replyToMapping.put(generatedMessageId, replyHandler);
+  }
+
+  void verifyReplyToAddressAvailable() throws IllegalStateException {
+    if (replyToConsumerAddress == null) {
+      throw new IllegalStateException(
+          "No reply-to address available, unable to send with a reply handler. Try an explicit consumer for replies.");
+    }
   }
 
   private void handleIncomingMessageReply(ProtonDelivery delivery,
@@ -218,9 +222,14 @@ public class AmqpBridgeImpl implements AmqpBridge {
 
   <R> void sendReply(org.apache.qpid.proton.message.Message origIncomingMessage, JsonObject replyBody,
                      Handler<AsyncResult<Message<R>>> replyHandler) {
+    if(replySender == null) {
+      throw new IllegalStateException(
+          "No reply sender available, unable to send implicit replies. Try an explicit producer for replies.");
+    }
+
     String replyAddress = origIncomingMessage.getReplyTo();
     if (replyAddress == null) {
-      throw new IllegalStateException("Original message has no reply-to address, unable to send reply");
+      throw new IllegalStateException("Original message has no reply-to address, unable to send implicit reply");
     }
 
     // Set the correlationId to the messageId value if there was one, so that if the reply recipient is also a
@@ -237,14 +246,6 @@ public class AmqpBridgeImpl implements AmqpBridge {
     }
 
     replySender.doSend(replyBody, replyHandler, replyAddress);
-  }
-
-  /*
-   * Internal test related method.
-   */
-  public AmqpBridge setReplyHandlerSupported(boolean replyHandlerSupport) {
-    this.replyHandlerSupport = replyHandlerSupport;
-    return this;
   }
 
   boolean onContextEventLoop() {

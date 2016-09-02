@@ -105,6 +105,9 @@ public class AmqpBridgeOptionsConverter {
     if (json.getValue("reconnectInterval") instanceof Number) {
       obj.setReconnectInterval(((Number)json.getValue("reconnectInterval")).longValue());
     }
+    if (json.getValue("replyHandlingSupport") instanceof Boolean) {
+      obj.setReplyHandlingSupport((Boolean)json.getValue("replyHandlingSupport"));
+    }
     if (json.getValue("reuseAddress") instanceof Boolean) {
       obj.setReuseAddress((Boolean)json.getValue("reuseAddress"));
     }
@@ -188,6 +191,7 @@ public class AmqpBridgeOptionsConverter {
     json.put("receiveBufferSize", obj.getReceiveBufferSize());
     json.put("reconnectAttempts", obj.getReconnectAttempts());
     json.put("reconnectInterval", obj.getReconnectInterval());
+    json.put("replyHandlingSupport", obj.isReplyHandlingSupport());
     json.put("reuseAddress", obj.isReuseAddress());
     json.put("sendBufferSize", obj.getSendBufferSize());
     json.put("soLinger", obj.getSoLinger());

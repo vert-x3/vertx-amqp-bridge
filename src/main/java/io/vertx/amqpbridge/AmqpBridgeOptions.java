@@ -36,11 +36,36 @@ import io.vertx.proton.ProtonClientOptions;
 @DataObject(generateConverter = true, inheritConverter = true)
 public class AmqpBridgeOptions extends ProtonClientOptions {
 
+  private boolean replyHandlingSupport = true;
+
   public AmqpBridgeOptions() {
   }
 
   public AmqpBridgeOptions(JsonObject json) {
     AmqpBridgeOptionsConverter.fromJson(json, this);
+  }
+
+  /**
+   * Sets whether the bridge should try to enable support for sending messages with a reply handler set, and replying to
+   * messages using the message reply methods. Defaults to true. If the server does not advertise support for
+   * 'anonymous sender' links then the bridge won't support reply handling regardless of this setting.
+   *
+   * @return the options
+   */
+  public AmqpBridgeOptions setReplyHandlingSupport(boolean replyHandlingSupport) {
+    this.replyHandlingSupport = replyHandlingSupport;
+    return this;
+  }
+
+  /**
+   * Whether the bridge should try to enable support for sending messages with a reply handler set, and replying to
+   * messages using the message reply methods. Defaults to true. If the server does not advertise support for
+   * 'anonymous sender' links then the bridge won't support reply handling regardless of this setting.
+   *
+   * @return whether the bridge should try to enable reply handling support
+   */
+  public boolean isReplyHandlingSupport() {
+    return replyHandlingSupport;
   }
 
   @Override
@@ -250,5 +275,37 @@ public class AmqpBridgeOptions extends ProtonClientOptions {
   public AmqpBridgeOptions setSslEngineOptions(SSLEngineOptions sslEngineOptions) {
     super.setSslEngineOptions(sslEngineOptions);
     return this;
+  }
+
+  @Override
+  public int hashCode() {
+    final int prime = 31;
+
+    int result = super.hashCode();
+    result = prime * result + (replyHandlingSupport ? 1231 : 1237);
+
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+
+    if (obj == null || getClass() != obj.getClass()) {
+      return false;
+    }
+
+    if (!super.equals(obj)) {
+      return false;
+    }
+
+    AmqpBridgeOptions other = (AmqpBridgeOptions) obj;
+    if (replyHandlingSupport != other.replyHandlingSupport) {
+      return false;
+    }
+
+    return true;
   }
 }

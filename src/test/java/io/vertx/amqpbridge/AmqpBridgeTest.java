@@ -36,7 +36,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
-import io.vertx.amqpbridge.impl.AmqpBridgeImpl;
 import io.vertx.amqpbridge.impl.BridgeMetaDataSupportImpl;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
@@ -56,6 +55,7 @@ import io.vertx.proton.ProtonHelper;
 import io.vertx.proton.ProtonReceiver;
 import io.vertx.proton.ProtonSender;
 import io.vertx.proton.impl.ProtonSenderImpl;
+import io.vertx.proton.impl.ProtonServerImpl;
 
 @RunWith(VertxUnitRunner.class)
 public class AmqpBridgeTest extends ActiveMQTestBase {
@@ -163,8 +163,8 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
       });
     });
 
-    AmqpBridge bridge = AmqpBridge.create(vertx);
-    ((AmqpBridgeImpl) bridge).setReplyHandlerSupported(false);
+    AmqpBridgeOptions options = new AmqpBridgeOptions().setReplyHandlingSupport(false);
+    AmqpBridge bridge = AmqpBridge.create(vertx, options);
     bridge.start("localhost", server.actualPort(), res -> {
       LOG.trace("Startup complete");
       asyncMetaData.awaitSuccess();
@@ -442,6 +442,177 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
 
     asyncRequest.awaitSuccess();
     asyncShutdown.awaitSuccess();
+  }
+
+  @Test(timeout = 20000)
+  public void testReplyHandlingDisabledProducer(TestContext context) throws Exception {
+    Async asyncSend = context.async();
+    Async asyncShutdown = context.async();
+
+    String destinationName = getTestName();
+    String content = "myStringContent" + destinationName;
+
+    AmqpBridgeOptions options = new AmqpBridgeOptions().setReplyHandlingSupport(false);
+    AmqpBridge bridge = AmqpBridge.create(vertx, options);
+    bridge.start("localhost", getBrokerAmqpConnectorPort(), startResult -> {
+      context.assertTrue(startResult.succeeded());
+
+      MessageProducer<JsonObject> producer = bridge.createProducer(destinationName);
+
+      JsonObject body = new JsonObject();
+      body.put(AmqpConstants.BODY, content);
+
+      // Try send with a reply handler, expect to fail.
+      try {
+        producer.<JsonObject> send(body, reply -> {
+        });
+        context.fail("Expected exception to be thrown");
+      } catch (IllegalStateException ise) {
+        // Expected.
+      }
+
+      // Try send without reply handler.
+      producer.send(body);
+      LOG.trace("Client sent msg");
+      asyncSend.complete();
+
+      LOG.trace("Shutting down");
+      bridge.close(shutdownRes -> {
+        LOG.trace("Shutdown complete");
+        context.assertTrue(shutdownRes.succeeded());
+        asyncShutdown.complete();
+      });
+    });
+
+    asyncSend.awaitSuccess();
+    asyncShutdown.awaitSuccess();
+  }
+
+  @Test(timeout = 20000)
+  public void testReplyHandlingDisabledConsumer(TestContext context) throws Exception {
+    Async asyncSendMsg = context.async();
+    Async asyncRequest = context.async();
+    Async asyncShutdown = context.async();
+
+    String destinationName = getTestName();
+    String content = "myStringContent" + destinationName;
+
+    // Send a message from a regular AMQP client, with reply-to set
+    ProtonClient client = ProtonClient.create(vertx);
+    client.connect("localhost", getBrokerAmqpConnectorPort(), res -> {
+      context.assertTrue(res.succeeded());
+
+      org.apache.qpid.proton.message.Message protonMsg = Proton.message();
+      protonMsg.setBody(new AmqpValue(content));
+      protonMsg.setReplyTo(destinationName);
+
+
+      ProtonConnection conn = res.result().open();
+
+      ProtonSender sender = conn.createSender(destinationName).open();
+      sender.send(protonMsg, delivery -> {
+        context.assertNotNull(delivery.getRemoteState(), "message had no remote state");
+        context.assertTrue(delivery.getRemoteState() instanceof Accepted, "message was not accepted");
+        context.assertTrue(delivery.remotelySettled(), "message was not settled");
+
+        conn.closeHandler(closeResult -> {
+          conn.disconnect();
+        }).close();
+
+        asyncSendMsg.complete();
+      });
+    });
+
+    AmqpBridgeOptions options = new AmqpBridgeOptions().setReplyHandlingSupport(false);
+    AmqpBridge bridge = AmqpBridge.create(vertx, options);
+    bridge.start("localhost", getBrokerAmqpConnectorPort(), startResult -> {
+      context.assertTrue(startResult.succeeded());
+
+      MessageConsumer<JsonObject> consumer = bridge.createConsumer(destinationName);
+      consumer.handler(msg -> {
+        JsonObject receivedMsgBody = msg.body();
+        LOG.trace("Consumer got request msg: " + receivedMsgBody);
+
+        context.assertNotNull(receivedMsgBody, "expected msg body but none found");
+        context.assertEquals(content, receivedMsgBody.getValue(AmqpConstants.BODY), "unexpected msg content");
+        context.assertNotNull(msg.replyAddress(), "reply address was not set on the request");
+
+        JsonObject replyBody = new JsonObject();
+        replyBody.put(AmqpConstants.BODY, "content");
+
+        try {
+          msg.reply(replyBody);
+          context.fail("Expected exception to be thrown");
+        } catch (IllegalStateException ise) {
+          // Expected.
+        }
+
+        asyncRequest.complete();
+
+        LOG.trace("Shutting down");
+        bridge.close(shutdownRes -> {
+          LOG.trace("Shutdown complete");
+          context.assertTrue(shutdownRes.succeeded());
+          asyncShutdown.complete();
+        });
+      });
+    });
+
+    asyncSendMsg.awaitSuccess();
+    asyncRequest.awaitSuccess();
+    asyncShutdown.awaitSuccess();
+  }
+
+  @Test(timeout = 20000)
+  public void testConnectionToServerWithoutAnonymousSenderLinkSupport(TestContext context) throws Exception {
+    stopBroker();
+
+    Async asyncShutdown = context.async();
+    AtomicBoolean linkOpened = new AtomicBoolean();
+
+    MockServer server = new MockServer(vertx, serverConnection -> {
+      serverConnection.openHandler(x -> {
+        serverConnection.open();
+      });
+      serverConnection.closeHandler(x -> {
+        serverConnection.close();
+      });
+      serverConnection.sessionOpenHandler(serverSession -> {
+        serverSession.open();
+      });
+      serverConnection.receiverOpenHandler(serverReceiver -> {
+        linkOpened.set(true);
+        serverReceiver.setCondition(ProtonHelper.condition(AmqpError.PRECONDITION_FAILED, "Expected no links"));
+        serverReceiver.close();
+      });
+      serverConnection.senderOpenHandler(serverSender -> {
+        linkOpened.set(true);
+        serverSender.setCondition(ProtonHelper.condition(AmqpError.PRECONDITION_FAILED, "Expected no links"));
+        serverSender.close();
+      });
+    });
+    ((ProtonServerImpl) server.getProtonServer()).setAdvertiseAnonymousRelayCapability(false);
+
+    AmqpBridgeOptions options = new AmqpBridgeOptions().setReplyHandlingSupport(true);
+    AmqpBridge bridge = AmqpBridge.create(vertx, options);
+    bridge.start("localhost", server.actualPort(), res -> {
+      context.assertTrue(res.succeeded(), "Expected start to succeed");
+
+      LOG.trace("Startup complete, shutting down");
+      bridge.close(shutdownRes -> {
+        LOG.trace("Shutdown complete");
+        context.assertTrue(shutdownRes.succeeded());
+        asyncShutdown.complete();
+      });
+    });
+
+    try {
+      asyncShutdown.awaitSuccess();
+    } finally {
+      server.close();
+    }
+
+    context.assertFalse(linkOpened.get());
   }
 
   @Test(timeout = 20000)
@@ -767,8 +938,8 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
 
     // === Bridge producer handling ====
 
-    AmqpBridge bridge = AmqpBridge.create(vertx);
-    ((AmqpBridgeImpl) bridge).setReplyHandlerSupported(false);
+    AmqpBridgeOptions options = new AmqpBridgeOptions().setReplyHandlingSupport(false);
+    AmqpBridge bridge = AmqpBridge.create(vertx, options);
     bridge.start("localhost", server.actualPort(), res -> {
       // Set up a producer using the bridge, use it, close it.
       context.assertTrue(res.succeeded());
@@ -821,8 +992,8 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
     MockServer server = new MockServer(vertx,
         serverConnection -> handleReceiverOpenSendMessageThenClose(serverConnection, testName, sentContent, context));
 
-    AmqpBridge bridge = AmqpBridge.create(vertx);
-    ((AmqpBridgeImpl) bridge).setReplyHandlerSupported(false);
+    AmqpBridgeOptions options = new AmqpBridgeOptions().setReplyHandlingSupport(false);
+    AmqpBridge bridge = AmqpBridge.create(vertx, options);
     bridge.start("localhost", server.actualPort(), res -> {
       LOG.trace("Startup complete");
 
@@ -988,8 +1159,8 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
 
     // === Bridge producer handling ====
 
-    AmqpBridge bridge = AmqpBridge.create(vertx);
-    ((AmqpBridgeImpl) bridge).setReplyHandlerSupported(false);
+    AmqpBridgeOptions options = new AmqpBridgeOptions().setReplyHandlingSupport(false);
+    AmqpBridge bridge = AmqpBridge.create(vertx, options);
 
     bridge.start("localhost", server.actualPort(), res -> {
       context.assertTrue(res.succeeded());
@@ -1113,8 +1284,8 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
 
     // === Bridge producer handling ====
 
-    AmqpBridge bridge = AmqpBridge.create(vertx);
-    ((AmqpBridgeImpl) bridge).setReplyHandlerSupported(false);
+    AmqpBridgeOptions options = new AmqpBridgeOptions().setReplyHandlingSupport(false);
+    AmqpBridge bridge = AmqpBridge.create(vertx, options);
 
     bridge.start("localhost", server.actualPort(), res -> {
       context.assertTrue(res.succeeded());
@@ -1225,8 +1396,8 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
 
     // === Bridge consumer handling ====
 
-    AmqpBridge bridge = AmqpBridge.create(vertx);
-    ((AmqpBridgeImpl) bridge).setReplyHandlerSupported(false);
+    AmqpBridgeOptions options = new AmqpBridgeOptions().setReplyHandlingSupport(false);
+    AmqpBridge bridge = AmqpBridge.create(vertx, options);
     bridge.start("localhost", server.actualPort(), res -> {
       LOG.trace("Startup complete");
 
@@ -1330,8 +1501,8 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
 
     // === Bridge consumer handling ====
 
-    AmqpBridge bridge = AmqpBridge.create(vertx);
-    ((AmqpBridgeImpl) bridge).setReplyHandlerSupported(false);
+    AmqpBridgeOptions options = new AmqpBridgeOptions().setReplyHandlingSupport(false);
+    AmqpBridge bridge = AmqpBridge.create(vertx, options);
     bridge.start("localhost", server.actualPort(), res -> {
       LOG.trace("Startup complete");
 
@@ -1423,8 +1594,8 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
 
     // === Bridge consumer handling ====
 
-    AmqpBridge bridge = AmqpBridge.create(vertx);
-    ((AmqpBridgeImpl) bridge).setReplyHandlerSupported(false);
+    AmqpBridgeOptions options = new AmqpBridgeOptions().setReplyHandlingSupport(false);
+    AmqpBridge bridge = AmqpBridge.create(vertx, options);
     bridge.start("localhost", server.actualPort(), res -> {
       LOG.trace("Startup complete");
 
@@ -1533,8 +1704,8 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
 
     // === Bridge consumer handling ====
 
-    AmqpBridge bridge = AmqpBridge.create(vertx);
-    ((AmqpBridgeImpl) bridge).setReplyHandlerSupported(false);
+    AmqpBridgeOptions options = new AmqpBridgeOptions().setReplyHandlingSupport(false);
+    AmqpBridge bridge = AmqpBridge.create(vertx, options);
     bridge.start("localhost", server.actualPort(), res -> {
       LOG.trace("Startup complete");
 

@@ -33,6 +33,12 @@
 |[[receiveBufferSize]]`receiveBufferSize`|`Number (int)`|-
 |[[reconnectAttempts]]`reconnectAttempts`|`Number (int)`|-
 |[[reconnectInterval]]`reconnectInterval`|`Number (long)`|-
+|[[replyHandlingSupport]]`replyHandlingSupport`|`Boolean`|
++++
+Sets whether the bridge should try to enable support for sending messages with a reply handler set, and replying to
+ messages using the message reply methods. Defaults to true. If the server does not advertise support for
+ 'anonymous sender' links then the bridge won't support reply handling regardless of this setting.
++++
 |[[reuseAddress]]`reuseAddress`|`Boolean`|-
 |[[sendBufferSize]]`sendBufferSize`|`Number (int)`|-
 |[[soLinger]]`soLinger`|`Number (int)`|-
