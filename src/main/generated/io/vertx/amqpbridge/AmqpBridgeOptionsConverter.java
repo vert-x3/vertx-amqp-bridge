@@ -75,6 +75,9 @@ public class AmqpBridgeOptionsConverter {
     if (json.getValue("keyStoreOptions") instanceof JsonObject) {
       obj.setKeyStoreOptions(new io.vertx.core.net.JksOptions((JsonObject)json.getValue("keyStoreOptions")));
     }
+    if (json.getValue("localAddress") instanceof String) {
+      obj.setLocalAddress((String)json.getValue("localAddress"));
+    }
     if (json.getValue("logActivity") instanceof Boolean) {
       obj.setLogActivity((Boolean)json.getValue("logActivity"));
     }
@@ -193,6 +196,9 @@ public class AmqpBridgeOptionsConverter {
       json.put("hostnameVerificationAlgorithm", obj.getHostnameVerificationAlgorithm());
     }
     json.put("idleTimeout", obj.getIdleTimeout());
+    if (obj.getLocalAddress() != null) {
+      json.put("localAddress", obj.getLocalAddress());
+    }
     json.put("logActivity", obj.getLogActivity());
     if (obj.getMetricsName() != null) {
       json.put("metricsName", obj.getMetricsName());
