@@ -50,7 +50,7 @@ var AmqpBridge = function(j_val) {
     if (__args.length === 3 && typeof __args[0] === 'string' && typeof __args[1] ==='number' && typeof __args[2] === 'function') {
       j_amqpBridge["start(java.lang.String,int,io.vertx.core.Handler)"](__args[0], __args[1], function(ar) {
       if (ar.succeeded()) {
-        __args[2](utils.convReturnVertxGen(ar.result(), AmqpBridge), null);
+        __args[2](utils.convReturnVertxGen(AmqpBridge, ar.result()), null);
       } else {
         __args[2](null, ar.cause());
       }
@@ -58,7 +58,7 @@ var AmqpBridge = function(j_val) {
     }  else if (__args.length === 5 && typeof __args[0] === 'string' && typeof __args[1] ==='number' && typeof __args[2] === 'string' && typeof __args[3] === 'string' && typeof __args[4] === 'function') {
       j_amqpBridge["start(java.lang.String,int,java.lang.String,java.lang.String,io.vertx.core.Handler)"](__args[0], __args[1], __args[2], __args[3], function(ar) {
       if (ar.succeeded()) {
-        __args[4](utils.convReturnVertxGen(ar.result(), AmqpBridge), null);
+        __args[4](utils.convReturnVertxGen(AmqpBridge, ar.result()), null);
       } else {
         __args[4](null, ar.cause());
       }
@@ -79,7 +79,7 @@ var AmqpBridge = function(j_val) {
   this.createConsumer = function(amqpAddress) {
     var __args = arguments;
     if (__args.length === 1 && typeof __args[0] === 'string') {
-      return utils.convReturnVertxGen(j_amqpBridge["createConsumer(java.lang.String)"](amqpAddress), MessageConsumer);
+      return utils.convReturnVertxGen(MessageConsumer, j_amqpBridge["createConsumer(java.lang.String)"](amqpAddress), undefined);
     } else throw new TypeError('function invoked with invalid arguments');
   };
 
@@ -96,7 +96,7 @@ var AmqpBridge = function(j_val) {
   this.createProducer = function(amqpAddress) {
     var __args = arguments;
     if (__args.length === 1 && typeof __args[0] === 'string') {
-      return utils.convReturnVertxGen(j_amqpBridge["createProducer(java.lang.String)"](amqpAddress), MessageProducer);
+      return utils.convReturnVertxGen(MessageProducer, j_amqpBridge["createProducer(java.lang.String)"](amqpAddress), undefined);
     } else throw new TypeError('function invoked with invalid arguments');
   };
 
@@ -125,6 +125,25 @@ var AmqpBridge = function(j_val) {
   this._jdel = j_amqpBridge;
 };
 
+AmqpBridge._jclass = utils.getJavaClass("io.vertx.amqpbridge.AmqpBridge");
+AmqpBridge._jtype = {
+  accept: function(obj) {
+    return AmqpBridge._jclass.isInstance(obj._jdel);
+  },
+  wrap: function(jdel) {
+    var obj = Object.create(AmqpBridge.prototype, {});
+    AmqpBridge.apply(obj, arguments);
+    return obj;
+  },
+  unwrap: function(obj) {
+    return obj._jdel;
+  }
+};
+AmqpBridge._create = function(jdel) {
+  var obj = Object.create(AmqpBridge.prototype, {});
+  AmqpBridge.apply(obj, arguments);
+  return obj;
+}
 /**
  Creates a Bridge with the given options.
 
@@ -136,11 +155,10 @@ var AmqpBridge = function(j_val) {
 AmqpBridge.create = function() {
   var __args = arguments;
   if (__args.length === 1 && typeof __args[0] === 'object' && __args[0]._jdel) {
-    return utils.convReturnVertxGen(JAmqpBridge["create(io.vertx.core.Vertx)"](__args[0]._jdel), AmqpBridge);
+    return utils.convReturnVertxGen(AmqpBridge, JAmqpBridge["create(io.vertx.core.Vertx)"](__args[0]._jdel));
   }else if (__args.length === 2 && typeof __args[0] === 'object' && __args[0]._jdel && (typeof __args[1] === 'object' && __args[1] != null)) {
-    return utils.convReturnVertxGen(JAmqpBridge["create(io.vertx.core.Vertx,io.vertx.amqpbridge.AmqpBridgeOptions)"](__args[0]._jdel, __args[1] != null ? new AmqpBridgeOptions(new JsonObject(JSON.stringify(__args[1]))) : null), AmqpBridge);
+    return utils.convReturnVertxGen(AmqpBridge, JAmqpBridge["create(io.vertx.core.Vertx,io.vertx.amqpbridge.AmqpBridgeOptions)"](__args[0]._jdel, __args[1] != null ? new AmqpBridgeOptions(new JsonObject(JSON.stringify(__args[1]))) : null));
   } else throw new TypeError('function invoked with invalid arguments');
 };
 
-// We export the Constructor function
 module.exports = AmqpBridge;
