@@ -97,6 +97,7 @@ public class AmqpBridgeOptions extends ProtonClientOptions {
    * messages using the message reply methods. Defaults to true. If the server does not advertise support for
    * 'anonymous sender' links then the bridge won't support reply handling regardless of this setting.
    *
+   * @param replyHandlingSupport should attempt be made to enable support for sending messages with a reply handler
    * @return the options
    */
   public AmqpBridgeOptions setReplyHandlingSupport(boolean replyHandlingSupport) {
