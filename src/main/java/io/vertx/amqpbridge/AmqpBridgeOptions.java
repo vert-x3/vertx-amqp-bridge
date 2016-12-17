@@ -122,6 +122,12 @@ public class AmqpBridgeOptions extends ProtonClientOptions {
   }
 
   @Override
+  public AmqpBridgeOptions setHeartbeat(int heartbeat) {
+    super.setHeartbeat(heartbeat);
+    return this;
+  }
+
+  @Override
   public AmqpBridgeOptions setSendBufferSize(int sendBufferSize) {
     super.setSendBufferSize(sendBufferSize);
     return this;
@@ -321,6 +327,12 @@ public class AmqpBridgeOptions extends ProtonClientOptions {
   @Override
   public AmqpBridgeOptions setSslEngineOptions(SSLEngineOptions sslEngineOptions) {
     super.setSslEngineOptions(sslEngineOptions);
+    return this;
+  }
+
+  @Override
+  public AmqpBridgeOptions setLocalAddress(String localAddress) {
+    super.setLocalAddress(localAddress);
     return this;
   }
 

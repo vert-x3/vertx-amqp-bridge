@@ -63,6 +63,9 @@ public class AmqpBridgeOptionsConverter {
           obj.addEnabledSecureTransportProtocol((String)item);
       });
     }
+    if (json.getValue("heartbeat") instanceof Number) {
+      obj.setHeartbeat(((Number)json.getValue("heartbeat")).intValue());
+    }
     if (json.getValue("hostnameVerificationAlgorithm") instanceof String) {
       obj.setHostnameVerificationAlgorithm((String)json.getValue("hostnameVerificationAlgorithm"));
     }
@@ -192,6 +195,7 @@ public class AmqpBridgeOptionsConverter {
               map(item -> item).
               collect(java.util.stream.Collectors.toList())));
     }
+    json.put("heartbeat", obj.getHeartbeat());
     if (obj.getHostnameVerificationAlgorithm() != null) {
       json.put("hostnameVerificationAlgorithm", obj.getHostnameVerificationAlgorithm());
     }
