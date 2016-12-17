@@ -64,6 +64,13 @@ public class AmqpMessageImpl implements Message<JsonObject> {
     return amqpReplyAddress;
   }
 
+  @Override
+  public boolean isSend() {
+    // EventBus 'send vs publish' is semantically different than in AMQP, where the node at a given
+    // address governs behaviour but addresses can be arbitrary. Just return true to say it isSend.
+    return true;
+  }
+
   private <R> void doReply(Object replyMessageBody, Handler<AsyncResult<Message<R>>> replyHandler) {
     if(!(replyMessageBody instanceof JsonObject)) {
       throw new IllegalArgumentException("The reply body must be an instance of JsonObject");
