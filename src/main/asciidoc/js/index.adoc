@@ -16,7 +16,7 @@ To use Vert.x AMQP Bridge, add the following dependency to the _dependencies_ se
 <dependency>
   <groupId>io.vertx</groupId>
   <artifactId>vertx-amqp-bridge</artifactId>
-  <version>3.4.0-SNAPSHOT</version>
+  <version>3.4.0.Beta1</version>
 </dependency>
 ----
 
@@ -24,7 +24,7 @@ To use Vert.x AMQP Bridge, add the following dependency to the _dependencies_ se
 
 [source,groovy,subs="+attributes"]
 ----
-compile io.vertx:vertx-amqp-bridge:3.4.0-SNAPSHOT
+compile io.vertx:vertx-amqp-bridge:3.4.0.Beta1
 ----
 
 == Getting Started
@@ -153,7 +153,7 @@ retrieving an application-property from a received message might look like:
 ----
 // Check the application properties section was present before use, it may not be
 var appProps = amqpMsgPayload.application_properties;
-if (appProps !== null) {
+if ((appProps !== null && appProps !== undefined)) {
   var propValue = appProps.propertyName;
 }
 
@@ -370,7 +370,7 @@ The following is a basic example of sending a reply using the message reply meth
 consumer.handler(function (msg) {
   // ...do something with received message...then reply...
   var replyAddress = msg.replyAddress();
-  if (replyAddress !== null) {
+  if ((replyAddress !== null && replyAddress !== undefined)) {
     var amqpReplyMessagePayload = {
     };
     amqpReplyMessagePayload.body = "myResponse";
