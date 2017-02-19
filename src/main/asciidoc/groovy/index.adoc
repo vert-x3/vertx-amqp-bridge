@@ -16,7 +16,7 @@ To use Vert.x AMQP Bridge, add the following dependency to the _dependencies_ se
 <dependency>
   <groupId>io.vertx</groupId>
   <artifactId>vertx-amqp-bridge</artifactId>
-  <version>3.4.0.Beta1</version>
+  <version>3.4.0-SNAPSHOT</version>
 </dependency>
 ----
 
@@ -24,7 +24,7 @@ To use Vert.x AMQP Bridge, add the following dependency to the _dependencies_ se
 
 [source,groovy,subs="+attributes"]
 ----
-compile io.vertx:vertx-amqp-bridge:3.4.0.Beta1
+compile io.vertx:vertx-amqp-bridge:3.4.0-SNAPSHOT
 ----
 
 == Getting Started
@@ -39,7 +39,6 @@ to configure various options such as for using SSL connections.
 
 [source,groovy]
 ----
-import io.vertx.amqpbridge.AmqpBridge
 def bridge = AmqpBridge.create(vertx)
 // Start the bridge, then use the event loop thread to process things thereafter.
 bridge.start("localhost", 5672, { res ->
@@ -63,7 +62,6 @@ messages.
 
 [source,groovy]
 ----
-import io.vertx.amqpbridge.AmqpBridge
 def bridge = AmqpBridge.create(vertx)
 // Start the bridge, then use the event loop thread to process things thereafter.
 bridge.start("localhost", 5672, { res ->
@@ -216,7 +214,6 @@ certificate:
 
 [source,groovy]
 ----
-import io.vertx.amqpbridge.AmqpBridge
 def bridgeOptions = [:]
 bridgeOptions.ssl = true
 
@@ -239,7 +236,6 @@ also a PKCS12 based key store containing an SSL key and certificate the server c
 
 [source,groovy]
 ----
-import io.vertx.amqpbridge.AmqpBridge
 def bridgeOptions = [:]
 bridgeOptions.ssl = true
 
