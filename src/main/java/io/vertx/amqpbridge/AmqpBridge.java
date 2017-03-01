@@ -118,4 +118,12 @@ public interface AmqpBridge {
    *          the result handler
    */
   void close(Handler<AsyncResult<Void>> resultHandler);
+
+  /**
+   * Set an end handler. This will fire if the underlying connection is unexpectedly disconnected or remotely closed.
+   *
+   * @param endHandler
+   *          the handler
+   */
+  void endHandler(Handler<Void> endHandler);
 }

@@ -26,6 +26,7 @@ import io.vertx.amqpbridge.AmqpBridgeOptions;
 import io.vertx.amqpbridge.AmqpConstants;
 import org.apache.qpid.proton.amqp.Symbol;
 import org.apache.qpid.proton.amqp.messaging.Source;
+import org.apache.qpid.proton.engine.EndpointState;
 
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Context;
@@ -43,6 +44,7 @@ import io.vertx.proton.ProtonClient;
 import io.vertx.proton.ProtonConnection;
 import io.vertx.proton.ProtonDelivery;
 import io.vertx.proton.ProtonReceiver;
+import io.vertx.proton.impl.ProtonConnectionImpl;
 
 public class AmqpBridgeImpl implements AmqpBridge {
 
@@ -57,6 +59,8 @@ public class AmqpBridgeImpl implements AmqpBridge {
   private Map<String, Handler<?>> replyToMapping = new ConcurrentHashMap<>();
   private MessageTranslatorImpl translator = new MessageTranslatorImpl();
   private AtomicBoolean started = new AtomicBoolean();
+  private AtomicBoolean closed = new AtomicBoolean();
+  private volatile Handler<Void> endHandler;
 
   public AmqpBridgeImpl(Vertx vertx, AmqpBridgeOptions options) {
     this.vertx = vertx;
@@ -98,6 +102,18 @@ public class AmqpBridgeImpl implements AmqpBridge {
         if(options.getContainerId() != null) {
           connection.setContainer(options.getContainerId());
         }
+
+        connection.disconnectHandler(closeResult -> {
+          endHandlerImpl();
+        });
+
+        connection.closeHandler(closeResult -> {
+          try {
+            disconnectImpl();
+          } finally {
+            endHandlerImpl();
+          }
+        });
 
         connection.openHandler(openResult -> {
           LOG.trace("Bridge connection open complete");
@@ -142,6 +158,14 @@ public class AmqpBridgeImpl implements AmqpBridge {
     });
   }
 
+  private void endHandlerImpl() {
+    Handler<Void> handler = endHandler;
+    endHandler = null;
+    if (handler != null && !closed.get()) {
+      handler.handle(null);
+    }
+  }
+
   @SuppressWarnings("unchecked")
   @Override
   public MessageConsumer<JsonObject> createConsumer(String amqpAddress) {
@@ -164,6 +188,7 @@ public class AmqpBridgeImpl implements AmqpBridge {
 
   @Override
   public void close(Handler<AsyncResult<Void>> resultHandler) {
+    closed.set(true);
     runOnContext(true, v -> {
       shutdownImpl(resultHandler);
     });
@@ -171,19 +196,54 @@ public class AmqpBridgeImpl implements AmqpBridge {
 
   private void shutdownImpl(Handler<AsyncResult<Void>> resultHandler) {
     if (connection != null) {
-      connection.closeHandler(res -> {
-        try {
-          if (res.succeeded()) {
-            resultHandler.handle(Future.succeededFuture());
-          } else {
-            resultHandler.handle(Future.failedFuture(res.cause()));
+      if (isLocalOpen(connection) && isRemoteOpen(connection)) {
+        connection.closeHandler(res -> {
+          try {
+            disconnectImpl();
+          } finally {
+            if (res.succeeded()) {
+              resultHandler.handle(Future.succeededFuture());
+            } else {
+              resultHandler.handle(Future.failedFuture(res.cause()));
+            }
           }
+        }).close();
+      } else {
+        try {
+          disconnectImpl();
         } finally {
-          connection.disconnect();
-          connection = null;
+          resultHandler.handle(Future.succeededFuture());
         }
-      }).close();
+      }
+    } else {
+      resultHandler.handle(Future.succeededFuture());
     }
+  }
+
+  private void disconnectImpl() {
+    ProtonConnection conn = connection;
+    connection = null;
+    if (conn != null) {
+      try {
+        // Does nothing if already closed
+        conn.close();
+      } finally {
+        conn.disconnect();
+      }
+    }
+  }
+
+  private boolean isLocalOpen(ProtonConnection connection) {
+    return ((ProtonConnectionImpl) connection).getLocalState() == EndpointState.ACTIVE;
+  }
+
+  private boolean isRemoteOpen(ProtonConnection connection) {
+    return ((ProtonConnectionImpl) connection).getRemoteState() == EndpointState.ACTIVE;
+  }
+
+  @Override
+  public void endHandler(Handler<Void> endHandler) {
+    this.endHandler = endHandler;
   }
 
   <R> void registerReplyToHandler(org.apache.qpid.proton.message.Message msg,

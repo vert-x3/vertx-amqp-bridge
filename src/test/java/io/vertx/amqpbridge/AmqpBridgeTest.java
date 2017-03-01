@@ -17,6 +17,8 @@ package io.vertx.amqpbridge;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -1798,5 +1800,136 @@ public class AmqpBridgeTest extends ActiveMQTestBase {
     } finally {
       server.close();
     }
+  }
+
+  @Test(timeout = 20000)
+  public void testConnectionClosedRemotelyCallsEndHandler(TestContext context) throws Exception {
+    doConnectionEndHandlerCalledTestImpl(context, false);
+  }
+
+  @Test(timeout = 20000)
+  public void testConnectionDisconnectedCallsEndHandler(TestContext context) throws Exception {
+    doConnectionEndHandlerCalledTestImpl(context, false);
+  }
+
+  private void doConnectionEndHandlerCalledTestImpl(TestContext context, boolean disconnect) throws Exception {
+    stopBroker();
+
+    final Async asyncShutdown = context.async();
+    final Async asyncEndHandlerCalled = context.async();
+
+    // === Server handling ====
+
+    MockServer server = new MockServer(vertx, serverConnection -> {
+      // Expect a connection
+      serverConnection.openHandler(serverSender -> {
+        LOG.trace("Server connection open");
+        serverConnection.open();
+
+        // Remotely close/disconnect the connection after a delay
+        vertx.setTimer(100, x -> {
+          if (disconnect) {
+            LOG.trace("Disconnecting server connection");
+            serverConnection.disconnect();
+          } else {
+            LOG.trace("Closing server connection");
+            serverConnection.close();
+          }
+        });
+      });
+    });
+
+    // === Bridge handling ====
+
+    AmqpBridgeOptions options = new AmqpBridgeOptions().setReplyHandlingSupport(false);
+    AmqpBridge bridge = AmqpBridge.create(vertx, options);
+    bridge.endHandler(x -> {
+      LOG.trace("End handler called");
+      asyncEndHandlerCalled.complete();
+
+      LOG.trace("Shutting down");
+      bridge.close(shutdownRes -> {
+        context.assertTrue(shutdownRes.succeeded());
+        LOG.trace("Shutdown complete");
+        asyncShutdown.complete();
+      });
+    });
+
+    bridge.start("localhost", server.actualPort(), res -> {
+      LOG.trace("Startup complete");
+    });
+
+    try {
+      asyncEndHandlerCalled.awaitSuccess();
+      asyncShutdown.awaitSuccess();
+    } finally {
+      server.close();
+    }
+  }
+
+  @Test(timeout = 20000)
+  public void testBridgeCloseDoesNotCallEndHandler(TestContext context) throws Exception {
+    stopBroker();
+
+    final Async asyncShutdown = context.async();
+    final CountDownLatch latch = new CountDownLatch(1);
+
+    // === Server handling ====
+
+    MockServer server = new MockServer(vertx, serverConnection -> {
+      // Expect a connection
+      serverConnection.openHandler(serverSender -> {
+        LOG.trace("Server connection open");
+        // Add a close handler
+        serverConnection.closeHandler(x -> {
+          serverConnection.close();
+        });
+
+        serverConnection.open();
+      });
+    });
+
+    // === Bridge handling ====
+
+    AmqpBridgeOptions options = new AmqpBridgeOptions().setReplyHandlingSupport(false);
+    AmqpBridge bridge = AmqpBridge.create(vertx, options);
+    bridge.endHandler(x -> {
+      LOG.error("End handler called unexpectedly");
+      latch.countDown();
+    });
+
+    bridge.start("localhost", server.actualPort(), res -> {
+      LOG.trace("Startup complete");
+
+      bridge.close(shutdownRes -> {
+        context.assertTrue(shutdownRes.succeeded());
+        LOG.trace("Shutdown complete");
+        asyncShutdown.complete();
+      });
+    });
+
+    try {
+      asyncShutdown.awaitSuccess();
+      context.assertFalse(latch.await(100, TimeUnit.MILLISECONDS), "end handler should not have fired");
+    } finally {
+      server.close();
+    }
+  }
+
+  @Test(timeout = 20000)
+  public void testCloseBridgeThatWasntStarted(TestContext context) throws Exception {
+    stopBroker();
+
+    Async async = context.async();
+
+    AmqpBridge bridge = AmqpBridge.create(vertx);
+    bridge.close(shutdownRes -> {
+      LOG.trace("Shutdown complete");
+      context.assertTrue(shutdownRes.succeeded());
+
+      async.complete();
+    });
+
+    async.awaitSuccess();
   }
 }
