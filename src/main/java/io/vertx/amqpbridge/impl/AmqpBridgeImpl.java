@@ -83,6 +83,7 @@ public class AmqpBridgeImpl implements AmqpBridge {
     });
   }
 
+  @SuppressWarnings("deprecation")
   private void startImpl(String hostname, int port, String username, String password,
                          Handler<AsyncResult<AmqpBridge>> resultHandler) {
     client = ProtonClient.create(vertx);

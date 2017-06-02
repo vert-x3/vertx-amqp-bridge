@@ -123,6 +123,9 @@ public class AmqpBridgeOptionsConverter {
     if (json.getValue("sendBufferSize") instanceof Number) {
       obj.setSendBufferSize(((Number)json.getValue("sendBufferSize")).intValue());
     }
+    if (json.getValue("sniServerName") instanceof String) {
+      obj.setSniServerName((String)json.getValue("sniServerName"));
+    }
     if (json.getValue("soLinger") instanceof Number) {
       obj.setSoLinger(((Number)json.getValue("soLinger")).intValue());
     }
@@ -152,6 +155,9 @@ public class AmqpBridgeOptionsConverter {
     }
     if (json.getValue("vhost") instanceof String) {
       obj.setVhost((String)json.getValue("vhost"));
+    }
+    if (json.getValue("virtualHost") instanceof String) {
+      obj.setVirtualHost((String)json.getValue("virtualHost"));
     }
   }
 
@@ -227,6 +233,9 @@ public class AmqpBridgeOptionsConverter {
     json.put("replyHandlingSupport", obj.isReplyHandlingSupport());
     json.put("reuseAddress", obj.isReuseAddress());
     json.put("sendBufferSize", obj.getSendBufferSize());
+    if (obj.getSniServerName() != null) {
+      json.put("sniServerName", obj.getSniServerName());
+    }
     json.put("soLinger", obj.getSoLinger());
     json.put("ssl", obj.isSsl());
     json.put("tcpKeepAlive", obj.isTcpKeepAlive());
@@ -240,6 +249,9 @@ public class AmqpBridgeOptionsConverter {
     json.put("usePooledBuffers", obj.isUsePooledBuffers());
     if (obj.getVhost() != null) {
       json.put("vhost", obj.getVhost());
+    }
+    if (obj.getVirtualHost() != null) {
+      json.put("virtualHost", obj.getVirtualHost());
     }
   }
 }

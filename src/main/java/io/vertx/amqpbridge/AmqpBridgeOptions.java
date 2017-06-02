@@ -76,7 +76,9 @@ public class AmqpBridgeOptions extends ProtonClientOptions {
    *
    * @param vhost the value to use as the hostname field in the AMQP Open frame to indicate a vhost.
    * @return the options
+   * @deprecated use {@link #setVirtualHost(String)} option instead.
    */
+  @Deprecated
   public AmqpBridgeOptions setVhost(String vhost) {
     this.vhost = vhost;
     return this;
@@ -87,7 +89,9 @@ public class AmqpBridgeOptions extends ProtonClientOptions {
    * indicates the hostname value given when starting the bridge will be used to populate the hostname field.
    *
    * @return the hostname, or null to indicate the TCP connection hostname will be used.
+   * @deprecated use {@link #getVirtualHost()} option instead.
    */
+  @Deprecated
   public String getVhost() {
     return vhost;
   }
@@ -385,5 +389,17 @@ public class AmqpBridgeOptions extends ProtonClientOptions {
     }
 
     return true;
+  }
+
+  @Override
+  public AmqpBridgeOptions setVirtualHost(String virtualHost) {
+    super.setVirtualHost(virtualHost);
+    return this;
+  }
+
+  @Override
+  public AmqpBridgeOptions setSniServerName(String sniServerName) {
+    super.setSniServerName(sniServerName);
+    return this;
   }
 }

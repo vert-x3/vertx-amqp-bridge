@@ -41,6 +41,7 @@ import io.vertx.core.net.ProxyOptions
  * @param replyHandlingSupport  Sets whether the bridge should try to enable support for sending messages with a reply handler set, and replying to messages using the message reply methods. Defaults to true. If the server does not advertise support for 'anonymous sender' links then the bridge won't support reply handling regardless of this setting.
  * @param reuseAddress 
  * @param sendBufferSize 
+ * @param sniServerName 
  * @param soLinger 
  * @param ssl 
  * @param tcpKeepAlive 
@@ -51,6 +52,7 @@ import io.vertx.core.net.ProxyOptions
  * @param useAlpn 
  * @param usePooledBuffers 
  * @param vhost  Sets the value to use as the hostname field in the AMQP Open frame. Defaults to null, which indicates the hostname value given when starting the bridge will be used to populate the hostname field.
+ * @param virtualHost 
  *
  * <p/>
  * NOTE: This function has been automatically generated from the [io.vertx.amqpbridge.AmqpBridgeOptions original] using Vert.x codegen.
@@ -83,6 +85,7 @@ fun AmqpBridgeOptions(
   replyHandlingSupport: Boolean? = null,
   reuseAddress: Boolean? = null,
   sendBufferSize: Int? = null,
+  sniServerName: String? = null,
   soLinger: Int? = null,
   ssl: Boolean? = null,
   tcpKeepAlive: Boolean? = null,
@@ -92,7 +95,8 @@ fun AmqpBridgeOptions(
   trustStoreOptions: io.vertx.core.net.JksOptions? = null,
   useAlpn: Boolean? = null,
   usePooledBuffers: Boolean? = null,
-  vhost: String? = null): AmqpBridgeOptions = io.vertx.amqpbridge.AmqpBridgeOptions().apply {
+  vhost: String? = null,
+  virtualHost: String? = null): AmqpBridgeOptions = io.vertx.amqpbridge.AmqpBridgeOptions().apply {
 
   if (connectTimeout != null) {
     this.setConnectTimeout(connectTimeout)
@@ -185,6 +189,9 @@ fun AmqpBridgeOptions(
   if (sendBufferSize != null) {
     this.setSendBufferSize(sendBufferSize)
   }
+  if (sniServerName != null) {
+    this.setSniServerName(sniServerName)
+  }
   if (soLinger != null) {
     this.setSoLinger(soLinger)
   }
@@ -214,6 +221,9 @@ fun AmqpBridgeOptions(
   }
   if (vhost != null) {
     this.setVhost(vhost)
+  }
+  if (virtualHost != null) {
+    this.setVirtualHost(virtualHost)
   }
 }
 
