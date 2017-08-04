@@ -84,6 +84,9 @@ public class AmqpBridgeOptionsConverter {
     if (json.getValue("logActivity") instanceof Boolean) {
       obj.setLogActivity((Boolean)json.getValue("logActivity"));
     }
+    if (json.getValue("maxFrameSize") instanceof Number) {
+      obj.setMaxFrameSize(((Number)json.getValue("maxFrameSize")).intValue());
+    }
     if (json.getValue("metricsName") instanceof String) {
       obj.setMetricsName((String)json.getValue("metricsName"));
     }
@@ -206,6 +209,7 @@ public class AmqpBridgeOptionsConverter {
       json.put("localAddress", obj.getLocalAddress());
     }
     json.put("logActivity", obj.getLogActivity());
+    json.put("maxFrameSize", obj.getMaxFrameSize());
     if (obj.getMetricsName() != null) {
       json.put("metricsName", obj.getMetricsName());
     }

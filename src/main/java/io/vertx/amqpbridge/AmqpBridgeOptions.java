@@ -402,4 +402,10 @@ public class AmqpBridgeOptions extends ProtonClientOptions {
     super.setSniServerName(sniServerName);
     return this;
   }
+
+  @Override
+  public AmqpBridgeOptions setMaxFrameSize(int maxFrameSize) {
+    super.setMaxFrameSize(maxFrameSize);
+    return this;
+  }
 }

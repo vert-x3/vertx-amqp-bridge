@@ -28,6 +28,7 @@ import io.vertx.core.net.ProxyOptions
  * @param keyStoreOptions 
  * @param localAddress 
  * @param logActivity 
+ * @param maxFrameSize 
  * @param metricsName 
  * @param openSslEngineOptions 
  * @param pemKeyCertOptions 
@@ -72,6 +73,7 @@ fun AmqpBridgeOptions(
   keyStoreOptions: io.vertx.core.net.JksOptions? = null,
   localAddress: String? = null,
   logActivity: Boolean? = null,
+  maxFrameSize: Int? = null,
   metricsName: String? = null,
   openSslEngineOptions: io.vertx.core.net.OpenSSLEngineOptions? = null,
   pemKeyCertOptions: io.vertx.core.net.PemKeyCertOptions? = null,
@@ -149,6 +151,9 @@ fun AmqpBridgeOptions(
   }
   if (logActivity != null) {
     this.setLogActivity(logActivity)
+  }
+  if (maxFrameSize != null) {
+    this.setMaxFrameSize(maxFrameSize)
   }
   if (metricsName != null) {
     this.setMetricsName(metricsName)
