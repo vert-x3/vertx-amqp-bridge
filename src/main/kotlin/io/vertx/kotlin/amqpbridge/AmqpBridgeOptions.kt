@@ -41,12 +41,16 @@ import io.vertx.core.net.ProxyOptions
  * @param reconnectInterval 
  * @param replyHandlingSupport  Sets whether the bridge should try to enable support for sending messages with a reply handler set, and replying to messages using the message reply methods. Defaults to true. If the server does not advertise support for 'anonymous sender' links then the bridge won't support reply handling regardless of this setting.
  * @param reuseAddress 
+ * @param reusePort 
  * @param sendBufferSize 
  * @param sniServerName 
  * @param soLinger 
  * @param ssl 
+ * @param tcpCork 
+ * @param tcpFastOpen 
  * @param tcpKeepAlive 
  * @param tcpNoDelay 
+ * @param tcpQuickAck 
  * @param trafficClass 
  * @param trustAll 
  * @param trustStoreOptions 
@@ -86,12 +90,16 @@ fun AmqpBridgeOptions(
   reconnectInterval: Long? = null,
   replyHandlingSupport: Boolean? = null,
   reuseAddress: Boolean? = null,
+  reusePort: Boolean? = null,
   sendBufferSize: Int? = null,
   sniServerName: String? = null,
   soLinger: Int? = null,
   ssl: Boolean? = null,
+  tcpCork: Boolean? = null,
+  tcpFastOpen: Boolean? = null,
   tcpKeepAlive: Boolean? = null,
   tcpNoDelay: Boolean? = null,
+  tcpQuickAck: Boolean? = null,
   trafficClass: Int? = null,
   trustAll: Boolean? = null,
   trustStoreOptions: io.vertx.core.net.JksOptions? = null,
@@ -191,6 +199,9 @@ fun AmqpBridgeOptions(
   if (reuseAddress != null) {
     this.setReuseAddress(reuseAddress)
   }
+  if (reusePort != null) {
+    this.setReusePort(reusePort)
+  }
   if (sendBufferSize != null) {
     this.setSendBufferSize(sendBufferSize)
   }
@@ -203,11 +214,20 @@ fun AmqpBridgeOptions(
   if (ssl != null) {
     this.setSsl(ssl)
   }
+  if (tcpCork != null) {
+    this.setTcpCork(tcpCork)
+  }
+  if (tcpFastOpen != null) {
+    this.setTcpFastOpen(tcpFastOpen)
+  }
   if (tcpKeepAlive != null) {
     this.setTcpKeepAlive(tcpKeepAlive)
   }
   if (tcpNoDelay != null) {
     this.setTcpNoDelay(tcpNoDelay)
+  }
+  if (tcpQuickAck != null) {
+    this.setTcpQuickAck(tcpQuickAck)
   }
   if (trafficClass != null) {
     this.setTrafficClass(trafficClass)

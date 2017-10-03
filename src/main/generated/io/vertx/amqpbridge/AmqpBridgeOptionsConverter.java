@@ -123,6 +123,9 @@ public class AmqpBridgeOptionsConverter {
     if (json.getValue("reuseAddress") instanceof Boolean) {
       obj.setReuseAddress((Boolean)json.getValue("reuseAddress"));
     }
+    if (json.getValue("reusePort") instanceof Boolean) {
+      obj.setReusePort((Boolean)json.getValue("reusePort"));
+    }
     if (json.getValue("sendBufferSize") instanceof Number) {
       obj.setSendBufferSize(((Number)json.getValue("sendBufferSize")).intValue());
     }
@@ -135,11 +138,20 @@ public class AmqpBridgeOptionsConverter {
     if (json.getValue("ssl") instanceof Boolean) {
       obj.setSsl((Boolean)json.getValue("ssl"));
     }
+    if (json.getValue("tcpCork") instanceof Boolean) {
+      obj.setTcpCork((Boolean)json.getValue("tcpCork"));
+    }
+    if (json.getValue("tcpFastOpen") instanceof Boolean) {
+      obj.setTcpFastOpen((Boolean)json.getValue("tcpFastOpen"));
+    }
     if (json.getValue("tcpKeepAlive") instanceof Boolean) {
       obj.setTcpKeepAlive((Boolean)json.getValue("tcpKeepAlive"));
     }
     if (json.getValue("tcpNoDelay") instanceof Boolean) {
       obj.setTcpNoDelay((Boolean)json.getValue("tcpNoDelay"));
+    }
+    if (json.getValue("tcpQuickAck") instanceof Boolean) {
+      obj.setTcpQuickAck((Boolean)json.getValue("tcpQuickAck"));
     }
     if (json.getValue("trafficClass") instanceof Number) {
       obj.setTrafficClass(((Number)json.getValue("trafficClass")).intValue());
@@ -236,14 +248,18 @@ public class AmqpBridgeOptionsConverter {
     json.put("reconnectInterval", obj.getReconnectInterval());
     json.put("replyHandlingSupport", obj.isReplyHandlingSupport());
     json.put("reuseAddress", obj.isReuseAddress());
+    json.put("reusePort", obj.isReusePort());
     json.put("sendBufferSize", obj.getSendBufferSize());
     if (obj.getSniServerName() != null) {
       json.put("sniServerName", obj.getSniServerName());
     }
     json.put("soLinger", obj.getSoLinger());
     json.put("ssl", obj.isSsl());
+    json.put("tcpCork", obj.isTcpCork());
+    json.put("tcpFastOpen", obj.isTcpFastOpen());
     json.put("tcpKeepAlive", obj.isTcpKeepAlive());
     json.put("tcpNoDelay", obj.isTcpNoDelay());
+    json.put("tcpQuickAck", obj.isTcpQuickAck());
     json.put("trafficClass", obj.getTrafficClass());
     json.put("trustAll", obj.isTrustAll());
     if (obj.getTrustStoreOptions() != null) {
