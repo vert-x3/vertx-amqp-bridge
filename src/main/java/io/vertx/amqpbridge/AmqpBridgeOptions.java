@@ -175,6 +175,30 @@ public class AmqpBridgeOptions extends ProtonClientOptions {
   }
 
   @Override
+  public AmqpBridgeOptions setReusePort(boolean reusePort) {
+    super.setReusePort(reusePort);
+    return this;
+  }
+
+  @Override
+  public AmqpBridgeOptions setTcpCork(boolean tcpCork) {
+    super.setTcpCork(tcpCork);
+    return this;
+  }
+
+  @Override
+  public AmqpBridgeOptions setTcpFastOpen(boolean tcpFastOpen) {
+    super.setTcpFastOpen(tcpFastOpen);
+    return this;
+  }
+
+  @Override
+  public AmqpBridgeOptions setTcpQuickAck(boolean tcpQuickAck) {
+    super.setTcpQuickAck(tcpQuickAck);
+    return this;
+  }
+
+  @Override
   public AmqpBridgeOptions setUsePooledBuffers(boolean usePooledBuffers) {
     super.setUsePooledBuffers(usePooledBuffers);
     return this;
