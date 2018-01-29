@@ -15,6 +15,8 @@
 */
 package io.vertx.amqpbridge;
 
+import java.util.Set;
+
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.json.JsonObject;
@@ -45,6 +47,13 @@ public class AmqpBridgeOptions extends ProtonClientOptions {
 
   public AmqpBridgeOptions(JsonObject json) {
     AmqpBridgeOptionsConverter.fromJson(json, this);
+  }
+
+  @Override
+  public JsonObject toJson() {
+    JsonObject json = new JsonObject();
+    AmqpBridgeOptionsConverter.toJson(this, json);
+    return json;
   }
 
   /**
@@ -302,6 +311,18 @@ public class AmqpBridgeOptions extends ProtonClientOptions {
   @Override
   public AmqpBridgeOptions addEnabledSecureTransportProtocol(String protocol) {
     super.addEnabledSecureTransportProtocol(protocol);
+    return this;
+  }
+
+  @Override
+  public AmqpBridgeOptions removeEnabledSecureTransportProtocol(String protocol) {
+    super.removeEnabledSecureTransportProtocol(protocol);
+    return this;
+  }
+
+  @Override
+  public AmqpBridgeOptions setEnabledSecureTransportProtocols(Set<String> enabledSecureTransportProtocols) {
+    super.setEnabledSecureTransportProtocols(enabledSecureTransportProtocols);
     return this;
   }
 

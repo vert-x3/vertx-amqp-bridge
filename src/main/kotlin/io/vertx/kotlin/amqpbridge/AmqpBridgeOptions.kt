@@ -135,9 +135,7 @@ fun AmqpBridgeOptions(
     }
   }
   if (enabledSecureTransportProtocols != null) {
-    for (item in enabledSecureTransportProtocols) {
-      this.addEnabledSecureTransportProtocol(item)
-    }
+    this.setEnabledSecureTransportProtocols(enabledSecureTransportProtocols.toSet())
   }
   if (heartbeat != null) {
     this.setHeartbeat(heartbeat)

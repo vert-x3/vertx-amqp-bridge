@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Red Hat, Inc.
+ * Copyright (c) 2014 Red Hat, Inc. and others
  *
  * Red Hat licenses this file to you under the Apache License, version 2.0
  * (the "License"); you may not use this file except in compliance with the
@@ -58,10 +58,12 @@ public class AmqpBridgeOptionsConverter {
       });
     }
     if (json.getValue("enabledSecureTransportProtocols") instanceof JsonArray) {
-      json.getJsonArray("enabledSecureTransportProtocols").forEach(item -> {
+      java.util.LinkedHashSet<java.lang.String> list = new java.util.LinkedHashSet<>();
+      json.getJsonArray("enabledSecureTransportProtocols").forEach( item -> {
         if (item instanceof String)
-          obj.addEnabledSecureTransportProtocol((String)item);
+          list.add((String)item);
       });
+      obj.setEnabledSecureTransportProtocols(list);
     }
     if (json.getValue("heartbeat") instanceof Number) {
       obj.setHeartbeat(((Number)json.getValue("heartbeat")).intValue());
