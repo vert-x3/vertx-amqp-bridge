@@ -1,19 +1,3 @@
-/*
- * Copyright (c) 2014 Red Hat, Inc. and others
- *
- * Red Hat licenses this file to you under the Apache License, version 2.0
- * (the "License"); you may not use this file except in compliance with the
- * License.  You may obtain a copy of the License at:
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.  See the
- * License for the specific language governing permissions and limitations
- * under the License.
- */
-
 package io.vertx.amqpbridge;
 
 import io.vertx.core.json.JsonObject;
@@ -21,164 +5,264 @@ import io.vertx.core.json.JsonArray;
 
 /**
  * Converter for {@link io.vertx.amqpbridge.AmqpBridgeOptions}.
- *
- * NOTE: This class has been automatically generated from the {@link io.vertx.amqpbridge.AmqpBridgeOptions} original class using Vert.x codegen.
+ * NOTE: This class has been automatically generated from the {@link "io.vertx.amqpbridge.AmqpBridgeOptions} original class using Vert.x codegen.
  */
 public class AmqpBridgeOptionsConverter {
 
-  public static void fromJson(JsonObject json, AmqpBridgeOptions obj) {
-    if (json.getValue("connectTimeout") instanceof Number) {
-      obj.setConnectTimeout(((Number)json.getValue("connectTimeout")).intValue());
-    }
-    if (json.getValue("containerId") instanceof String) {
-      obj.setContainerId((String)json.getValue("containerId"));
-    }
-    if (json.getValue("crlPaths") instanceof JsonArray) {
-      json.getJsonArray("crlPaths").forEach(item -> {
-        if (item instanceof String)
-          obj.addCrlPath((String)item);
-      });
-    }
-    if (json.getValue("crlValues") instanceof JsonArray) {
-      json.getJsonArray("crlValues").forEach(item -> {
-        if (item instanceof String)
-          obj.addCrlValue(io.vertx.core.buffer.Buffer.buffer(java.util.Base64.getDecoder().decode((String)item)));
-      });
-    }
-    if (json.getValue("enabledCipherSuites") instanceof JsonArray) {
-      json.getJsonArray("enabledCipherSuites").forEach(item -> {
-        if (item instanceof String)
-          obj.addEnabledCipherSuite((String)item);
-      });
-    }
-    if (json.getValue("enabledSaslMechanisms") instanceof JsonArray) {
-      json.getJsonArray("enabledSaslMechanisms").forEach(item -> {
-        if (item instanceof String)
-          obj.addEnabledSaslMechanism((String)item);
-      });
-    }
-    if (json.getValue("enabledSecureTransportProtocols") instanceof JsonArray) {
-      java.util.LinkedHashSet<java.lang.String> list = new java.util.LinkedHashSet<>();
-      json.getJsonArray("enabledSecureTransportProtocols").forEach( item -> {
-        if (item instanceof String)
-          list.add((String)item);
-      });
-      obj.setEnabledSecureTransportProtocols(list);
-    }
-    if (json.getValue("heartbeat") instanceof Number) {
-      obj.setHeartbeat(((Number)json.getValue("heartbeat")).intValue());
-    }
-    if (json.getValue("hostnameVerificationAlgorithm") instanceof String) {
-      obj.setHostnameVerificationAlgorithm((String)json.getValue("hostnameVerificationAlgorithm"));
-    }
-    if (json.getValue("idleTimeout") instanceof Number) {
-      obj.setIdleTimeout(((Number)json.getValue("idleTimeout")).intValue());
-    }
-    if (json.getValue("jdkSslEngineOptions") instanceof JsonObject) {
-      obj.setJdkSslEngineOptions(new io.vertx.core.net.JdkSSLEngineOptions((JsonObject)json.getValue("jdkSslEngineOptions")));
-    }
-    if (json.getValue("keyStoreOptions") instanceof JsonObject) {
-      obj.setKeyStoreOptions(new io.vertx.core.net.JksOptions((JsonObject)json.getValue("keyStoreOptions")));
-    }
-    if (json.getValue("localAddress") instanceof String) {
-      obj.setLocalAddress((String)json.getValue("localAddress"));
-    }
-    if (json.getValue("logActivity") instanceof Boolean) {
-      obj.setLogActivity((Boolean)json.getValue("logActivity"));
-    }
-    if (json.getValue("maxFrameSize") instanceof Number) {
-      obj.setMaxFrameSize(((Number)json.getValue("maxFrameSize")).intValue());
-    }
-    if (json.getValue("metricsName") instanceof String) {
-      obj.setMetricsName((String)json.getValue("metricsName"));
-    }
-    if (json.getValue("openSslEngineOptions") instanceof JsonObject) {
-      obj.setOpenSslEngineOptions(new io.vertx.core.net.OpenSSLEngineOptions((JsonObject)json.getValue("openSslEngineOptions")));
-    }
-    if (json.getValue("pemKeyCertOptions") instanceof JsonObject) {
-      obj.setPemKeyCertOptions(new io.vertx.core.net.PemKeyCertOptions((JsonObject)json.getValue("pemKeyCertOptions")));
-    }
-    if (json.getValue("pemTrustOptions") instanceof JsonObject) {
-      obj.setPemTrustOptions(new io.vertx.core.net.PemTrustOptions((JsonObject)json.getValue("pemTrustOptions")));
-    }
-    if (json.getValue("pfxKeyCertOptions") instanceof JsonObject) {
-      obj.setPfxKeyCertOptions(new io.vertx.core.net.PfxOptions((JsonObject)json.getValue("pfxKeyCertOptions")));
-    }
-    if (json.getValue("pfxTrustOptions") instanceof JsonObject) {
-      obj.setPfxTrustOptions(new io.vertx.core.net.PfxOptions((JsonObject)json.getValue("pfxTrustOptions")));
-    }
-    if (json.getValue("proxyOptions") instanceof JsonObject) {
-      obj.setProxyOptions(new io.vertx.core.net.ProxyOptions((JsonObject)json.getValue("proxyOptions")));
-    }
-    if (json.getValue("receiveBufferSize") instanceof Number) {
-      obj.setReceiveBufferSize(((Number)json.getValue("receiveBufferSize")).intValue());
-    }
-    if (json.getValue("reconnectAttempts") instanceof Number) {
-      obj.setReconnectAttempts(((Number)json.getValue("reconnectAttempts")).intValue());
-    }
-    if (json.getValue("reconnectInterval") instanceof Number) {
-      obj.setReconnectInterval(((Number)json.getValue("reconnectInterval")).longValue());
-    }
-    if (json.getValue("replyHandlingSupport") instanceof Boolean) {
-      obj.setReplyHandlingSupport((Boolean)json.getValue("replyHandlingSupport"));
-    }
-    if (json.getValue("reuseAddress") instanceof Boolean) {
-      obj.setReuseAddress((Boolean)json.getValue("reuseAddress"));
-    }
-    if (json.getValue("reusePort") instanceof Boolean) {
-      obj.setReusePort((Boolean)json.getValue("reusePort"));
-    }
-    if (json.getValue("sendBufferSize") instanceof Number) {
-      obj.setSendBufferSize(((Number)json.getValue("sendBufferSize")).intValue());
-    }
-    if (json.getValue("sniServerName") instanceof String) {
-      obj.setSniServerName((String)json.getValue("sniServerName"));
-    }
-    if (json.getValue("soLinger") instanceof Number) {
-      obj.setSoLinger(((Number)json.getValue("soLinger")).intValue());
-    }
-    if (json.getValue("ssl") instanceof Boolean) {
-      obj.setSsl((Boolean)json.getValue("ssl"));
-    }
-    if (json.getValue("tcpCork") instanceof Boolean) {
-      obj.setTcpCork((Boolean)json.getValue("tcpCork"));
-    }
-    if (json.getValue("tcpFastOpen") instanceof Boolean) {
-      obj.setTcpFastOpen((Boolean)json.getValue("tcpFastOpen"));
-    }
-    if (json.getValue("tcpKeepAlive") instanceof Boolean) {
-      obj.setTcpKeepAlive((Boolean)json.getValue("tcpKeepAlive"));
-    }
-    if (json.getValue("tcpNoDelay") instanceof Boolean) {
-      obj.setTcpNoDelay((Boolean)json.getValue("tcpNoDelay"));
-    }
-    if (json.getValue("tcpQuickAck") instanceof Boolean) {
-      obj.setTcpQuickAck((Boolean)json.getValue("tcpQuickAck"));
-    }
-    if (json.getValue("trafficClass") instanceof Number) {
-      obj.setTrafficClass(((Number)json.getValue("trafficClass")).intValue());
-    }
-    if (json.getValue("trustAll") instanceof Boolean) {
-      obj.setTrustAll((Boolean)json.getValue("trustAll"));
-    }
-    if (json.getValue("trustStoreOptions") instanceof JsonObject) {
-      obj.setTrustStoreOptions(new io.vertx.core.net.JksOptions((JsonObject)json.getValue("trustStoreOptions")));
-    }
-    if (json.getValue("useAlpn") instanceof Boolean) {
-      obj.setUseAlpn((Boolean)json.getValue("useAlpn"));
-    }
-    if (json.getValue("usePooledBuffers") instanceof Boolean) {
-      obj.setUsePooledBuffers((Boolean)json.getValue("usePooledBuffers"));
-    }
-    if (json.getValue("vhost") instanceof String) {
-      obj.setVhost((String)json.getValue("vhost"));
-    }
-    if (json.getValue("virtualHost") instanceof String) {
-      obj.setVirtualHost((String)json.getValue("virtualHost"));
+  public static void fromJson(Iterable<java.util.Map.Entry<String, Object>> json, AmqpBridgeOptions obj) {
+    for (java.util.Map.Entry<String, Object> member : json) {
+      switch (member.getKey()) {
+        case "connectTimeout":
+          if (member.getValue() instanceof Number) {
+            obj.setConnectTimeout(((Number)member.getValue()).intValue());
+          }
+          break;
+        case "containerId":
+          if (member.getValue() instanceof String) {
+            obj.setContainerId((String)member.getValue());
+          }
+          break;
+        case "crlPaths":
+          if (member.getValue() instanceof JsonArray) {
+            ((Iterable<Object>)member.getValue()).forEach( item -> {
+              if (item instanceof String)
+                obj.addCrlPath((String)item);
+            });
+          }
+          break;
+        case "crlValues":
+          if (member.getValue() instanceof JsonArray) {
+            ((Iterable<Object>)member.getValue()).forEach( item -> {
+              if (item instanceof String)
+                obj.addCrlValue(io.vertx.core.buffer.Buffer.buffer(java.util.Base64.getDecoder().decode((String)item)));
+            });
+          }
+          break;
+        case "enabledCipherSuites":
+          if (member.getValue() instanceof JsonArray) {
+            ((Iterable<Object>)member.getValue()).forEach( item -> {
+              if (item instanceof String)
+                obj.addEnabledCipherSuite((String)item);
+            });
+          }
+          break;
+        case "enabledSaslMechanisms":
+          if (member.getValue() instanceof JsonArray) {
+            ((Iterable<Object>)member.getValue()).forEach( item -> {
+              if (item instanceof String)
+                obj.addEnabledSaslMechanism((String)item);
+            });
+          }
+          break;
+        case "enabledSecureTransportProtocols":
+          if (member.getValue() instanceof JsonArray) {
+            java.util.LinkedHashSet<java.lang.String> list =  new java.util.LinkedHashSet<>();
+            ((Iterable<Object>)member.getValue()).forEach( item -> {
+              if (item instanceof String)
+                list.add((String)item);
+            });
+            obj.setEnabledSecureTransportProtocols(list);
+          }
+          break;
+        case "heartbeat":
+          if (member.getValue() instanceof Number) {
+            obj.setHeartbeat(((Number)member.getValue()).intValue());
+          }
+          break;
+        case "hostnameVerificationAlgorithm":
+          if (member.getValue() instanceof String) {
+            obj.setHostnameVerificationAlgorithm((String)member.getValue());
+          }
+          break;
+        case "idleTimeout":
+          if (member.getValue() instanceof Number) {
+            obj.setIdleTimeout(((Number)member.getValue()).intValue());
+          }
+          break;
+        case "idleTimeoutUnit":
+          if (member.getValue() instanceof String) {
+            obj.setIdleTimeoutUnit(java.util.concurrent.TimeUnit.valueOf((String)member.getValue()));
+          }
+          break;
+        case "jdkSslEngineOptions":
+          if (member.getValue() instanceof JsonObject) {
+            obj.setJdkSslEngineOptions(new io.vertx.core.net.JdkSSLEngineOptions((JsonObject)member.getValue()));
+          }
+          break;
+        case "keyStoreOptions":
+          if (member.getValue() instanceof JsonObject) {
+            obj.setKeyStoreOptions(new io.vertx.core.net.JksOptions((JsonObject)member.getValue()));
+          }
+          break;
+        case "localAddress":
+          if (member.getValue() instanceof String) {
+            obj.setLocalAddress((String)member.getValue());
+          }
+          break;
+        case "logActivity":
+          if (member.getValue() instanceof Boolean) {
+            obj.setLogActivity((Boolean)member.getValue());
+          }
+          break;
+        case "maxFrameSize":
+          if (member.getValue() instanceof Number) {
+            obj.setMaxFrameSize(((Number)member.getValue()).intValue());
+          }
+          break;
+        case "metricsName":
+          if (member.getValue() instanceof String) {
+            obj.setMetricsName((String)member.getValue());
+          }
+          break;
+        case "openSslEngineOptions":
+          if (member.getValue() instanceof JsonObject) {
+            obj.setOpenSslEngineOptions(new io.vertx.core.net.OpenSSLEngineOptions((JsonObject)member.getValue()));
+          }
+          break;
+        case "pemKeyCertOptions":
+          if (member.getValue() instanceof JsonObject) {
+            obj.setPemKeyCertOptions(new io.vertx.core.net.PemKeyCertOptions((JsonObject)member.getValue()));
+          }
+          break;
+        case "pemTrustOptions":
+          if (member.getValue() instanceof JsonObject) {
+            obj.setPemTrustOptions(new io.vertx.core.net.PemTrustOptions((JsonObject)member.getValue()));
+          }
+          break;
+        case "pfxKeyCertOptions":
+          if (member.getValue() instanceof JsonObject) {
+            obj.setPfxKeyCertOptions(new io.vertx.core.net.PfxOptions((JsonObject)member.getValue()));
+          }
+          break;
+        case "pfxTrustOptions":
+          if (member.getValue() instanceof JsonObject) {
+            obj.setPfxTrustOptions(new io.vertx.core.net.PfxOptions((JsonObject)member.getValue()));
+          }
+          break;
+        case "proxyOptions":
+          if (member.getValue() instanceof JsonObject) {
+            obj.setProxyOptions(new io.vertx.core.net.ProxyOptions((JsonObject)member.getValue()));
+          }
+          break;
+        case "receiveBufferSize":
+          if (member.getValue() instanceof Number) {
+            obj.setReceiveBufferSize(((Number)member.getValue()).intValue());
+          }
+          break;
+        case "reconnectAttempts":
+          if (member.getValue() instanceof Number) {
+            obj.setReconnectAttempts(((Number)member.getValue()).intValue());
+          }
+          break;
+        case "reconnectInterval":
+          if (member.getValue() instanceof Number) {
+            obj.setReconnectInterval(((Number)member.getValue()).longValue());
+          }
+          break;
+        case "replyHandlingSupport":
+          if (member.getValue() instanceof Boolean) {
+            obj.setReplyHandlingSupport((Boolean)member.getValue());
+          }
+          break;
+        case "reuseAddress":
+          if (member.getValue() instanceof Boolean) {
+            obj.setReuseAddress((Boolean)member.getValue());
+          }
+          break;
+        case "reusePort":
+          if (member.getValue() instanceof Boolean) {
+            obj.setReusePort((Boolean)member.getValue());
+          }
+          break;
+        case "sendBufferSize":
+          if (member.getValue() instanceof Number) {
+            obj.setSendBufferSize(((Number)member.getValue()).intValue());
+          }
+          break;
+        case "sniServerName":
+          if (member.getValue() instanceof String) {
+            obj.setSniServerName((String)member.getValue());
+          }
+          break;
+        case "soLinger":
+          if (member.getValue() instanceof Number) {
+            obj.setSoLinger(((Number)member.getValue()).intValue());
+          }
+          break;
+        case "ssl":
+          if (member.getValue() instanceof Boolean) {
+            obj.setSsl((Boolean)member.getValue());
+          }
+          break;
+        case "tcpCork":
+          if (member.getValue() instanceof Boolean) {
+            obj.setTcpCork((Boolean)member.getValue());
+          }
+          break;
+        case "tcpFastOpen":
+          if (member.getValue() instanceof Boolean) {
+            obj.setTcpFastOpen((Boolean)member.getValue());
+          }
+          break;
+        case "tcpKeepAlive":
+          if (member.getValue() instanceof Boolean) {
+            obj.setTcpKeepAlive((Boolean)member.getValue());
+          }
+          break;
+        case "tcpNoDelay":
+          if (member.getValue() instanceof Boolean) {
+            obj.setTcpNoDelay((Boolean)member.getValue());
+          }
+          break;
+        case "tcpQuickAck":
+          if (member.getValue() instanceof Boolean) {
+            obj.setTcpQuickAck((Boolean)member.getValue());
+          }
+          break;
+        case "trafficClass":
+          if (member.getValue() instanceof Number) {
+            obj.setTrafficClass(((Number)member.getValue()).intValue());
+          }
+          break;
+        case "trustAll":
+          if (member.getValue() instanceof Boolean) {
+            obj.setTrustAll((Boolean)member.getValue());
+          }
+          break;
+        case "trustStoreOptions":
+          if (member.getValue() instanceof JsonObject) {
+            obj.setTrustStoreOptions(new io.vertx.core.net.JksOptions((JsonObject)member.getValue()));
+          }
+          break;
+        case "useAlpn":
+          if (member.getValue() instanceof Boolean) {
+            obj.setUseAlpn((Boolean)member.getValue());
+          }
+          break;
+        case "usePooledBuffers":
+          if (member.getValue() instanceof Boolean) {
+            obj.setUsePooledBuffers((Boolean)member.getValue());
+          }
+          break;
+        case "vhost":
+          if (member.getValue() instanceof String) {
+            obj.setVhost((String)member.getValue());
+          }
+          break;
+        case "virtualHost":
+          if (member.getValue() instanceof String) {
+            obj.setVirtualHost((String)member.getValue());
+          }
+          break;
+      }
     }
   }
 
   public static void toJson(AmqpBridgeOptions obj, JsonObject json) {
+    toJson(obj, json.getMap());
+  }
+
+  public static void toJson(AmqpBridgeOptions obj, java.util.Map<String, Object> json) {
     json.put("connectTimeout", obj.getConnectTimeout());
     if (obj.getContainerId() != null) {
       json.put("containerId", obj.getContainerId());
@@ -190,7 +274,7 @@ public class AmqpBridgeOptionsConverter {
     }
     if (obj.getCrlValues() != null) {
       JsonArray array = new JsonArray();
-      obj.getCrlValues().forEach(item -> array.add(item.getBytes()));
+      obj.getCrlValues().forEach(item -> array.add(java.util.Base64.getEncoder().encodeToString(item.getBytes())));
       json.put("crlValues", array);
     }
     if (obj.getEnabledCipherSuites() != null) {
@@ -213,6 +297,9 @@ public class AmqpBridgeOptionsConverter {
       json.put("hostnameVerificationAlgorithm", obj.getHostnameVerificationAlgorithm());
     }
     json.put("idleTimeout", obj.getIdleTimeout());
+    if (obj.getIdleTimeoutUnit() != null) {
+      json.put("idleTimeoutUnit", obj.getIdleTimeoutUnit().name());
+    }
     if (obj.getJdkSslEngineOptions() != null) {
       json.put("jdkSslEngineOptions", obj.getJdkSslEngineOptions().toJson());
     }

@@ -16,6 +16,7 @@
 package io.vertx.amqpbridge;
 
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 import io.vertx.codegen.annotations.DataObject;
 import io.vertx.core.buffer.Buffer;
@@ -216,6 +217,12 @@ public class AmqpBridgeOptions extends ProtonClientOptions {
   @Override
   public AmqpBridgeOptions setIdleTimeout(int idleTimeout) {
     super.setIdleTimeout(idleTimeout);
+    return this;
+  }
+
+  @Override
+  public AmqpBridgeOptions setIdleTimeoutUnit(TimeUnit idleTimeoutUnit) {
+    super.setIdleTimeoutUnit(idleTimeoutUnit);
     return this;
   }
 
