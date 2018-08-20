@@ -2,10 +2,12 @@ package io.vertx.amqpbridge;
 
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.json.JsonArray;
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 
 /**
  * Converter for {@link io.vertx.amqpbridge.AmqpBridgeOptions}.
- * NOTE: This class has been automatically generated from the {@link "io.vertx.amqpbridge.AmqpBridgeOptions} original class using Vert.x codegen.
+ * NOTE: This class has been automatically generated from the {@link io.vertx.amqpbridge.AmqpBridgeOptions} original class using Vert.x codegen.
  */
 public class AmqpBridgeOptionsConverter {
 

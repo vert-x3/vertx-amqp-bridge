@@ -42,7 +42,7 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
   private final MessageTranslatorImpl translator = new MessageTranslatorImpl();
   private final Queue<AmqpMessageImpl> buffered = new ArrayDeque<>();
   private Handler<Message<JsonObject>> handler;
-  private boolean paused;
+  private long demand = Long.MAX_VALUE;
   private boolean closed;
   private Handler<Throwable> exceptionHandler;
   private Handler<Void> endHandler;
@@ -115,13 +115,19 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
     boolean schedule = false;
 
     synchronized (AmqpConsumerImpl.this) {
-      if (handler != null && !paused && buffered.isEmpty()) {
+      if (handler != null && demand > 0L && buffered.isEmpty()) {
         h = handler;
-      } else if (handler != null && !paused) {
+        if (demand != Long.MAX_VALUE) {
+          demand--;
+        }
+      } else if (handler != null && demand > 0L) {
         // Buffered messages present, deliver the oldest of those instead
         buffered.add(vertxMessage);
         vertxMessage = buffered.poll();
         h = handler;
+        if (demand != Long.MAX_VALUE) {
+          demand--;
+        }
 
         // Schedule a delivery for the next buffered message
         schedule = true;
@@ -149,10 +155,10 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
   }
 
   private void scheduleBufferedMessageDelivery() {
-    boolean schedule = false;
+    boolean schedule;
 
     synchronized (AmqpConsumerImpl.this) {
-      schedule = !buffered.isEmpty() && !paused;
+      schedule = !buffered.isEmpty() && demand > 0L;
     }
 
     if (schedule) {
@@ -162,7 +168,10 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
 
         synchronized (AmqpConsumerImpl.this) {
           h = handler;
-          if (h != null && !paused) {
+          if (h != null && demand > 0L) {
+            if (demand != Long.MAX_VALUE) {
+              demand--;
+            }
             message = buffered.poll();
           }
         }
@@ -218,15 +227,25 @@ public class AmqpConsumerImpl implements MessageConsumer<JsonObject> {
 
   @Override
   public synchronized MessageConsumer<JsonObject> pause() {
-    paused = true;
+    demand = 0L;
+    return this;
+  }
+
+  @Override
+  public synchronized MessageConsumer<JsonObject> fetch(long amount) {
+    if (amount > 0) {
+      demand += amount;
+      if (demand < 0L) {
+        demand = Long.MAX_VALUE;
+      }
+      scheduleBufferedMessageDelivery();
+    }
     return this;
   }
 
   @Override
   public synchronized MessageConsumer<JsonObject> resume() {
-    paused = false;
-    scheduleBufferedMessageDelivery();
-    return this;
+    return fetch(Long.MAX_VALUE);
   }
 
   @Override
