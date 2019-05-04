@@ -16,6 +16,7 @@
 package io.vertx.amqpbridge.impl;
 
 import io.vertx.core.AsyncResult;
+import io.vertx.core.Future;
 import io.vertx.core.Handler;
 import io.vertx.core.VertxException;
 import io.vertx.core.eventbus.DeliveryOptions;
@@ -23,8 +24,10 @@ import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.proton.ProtonConnection;
+import io.vertx.proton.ProtonDelivery;
 import io.vertx.proton.ProtonSender;
 import io.vertx.proton.impl.ProtonSenderImpl;
+import org.apache.qpid.proton.amqp.transport.DeliveryState;
 
 public class AmqpProducerImpl implements MessageProducer<JsonObject> {
 
@@ -105,10 +108,11 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
 
   @Override
   public <R> MessageProducer<JsonObject> send(JsonObject messageBody, Handler<AsyncResult<Message<R>>> replyHandler) {
-    return doSend(messageBody, replyHandler, null);
+    return doSend(messageBody, null, replyHandler, null);
   }
 
   protected <R> MessageProducer<JsonObject> doSend(JsonObject messageBody,
+                                                   Handler<AsyncResult<Void>> completionHandler,
                                                    Handler<AsyncResult<Message<R>>> replyHandler, String toAddress) {
     if (replyHandler != null) {
       bridge.verifyReplyToAddressAvailable();
@@ -132,7 +136,28 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
         bridge.registerReplyToHandler(msg, replyHandler);
       }
 
-      sender.send(msg);
+      if (completionHandler == null) {
+        sender.send(msg);
+      } else {
+        sender.send(msg, delivery -> {
+          switch (delivery.getRemoteState().getType()) {
+            case Rejected:
+              completionHandler.handle(Future.failedFuture("message rejected (REJECTED"));
+              break;
+            case Modified:
+              completionHandler.handle(Future.failedFuture("message rejected (MODIFIED)"));
+              break;
+            case Released:
+              completionHandler.handle(Future.failedFuture("message rejected (RELEASED)"));
+              break;
+            case Accepted:
+              completionHandler.handle(Future.succeededFuture());
+              break;
+            default:
+              completionHandler.handle(Future.failedFuture("Unsupported delivery type: " + delivery.getRemoteState().getType()));
+          }
+        });
+      }
 
       synchronized (AmqpProducerImpl.this) {
         // Update the credit tracking *again*. We need to reinitialise it here in case the doSend call was performed on
@@ -156,6 +181,11 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
   @Override
   public MessageProducer<JsonObject> write(JsonObject data) {
     return send(data, null);
+  }
+
+  @Override
+  public MessageProducer<JsonObject> write(JsonObject data, Handler<AsyncResult<Void>> handler) {
+    return doSend(data, handler, null, null);
   }
 
   @Override
@@ -186,13 +216,26 @@ public class AmqpProducerImpl implements MessageProducer<JsonObject> {
   }
 
   @Override
+  public void end(Handler<AsyncResult<Void>> handler) {
+    close(handler);
+  }
+
+  @Override
   public void close() {
+    close(null);
+  }
+
+  @Override
+  public void close(Handler<AsyncResult<Void>> handler) {
     synchronized (this) {
       closed = true;
     }
 
     bridge.runOnContext(true, v -> {
       sender.close();
+      if (handler != null) {
+        handler.handle(Future.succeededFuture());
+      }
     });
   }
 }

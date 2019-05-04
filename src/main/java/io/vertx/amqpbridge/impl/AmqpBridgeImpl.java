@@ -314,7 +314,7 @@ public class AmqpBridgeImpl implements AmqpBridge {
       replyBodyProps.put(AmqpConstants.PROPERTIES_CORRELATION_ID, origMessageId);
     }
 
-    replySender.doSend(replyBody, replyHandler, replyAddress);
+    replySender.doSend(replyBody, null, replyHandler, replyAddress);
   }
 
   boolean onContextEventLoop() {
