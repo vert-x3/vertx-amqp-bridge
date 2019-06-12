@@ -1,4 +1,6 @@
 language: java
+before_install:
+  - cp .travis.maven.settings.xml $HOME/.m2/settings.xml
 branches:
   only:
   - master
@@ -6,8 +8,8 @@ branches:
 jobs:
   include:
     - stage: test
-      name: "OracleJDK 8"
-      jdk: oraclejdk8
+      name: "OpenJDK 8"
+      jdk: openjdk8
       script: mvn -q clean verify -B
     - if: type != pull_request
       name: "OpenJDK 11"
@@ -17,6 +19,11 @@ jobs:
       name: "Deploy to Sonatype's snapshots repository"
       if: type != pull_request AND env(SONATYPE_NEXUS_USERNAME) IS present
       script: bash .travis.deploy.artifacts.sh
+cache:
+  directories:
+    - $HOME/.m2
+before_cache:
+  - rm -rf $HOME/.m2/repository/io/vertx/
 notifications:
   email:
     recipients:
