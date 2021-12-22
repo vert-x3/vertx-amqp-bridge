@@ -29,7 +29,7 @@
       
     <artifactId>vertx-amqp-bridge</artifactId>
       
-    <version>3.9.12-SNAPSHOT</version>
+    <version>3.9.12</version>
       
     <name>Vert.x AMQP Bridge</name>
       
@@ -49,7 +49,7 @@
       
     <properties>
             
-        <stack.version>3.9.12-SNAPSHOT</stack.version>
+        <stack.version>3.9.12</stack.version>
             
         <!-- Test dependency versions -->
             
