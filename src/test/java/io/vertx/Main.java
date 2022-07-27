@@ -9,6 +9,7 @@ import org.apache.activemq.broker.BrokerService;
 import org.apache.activemq.broker.TransportConnector;
 
 import java.io.File;
+import java.nio.file.Files;
 
 /**
  * @author <a href="mailto:julien@julienviet.com">Julien Viet</a>
@@ -20,9 +21,7 @@ public class Main {
 
   public static void main(String[] args) throws Exception {
 
-    File tmp = File.createTempFile("activemq", ".tmp");
-    tmp.delete();
-    tmp.mkdirs();
+    File tmp = Files.createTempDirectory("activemq" + ".tmp").toFile();
     tmp.deleteOnExit();
 
     BrokerService brokerService = new BrokerService();
