@@ -24,10 +24,8 @@ import io.vertx.core.eventbus.Message;
 import io.vertx.core.eventbus.MessageProducer;
 import io.vertx.core.json.JsonObject;
 import io.vertx.proton.ProtonConnection;
-import io.vertx.proton.ProtonDelivery;
 import io.vertx.proton.ProtonSender;
 import io.vertx.proton.impl.ProtonSenderImpl;
-import org.apache.qpid.proton.amqp.transport.DeliveryState;
 
 public class AmqpProducerImpl implements MessageProducer<JsonObject> {
 
