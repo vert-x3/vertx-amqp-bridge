@@ -10,7 +10,3 @@ MessageProducer and MessageConsumer APIs over the top of [vertx-proton](https://
 See the docs for more details:
 
 * [Java documentation](http://vertx.io/docs/vertx-amqp-bridge/java/)
-* [JavaScript documentation](http://vertx.io/docs/vertx-amqp-bridge/js/)
-* [Kotlin documentation](http://vertx.io/docs/vertx-amqp-bridge/kotlin/)
-* [Groovy documentation](http://vertx.io/docs/vertx-amqp-bridge/groovy/)
-* [Ruby documentation](http://vertx.io/docs/vertx-amqp-bridge/ruby/)
